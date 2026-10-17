@@ -1,11 +1,11 @@
-FROM node:24-alpine AS build
+FROM node:25-alpine AS build
 WORKDIR /repo
 RUN corepack enable
 COPY . .
 RUN pnpm install --frozen-lockfile
 RUN pnpm --filter @amax/web build
 
-FROM node:24-alpine
+FROM node:25-alpine
 WORKDIR /app
 ENV NODE_ENV=production PORT=3000 HOSTNAME=0.0.0.0
 COPY --from=build --chown=node:node /repo/apps/web/.next/standalone ./
