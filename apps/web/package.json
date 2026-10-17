@@ -17,8 +17,8 @@
   "dependencies": {
     "next": "16.4.2",
     "next-auth": "5.0.0-beta.32",
-    "react": "19.2.0",
-    "react-dom": "19.2.0"
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.14.0",
@@ -27,7 +27,7 @@
     "@types/pngjs": "6",
     "pixelmatch": "8.0.0",
     "pngjs": "7.0.0",
-    "wrangler": "4.148.0",
+    "wrangler": "4.149.0",
     "postgres": "3.4.9",
     "tsx": "4.23.15"
   }
