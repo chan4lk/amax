@@ -27,7 +27,7 @@ jobs:
     env:
       DATABASE_MIGRATE_URL: postgres://amax:amax@localhost:5432/amax
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: ./.github/actions/setup
       - name: App role for row-level security tests
         run: psql "$DATABASE_MIGRATE_URL" -c "create role amax_app login password 'amax_app'"
@@ -43,7 +43,7 @@ jobs:
   vercel:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: ./.github/actions/setup
       - run: |
           mkdir -p .vercel
@@ -53,7 +53,7 @@ jobs:
   cloudflare:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: ./.github/actions/setup
       - run: pnpm --filter @amax/web build:cloudflare
       - run: test -f apps/web/.open-next/worker.js
@@ -61,7 +61,7 @@ jobs:
   docker-k3s:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - run: docker build -t amax:ci .
       - name: Image serves /healthz
         run: |
