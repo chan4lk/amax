@@ -5,6 +5,7 @@ import { contextFor } from "@amax/core/server";
 import { defineSuggestionKind } from "@amax/agents";
 import { createSuggestion } from "@amax/agents/server";
 import { EVENTS as DELIVERY, type CommitTime } from "@amax/delivery/contracts";
+import { EVENTS, type EntryDeleted } from "./contracts";
 import { logEntry } from "./server/log";
 
 const Draft = z.object({ userId: z.uuid(), projectKey: z.string().min(1), day: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), hours: z.number().positive().max(12), commit: z.string().min(4), proposalKey: z.string() });
@@ -22,9 +23,13 @@ export const commitDraft = defineSuggestionKind<Draft, { entryId: string }>({
     return { applied: { entryId: out.resourceId }, action: "time.entry.log", resource: "time.entry", resourceId: out.resourceId, after: out.after, events: out.events };
   },
   async undo(tx, _ctx, p, a) {
-    const [gone] = await tx.execute(sql`delete from time.entry e using time.week w where e.id = ${a.entryId} and w.id = e.week_id and w.status in ('draft', 'rejected') returning e.id`);
+    const [gone] = await tx.execute(sql`delete from time.entry e using time.week w where e.id = ${a.entryId} and w.id = e.week_id and w.status in ('draft', 'rejected')
+      returning e.id, e.week_id, e.user_id, e.project_id, to_char(e.day, 'YYYY-MM-DD') as day, e.hours, e.revision`);
     if (!gone) throw new Error("that week was submitted since; ask the approver to send it back first");
-    return { applied: null, action: "time.entry.delete", resource: "time.entry", resourceId: a.entryId, before: { hours: p.hours, day: p.day } };
+    // 070 AC-6: consumers (reports) drop the entry too.
+    const payload: EntryDeleted = { entryId: a.entryId, weekId: gone.week_id as string, userId: gone.user_id as string, projectId: gone.project_id as string, day: gone.day as string,
+      hours: Number(gone.hours), revision: Number(gone.revision) + 1, lockedChange: false };
+    return { applied: null, action: "time.entry.delete", resource: "time.entry", resourceId: a.entryId, before: { hours: p.hours, day: p.day }, events: [{ name: EVENTS.entryDeleted, payload }] };
   },
 });
 

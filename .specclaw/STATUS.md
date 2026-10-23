@@ -1,7 +1,7 @@
 # 🦞 SpecClaw Dashboard
 
 **Project:** amax
-**Last Updated:** 2026-10-19 06:00 UTC
+**Last Updated:** 2026-10-23 15:25 UTC
 
 _1 unnumbered change · run `/specclaw-extras:renumber` to order them_
 
@@ -10,7 +10,11 @@ _1 unnumbered change · run `/specclaw-extras:renumber` to order them_
 
 - 🔀 **067-glob-security-bump** — pr raised | 2/2 tasks (100%) | 0 failed | PR #96 merged
 - 🔀 **068-overview-dashboard** — pr raised | 6/6 tasks (100%) | 0 failed | PR #97 merged
-- 🔍 **069-chat-tool-schema-hotfix** — verify done | 3/3 tasks (100%) | 0 failed
+- 🔀 **069-chat-tool-schema-hotfix** — pr raised | 3/3 tasks (100%) | 0 failed | PR #98 merged
+- 🔍 **070-time-entry-corrections** — verify done | 29/29 tasks (100%) | 0 failed | PR #102 open
+- 🔨 **071-time-access-and-integrity** — 0/5 tasks (0%) | 0 failed
+- 🔨 **072-time-consumers-sync** — 0/5 tasks (0%) | 0 failed
+- 🔨 **073-time-workflow-enhancements** — 0/4 tasks (0%) | 0 failed
 
 ## Pending Proposals
 
@@ -89,6 +93,6 @@ _1 unnumbered change · run `/specclaw-extras:renumber` to order them_
 
 ## Stats
 
-- **Total changes:** 67
-- **Active:** 3
+- **Total changes:** 71
+- **Active:** 7
 - **Completed:** 64

@@ -21,7 +21,7 @@ const groupBy = <T>(rows: T[], key: (r: T) => string) => {
 };
 
 async function hoursIn(tx: Tx, v: Viewer, range: Range) {
-  const rows = await tx.execute(sql`select user_id, day, hours, billable from reports.logged_hours where day between ${range.from} and ${range.to} order by day`);
+  const rows = await tx.execute(sql`select user_id, day, hours, billable from reports.logged_hours where day between ${range.from} and ${range.to} and deleted_at is null order by day`);
   const seen = rows.filter((r) => seesHours(v, r.user_id as string));
   return groupBy(seen.map((r) => ({ userId: r.user_id as string, day: asDay(r.day), hours: Number(r.hours), billable: Boolean(r.billable) })), (r) => r.userId);
 }

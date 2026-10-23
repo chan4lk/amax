@@ -85,6 +85,10 @@ export type FixtureSeed = (ctx: { tx: Tx; tenantId: string; shared: SharedFixtur
 /** What a write tool names as its service: a defineService result. */
 export type ToolService = { spec: { name: string } };
 
+export type CardLine = { label: string; value: string };
+export type ChatSuggestion = { routes: string[]; label: string; prompt: string; tool: string; when?: (viewer: never, params: Record<string, string>) => Promise<boolean> };
+export type ToolCard = { title: string; lines: CardLine[] };
+
 export type McpToolDef = {
   name: string;
   description: string;
@@ -115,6 +119,11 @@ export type McpToolDef = {
    * a ToolError (code invalid_input) to refuse the card; its message is what the model is told.
    */
   propose?: (viewer: never, input: never) => Promise<void>;
+  /**
+   * What a write tool's confirm card says, in the person's words (070 amendment 2): a title and labelled
+   * lines read from the stored record. Without it, the card shows the description and the raw input.
+   */
+  card?: (viewer: never, input: never) => Promise<ToolCard>;
   /** How a pin on this read tool names what it shows (059); the registry checks it at startup. */
   pin?: PinSpec;
 };
@@ -236,6 +245,13 @@ export type ModuleManifest = {
   /** Contributes results to the built-in `search` tool. */
   search?: (viewer: never, query: string) => Promise<SearchHit[]>;
   chatIntents?: unknown[];
+  /**
+   * What chat offers on this module's pages (070 amendment 4): shown only when the viewer may use `tool` and
+   * `when` (if any) passes for the page's route params. A suggestion fills the message box; it never sends.
+   */
+  chatSuggestions?: ChatSuggestion[];
+  /** A short label for a page's params in chat's header, e.g. "Week of Oct 12" for a week. */
+  pageLabel?: (params: Record<string, string>) => string | null;
   jobs?: JobDef[];
   /** Durable workflows (029): defineWorkflow() results from @amax/workflows, opaque to core. */
   workflows?: readonly unknown[];

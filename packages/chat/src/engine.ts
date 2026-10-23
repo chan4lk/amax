@@ -7,12 +7,14 @@ import { resolvePins } from "./resolve";
 import { CancelledByKeyError, claimKey, currentTrace, KEY_DAYS, keyedOutcome, logError, lookupKey, ReplayedError, retryable, traceStep, traceStepOrFail, UndeclaredWriteError, withIdempotency, withTrace, type KeyedRun } from "@amax/core/server";
 import { ToolError, type Registry, type RegisteredTool } from "@amax/mcp";
 import type { Viewer } from "@amax/auth";
+import type { CardLine } from "@amax/core";
 
 export type Intent = { id: string; label: string; tool: string; required: string[]; fields: { name: string; ask: string; options?: string[] }[] };
 export type { Pin };
 /** `createdAt` (ISO): a card expires after CARD_DAYS, before its idempotency record can be pruned. */
 /** `traceId` (050): the turn that proposed it, so its confirm or cancel joins the same trace. */
-export type PendingAction = { id: string; tool: string; title: string; input: Record<string, unknown>; fields: string[]; createdAt: string; secret?: { label: string }; traceId?: string };
+/** `lines` (070 amendment 2): what the tool's own `card` says changes, shown instead of the raw input. */
+export type PendingAction = { id: string; tool: string; title: string; input: Record<string, unknown>; fields: string[]; createdAt: string; secret?: { label: string }; traceId?: string; lines?: CardLine[] };
 export type Highlight = { text: string; field: string; index: number };
 /** `pins`: the turn's pins as read (059), in the order sent: labels refreshed, old ones moved onto ids. */
 export type ChatTurn = { conversationId: string; reply: string; toolsRun: string[]; pending: PendingAction[]; highlights: Highlight[]; pins: Pin[] };
@@ -22,7 +24,10 @@ Answer briefly and concretely. Use the read tools to look things up instead of g
 To create or change anything, call the matching write tool with every field you can fill. Write tools don't run straight away:
 the user sees a confirm card and decides, so never say a change is done until a later message confirms it.
 If a required field is missing, ask for it in one short question instead of calling the tool.
-If a tool says you're not allowed, tell the user plainly that their role can't do that.`;
+If a tool says you're not allowed, tell the user plainly that their role can't do that.
+"Current page", when given, is where the user is now: use its module and params (such as the week) to read the right
+records, but it is context, not permission, and never picks one record when several fit. Asked what you can do here,
+answer from its suggestions and your tools, and say plainly what isn't possible here.`;
 
 const titleOf = (t: RegisteredTool, input: Record<string, unknown>) =>
   `${t.description.split(".")[0]}: ${Object.values(input).filter((v) => typeof v === "string" || typeof v === "number").join(", ")}`;
@@ -67,8 +72,11 @@ const traceFor = (viewer: Viewer, traceId?: string) => ({ traceId, tenantId: vie
 // The gateway hands write tools the input it validated, so a field the tool doesn't declare (a
 // "value" the model made up, say) never reaches the card. A tool that takes a typed secret marks the
 // card, which then asks the person for it in a masked field (047 AC-4).
-function pendingFor(t: RegisteredTool, input: Record<string, unknown>): PendingAction {
-  return { id: randomUUID(), tool: t.name, title: titleOf(t, input), input, fields: Object.keys(input), createdAt: new Date().toISOString(), traceId: currentTrace()?.traceId, ...(t.secretInput ? { secret: t.secretInput } : {}) };
+// A tool's own card (070 amendment 2) words it from the stored record; one that fails keeps today's card.
+async function pendingFor(t: RegisteredTool, viewer: Viewer, input: Record<string, unknown>): Promise<PendingAction> {
+  const card = await t.card?.(viewer as never, input as never).catch((e: unknown) => void logError(`chat.card ${t.name}`, e));
+  return { id: randomUUID(), tool: t.name, title: card?.title ?? titleOf(t, input), input, fields: Object.keys(input), createdAt: new Date().toISOString(), traceId: currentTrace()?.traceId,
+    ...(card ? { lines: card.lines } : {}), ...(t.secretInput ? { secret: t.secretInput } : {}) };
 }
 
 // An error from a write that was given a secret never carries it on, even if some layer echoed it.
@@ -97,10 +105,12 @@ async function proposeCheck(t: RegisteredTool, viewer: Viewer, input: Record<str
 }
 
 /** One user message: answer with read tools, turn write calls into confirm cards. */
-export const chatTurn = (db: Db, registry: Registry, viewer: Viewer, opts: { conversationId?: string; text: string; pins?: Pin[]; intent?: Intent }): Promise<ChatTurn> =>
+/** `page` (070 amendment 4): the page the user is on, as the host matched it; context for the model, never permission. */
+export type TurnPage = { module: string; page: string; label: string; params: Record<string, string>; suggestions: { label: string; prompt: string }[] };
+export const chatTurn = (db: Db, registry: Registry, viewer: Viewer, opts: { conversationId?: string; text: string; pins?: Pin[]; intent?: Intent; page?: TurnPage }): Promise<ChatTurn> =>
   withTrace(traceFor(viewer), () => runTurn(db, registry, viewer, opts));
 
-async function runTurn(db: Db, registry: Registry, viewer: Viewer, opts: { conversationId?: string; text: string; pins?: Pin[]; intent?: Intent }): Promise<ChatTurn> {
+async function runTurn(db: Db, registry: Registry, viewer: Viewer, opts: { conversationId?: string; text: string; pins?: Pin[]; intent?: Intent; page?: TurnPage }): Promise<ChatTurn> {
   const convo = await load(db, viewer, opts.conversationId);
   await traceStep({ kind: "turn", recordId: convo.id, detail: { pins: opts.pins?.length ?? 0, intent: opts.intent?.id ?? null } });
   const pending: PendingAction[] = [];
@@ -116,7 +126,7 @@ async function runTurn(db: Db, registry: Registry, viewer: Viewer, opts: { conve
       if (refused) return refused;
       // The step comes first (053): a card is shown only once its pending step is in the trace, so a
       // step that can't be written means nothing was proposed, and the model is told exactly that.
-      const action = pendingFor(t, input);
+      const action = await pendingFor(t, viewer, input);
       if (!(await traceStep({ kind: "pending", tool: t.name, args: input, detail: { actionId: action.id } }))) return NOT_PROPOSED;
       pending.push(action);
       return { status: "awaiting_confirmation", note: "The user now sees a confirm card for this. Don't say it's done." };
@@ -127,7 +137,8 @@ async function runTurn(db: Db, registry: Registry, viewer: Viewer, opts: { conve
   // under its label as it is now (059). A record, not text, so the gateway redacts its classified
   // fields like any other record.
   const resolved = await resolvePins(registry, viewer, opts.pins ?? [], convo.savedAt);
-  const data: DataItem[] = resolved.map((r) => ({ label: r.pin.label, record: r.record, ...(r.tool ? { sensitive: r.tool.sensitive } : {}) }));
+  const data: DataItem[] = [...(opts.page ? [{ label: "Current page", record: opts.page }] : []),
+    ...resolved.map((r) => ({ label: r.pin.label, record: r.record, ...(r.tool ? { sensitive: r.tool.sensitive } : {}) }))];
   const pins = resolved.map((r) => r.pin);
 
   const intentNote = opts.intent

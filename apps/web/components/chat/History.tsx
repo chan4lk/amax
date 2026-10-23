@@ -30,7 +30,7 @@ function Row({ item, onOpen }: { item: ConversationSummary; onOpen: (id: string)
   );
 }
 
-export function History({ initial, error, onOpen, onNew }: { initial: ConversationSummary[]; error?: string; onOpen: (id: string) => void; onNew: () => void }) {
+export function History({ initial, error, onOpen, onNew, as }: { initial: ConversationSummary[]; error?: string; onOpen: (id: string) => void; onNew: () => void; as?: string }) {
   const [items, setItems] = useState(initial);
   const [problem, setProblem] = useState(error);
   const [query, setQuery] = useState("");
@@ -39,7 +39,7 @@ export function History({ initial, error, onOpen, onNew }: { initial: Conversati
   async function search(q: string) {
     setQuery(q);
     latest.current = q;
-    const r = await listChats(q);
+    const r = await listChats(q, as);
     if (latest.current !== q) return;
     if (!r.ok) { setProblem(r.error); return; }
     setProblem(undefined);

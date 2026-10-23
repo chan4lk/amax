@@ -1,0 +1,11 @@
+{
+  "change": "070-time-entry-corrections",
+  "phase": "verify",
+  "branch": "specclaw/070-time-entry-corrections",
+  "phases": {
+    "proposal": {"status":"approved","at":"2026-10-22T12:20:08Z"},
+    "tasks": {"status":"done","at":"2026-10-22T12:20:58Z"},
+    "verify": {"status":"done","at":"2026-10-22T13:29:24Z"},
+    "pr": {"status":"raised","at":"2026-10-22T13:46:00Z","url":"https://github.com/chan4lk/amax/pull/102"}
+  }
+}

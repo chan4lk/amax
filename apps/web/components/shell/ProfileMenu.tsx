@@ -7,6 +7,8 @@ const THEMES: ThemeChoice[] = ["system", "light", "dark"];
 export const VIEW_ROLES = ["Admin", "ITAdmin", "Leadership", "PM", "HR", "Payroll", "Finance", "Engineer", "Employee"] as const;
 
 export type Profile = {
+  /** 070 AC-53: the user this page was rendered for; actions send it so a switched session is refused. */
+  userId: string;
   name: string;
   initials: string;
   /** What the chip shows: the View-as role, else the primary role. */

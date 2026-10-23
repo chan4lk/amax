@@ -12,19 +12,33 @@ export type WeekStatus = (typeof WEEK_STATUSES)[number];
 export type EntrySource = "person" | "agent";
 export type ApprovalChain = "manager" | "project" | "admin";
 
-export type EntryLogged = { entryId: string; weekId: string; userId: string; projectId: string; day: string; hours: number; billable: boolean; source: EntrySource; lockedChange: boolean };
+export type EntryLogged = { entryId: string; weekId: string; userId: string; projectId: string; day: string; hours: number; billable: boolean; source: EntrySource; lockedChange: boolean; revision: number };
+/** 070: an entry's new state; `revision` grows with every change. AC-14: `byOther` when someone else fixed it, with the `reason` they are told. */
+type FixedBy = { by?: string; byOther?: boolean; reason?: string | null; projectName?: string; week?: string; dayLabel?: string; requestId?: string };
+export type EntryCorrected = { entryId: string; weekId: string; userId: string; projectId: string; day: string; hours: number; billable: boolean; revision: number; before: { hours: number; billable: boolean; projectId: string }; lockedChange: boolean } & FixedBy;
+export type EntryDeleted = { entryId: string; weekId: string; userId: string; projectId: string; day: string; hours: number; revision: number; lockedChange: boolean } & FixedBy;
 export type WeekSubmitted = { weekId: string; userId: string; week: string; hours: number };
 export type WeekDecided = { weekId: string; userId: string; week: string; by: string; chain: ApprovalChain; comment: string | null };
 export type WeekReopened = { weekId: string; userId: string; week: string; by: string; reason: string };
+// 070 amendment 3: change requests on locked weeks. `answered` marks the owner's reply to a question.
+type RequestRef = { requestId: string; weekId: string; userId: string; week: string; entryId: string; projectName: string; dayLabel: string };
+export type ChangeRequested = RequestRef & { change: string; reason: string; answered: boolean; answer: string | null };
+export type ChangeDecided = RequestRef & { decision: "apply" | "reopen" | "ask" | "decline" | "cancel"; by: string; note: string | null };
+export type ChangeCompleted = { requestId: string; weekId: string; userId: string; week: string };
 export type WeekReminded = { weekId: string; userId: string; week: string; by: string };
 
 export const EVENTS = {
   entryLogged: "time.entry.logged",
+  entryCorrected: "time.entry.corrected",
+  entryDeleted: "time.entry.deleted",
   weekSubmitted: "time.week.submitted",
   weekApproved: "time.week.approved",
   weekRejected: "time.week.rejected",
   weekReopened: "time.week.reopened",
   weekReminded: "time.week.reminded",
+  changeRequested: "time.change.requested",
+  changeDecided: "time.change.decided",
+  changeCompleted: "time.change.completed",
 } as const;
 
 export type PersonWeek = { weekId: string; userId: string; personName: string; status: WeekStatus; hours: number; agentHours: number; billableHours: number };
@@ -39,7 +53,7 @@ const visible = (v: Viewer, ownerId: string, weekProjectIds: string[]) => ownerI
 const mustRead = (v: Viewer) => {
   if (!can(v, "time:read")) throw new ForbiddenError("time:read", "time");
 };
-const weekProjects = sql`coalesce((select array_agg(distinct x.project_id) from time.entry x where x.week_id = w.id), '{}')`;
+const weekProjects = sql`coalesce((select array_agg(distinct x.project_id) from time.entry x where x.week_id = w.id and x.deleted_at is null), '{}')`;
 
 /** Per-person totals for an ISO week, limited to the weeks the viewer may see. */
 export async function weekTotals(tx: Tx, viewer: Viewer, w: IsoWeek): Promise<PersonWeek[]> {
@@ -47,7 +61,7 @@ export async function weekTotals(tx: Tx, viewer: Viewer, w: IsoWeek): Promise<Pe
   const rows = await tx.execute(sql`select w.id, w.user_id, w.person_name, w.status, coalesce(sum(e.hours), 0) as hours,
       coalesce(sum(e.hours) filter (where e.source = 'agent'), 0) as agent, coalesce(sum(e.hours) filter (where e.billable), 0) as billable,
       ${weekProjects} as projects
-    from time.week w left join time.entry e on e.week_id = w.id
+    from time.week w left join time.entry e on e.week_id = w.id and e.deleted_at is null
     where w.iso_year = ${w.year} and w.iso_week = ${w.week} group by w.id order by w.person_name`);
   return rows.filter((r) => visible(viewer, r.user_id as string, (r.projects as string[]) ?? []))
     .map((r) => ({ weekId: r.id as string, userId: r.user_id as string, personName: r.person_name as string, status: r.status as WeekStatus,
@@ -61,7 +75,7 @@ export async function projectHours(tx: Tx, viewer: Viewer, range: { from: string
   const rows = await tx.execute(sql`select w.user_id, ${weekProjects} as projects, e.project_id, sum(e.hours) as hours, coalesce(sum(e.hours) filter (where e.source = 'agent'), 0) as agent,
       coalesce(sum(e.hours) filter (where e.billable), 0) as billable
     from time.entry e join time.week w on w.id = e.week_id
-    where e.day between ${range.from} and ${range.to} ${approved} group by w.id, e.project_id`);
+    where e.day between ${range.from} and ${range.to} and e.deleted_at is null ${approved} group by w.id, e.project_id`);
   const by = new Map<string, ProjectHours>();
   for (const r of rows) {
     const projectId = r.project_id as string;
@@ -85,7 +99,7 @@ export async function weeklyHours(tx: Tx, viewer: Viewer, q: { last: IsoWeek; we
   const only = q.projectId ? sql`and e.project_id = ${q.projectId}` : sql``;
   const rows = await tx.execute(sql`select w.user_id, w.iso_year, w.iso_week, ${weekProjects} as projects,
       coalesce(sum(e.hours) filter (where e.source = 'agent'), 0) as agent, coalesce(sum(e.hours) filter (where e.source <> 'agent'), 0) as person
-    from time.week w join time.entry e on e.week_id = w.id
+    from time.week w join time.entry e on e.week_id = w.id and e.deleted_at is null
     where (w.iso_year, w.iso_week) between (${first.year}, ${first.week}) and (${q.last.year}, ${q.last.week}) ${only} group by w.id`);
   const by = new Map(keys.map((k) => [weekKey(k), { week: weekKey(k), agentHours: 0, personHours: 0 }]));
   for (const r of rows) {

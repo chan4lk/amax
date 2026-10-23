@@ -8,19 +8,24 @@ import { currentViewer } from "@amax/auth";
 import { cancelAction, chatTurn, confirmAction, resolvePins, type ChatTurn, type Pin } from "@amax/chat";
 import { myChatUsage } from "../../lib/chat-usage";
 import { doneOutcome, outcomeOf, type CardOutcome } from "../../lib/chat-outcome";
+import { pageInfo, type PageInfo } from "../../lib/page-context";
+import { installed } from "../../lib/registry";
+import { sameUser, SignedInElsewhere } from "../../lib/same-user";
 import { chatIntents, getDb, toolRegistry } from "../../lib/server";
 
 export type ChatResult = ({ ok: true; usage: string | null } & ChatTurn) | { ok: false; error: string };
 
 const friendly = (e: unknown) =>
-  e instanceof AiDisabledError ? e.message : e instanceof Error && /forbidden|scope/.test(e.message) ? e.message : "Sorry, something went wrong. Try again.";
+  e instanceof AiDisabledError || e instanceof SignedInElsewhere ? e.message : e instanceof Error && /forbidden|scope/.test(e.message) ? e.message : "Sorry, something went wrong. Try again.";
 
-export async function sendChat(input: { conversationId?: string; text: string; pins?: Pin[]; intentId?: string }): Promise<ChatResult> {
+export async function sendChat(input: { conversationId?: string; text: string; pins?: Pin[]; intentId?: string; path?: string; as?: string }): Promise<ChatResult> {
   try {
     const viewer = await currentViewer();
+    sameUser(viewer, input.as);
     if (!aiConfigured()) return { ok: false, error: "AI is off: no API key is configured on the server." };
     const intent = input.intentId ? chatIntents().find((i) => i.id === input.intentId) : undefined;
-    const turn = await chatTurn(getDb()!, toolRegistry(), viewer, { conversationId: input.conversationId, text: input.text.slice(0, 4000), pins: input.pins?.slice(0, 8), intent });
+    const page = input.path ? (await pageInfo(installed, toolRegistry(), viewer, input.path.slice(0, 300))) ?? undefined : undefined;
+    const turn = await chatTurn(getDb()!, toolRegistry(), viewer, { conversationId: input.conversationId, text: input.text.slice(0, 4000), pins: input.pins?.slice(0, 8), intent, page });
     return { ok: true, ...turn, usage: await myChatUsage(viewer) };
   } catch (e) {
     const id = logError("chat", e);
@@ -30,10 +35,24 @@ export async function sendChat(input: { conversationId?: string; text: string; p
 
 export type { CardOutcome };
 
-export async function confirmChat(conversationId: string, actionId: string): Promise<CardOutcome> {
+/** 070 amendment 4: the page chat's header and suggestions describe; null for a page with no module route. */
+export async function pageContext(path: string, as?: string): Promise<PageInfo | null> {
+  try {
+    if (typeof path !== "string" || path.length > 300) return null;
+    const viewer = await currentViewer();
+    sameUser(viewer, as);
+    return await pageInfo(installed, toolRegistry(), viewer, path);
+  } catch (e) {
+    logError("chat.page", e);
+    return null;
+  }
+}
+
+export async function confirmChat(conversationId: string, actionId: string, as?: string): Promise<CardOutcome> {
   let done: { title: string; result: unknown };
   try {
     const viewer = await currentViewer();
+    sameUser(viewer, as);
     const { action, result } = await confirmAction(getDb()!, toolRegistry(), viewer, conversationId, actionId);
     done = { title: action.title, result };
   } catch (e) {
@@ -50,9 +69,10 @@ const pinList = z.array(z.object({ label: z.string().max(200), tool: z.string().
  * The panel's pins read again with the viewer's permissions (059), after a confirm or whenever the
  * panel wants their labels as they are now. Only the pins come back, never the records.
  */
-export async function refreshPins(pins: unknown): Promise<Pin[] | null> {
+export async function refreshPins(pins: unknown, as?: string): Promise<Pin[] | null> {
   try {
     const viewer = await currentViewer();
+    sameUser(viewer, as);
     return (await resolvePins(toolRegistry(), viewer, pinList.parse(pins))).map((r) => r.pin);
   } catch (e) {
     logError("chat.pins", e);
@@ -60,9 +80,10 @@ export async function refreshPins(pins: unknown): Promise<Pin[] | null> {
   }
 }
 
-export async function cancelChat(conversationId: string, actionId: string): Promise<CardOutcome> {
+export async function cancelChat(conversationId: string, actionId: string, as?: string): Promise<CardOutcome> {
   try {
     const viewer = await currentViewer();
+    sameUser(viewer, as);
     await cancelAction(getDb()!, viewer, conversationId, actionId);
     return { state: "cancelled", note: "Cancelled. Nothing was changed." };
   } catch (e) {
@@ -82,6 +103,7 @@ export async function confirmSecretChat(conversationId: string, actionId: string
     const parsed = secretForm.safeParse({ secret: data.get("secret") });
     if (!parsed.success) return { state: "open", note: "Type the value first." };
     const viewer = await currentViewer();
+    sameUser(viewer, data.get("as") ?? undefined);
     await confirmAction(getDb()!, toolRegistry(), viewer, conversationId, actionId, { secret: parsed.data.secret });
     revalidatePath("/", "layout");
     return { state: "done", note: "Done: saved to the vault. The value can't be shown again." };
