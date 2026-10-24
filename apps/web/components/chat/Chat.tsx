@@ -89,6 +89,7 @@ export function Chat({ open, onClose, returnFocus, signedIn, userId, voice, usag
   textNow.current = text;
   const pinsNow = useRef(pins);
   pinsNow.current = pins;
+  const pinsKey = pins.map(pinKey).join("|");
 
   // Chat is fixed to the screen, so focusing in or out of it never needs to scroll the page under it.
   useEffect(() => { if (open) input.current?.focus({ preventScroll: true }); }, [open]);
@@ -111,9 +112,11 @@ export function Chat({ open, onClose, returnFocus, signedIn, userId, voice, usag
   useEffect(() => {
     if (!open || !signedIn) return;
     let live = true;
-    pageContext(pathname, userId).then((p) => { if (live) setPage(p); }, () => { if (live) setPage(null); });
+    // 073: what is pinned shapes the suggestions too (a pinned week offers its approve or remind).
+    const pinned = pinsNow.current.filter((x) => !x.unavailable).map(({ tool, args }) => ({ tool, args }));
+    pageContext(pathname, userId, pinned).then((p) => { if (live) setPage(p); }, () => { if (live) setPage(null); });
     return () => { live = false; };
-  }, [open, signedIn, pathname, log.length, userId]);
+  }, [open, signedIn, pathname, log.length, userId, pinsKey]);
 
   // Pins and intents arrive from anywhere on the page.
   useEffect(() => {

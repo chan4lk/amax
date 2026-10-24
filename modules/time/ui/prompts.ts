@@ -11,4 +11,8 @@ export const approveAllPrompt = (rows: Who[], week: string) => `Approve the subm
 // 070 amendment 3: the request is named by its id, so chat decides on exactly that one.
 export const reviewPrompt = (r: Pick<ChangeRequest, "id" | "personName" | "dayLabel" | "before">) =>
   `Review ${r.personName}'s change request for ${r.before.projectName}, ${r.dayLabel} (request id ${r.id}): `;
-export const remindAllPrompt = (rows: Who[], week: string) => `Remind these people to submit their timesheets for ${week}: ${rows.map(one).join(", ")}`;
+// 073: Not started people have no week id yet; they are named by user id, with the week they owe.
+type Owed = Who | { weekId: null; personName: string; userId: string };
+const owed = (r: Owed) => (r.weekId ? one(r as Who) : `${r.personName} (no timesheet yet, user id ${(r as { userId: string }).userId})`);
+export const remindAllPrompt = (rows: Owed[], week: string) => `Remind these people to submit their timesheets for ${week}: ${rows.map(owed).join(", ")}`;
+export const notStartedPrompt = (name: string, userId: string, week: string) => `Remind ${name} to submit their timesheet for ${week} (no timesheet yet, user id ${userId})`;

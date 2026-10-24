@@ -6,7 +6,7 @@ import { AskButton } from "./AskButton";
 import { DayCell } from "./DayCell";
 import { Filters } from "./Filters";
 import { Since } from "./Since";
-import { decidePrompt, remindAllPrompt } from "./prompts";
+import { remindAllPrompt } from "./prompts";
 import { avatar, DayHead, dayName, initials, STATUS, Util } from "./parts";
 
 // Quote every text cell, double embedded quotes, and defuse leading formula characters (CSV injection).
@@ -17,16 +17,10 @@ const csv = (rows: GridRow[], days: string[]) => encodeURIComponent([["Person", 
   ...rows.map((r) => [csvCell(r.personName), ...r.cells.map((c) => c.hours.toFixed(1)), r.total.toFixed(1), `${r.utilisation}%`, r.agentHours.toFixed(1), STATE[r.status][1]].join(","))].join("\n"));
 
 const sheetPin = (row: GridRow, weekKey: string) => (row.weekId ? { label: `${row.personName}, ${weekKey}`, tool: "get_timesheet", args: { weekId: row.weekId } }
-  : { label: `${row.personName}, ${weekKey} (not started)`, tool: "get_team_week", args: { week: weekKey } });
+  : { label: `${row.personName}, ${weekKey} (not started)`, tool: "get_team_week", args: { week: weekKey, userId: row.userId } });
 
-function Action({ row, weekKey }: { row: GridRow; weekKey: string }) {
-  if (row.status === "approved") return <span className="muted">Locked</span>;
-  if (row.status === "not_started") return <AskButton className="btn sm" spark={false} label="Remind" name={`Remind ${row.personName}`} prompt={`Remind ${row.personName} to log their hours for ${weekKey}`} pin={sheetPin(row, weekKey)} />;
-  if (!row.canApprove || !row.weekId) return null;
-  const verb = row.status === "submitted" ? "Approve" : "Remind";
-  return <AskButton className="btn sm" spark={false} label={verb} name={`${verb} ${row.personName}`}
-    prompt={decidePrompt(verb, { weekId: row.weekId, personName: row.personName }, weekKey)} pin={sheetPin(row, weekKey)} />;
-}
+// 073: a submitted week that approve-all leaves out says why, in words as well as colour.
+const Check = ({ row }: { row: GridRow }) => (row.status === "submitted" && row.anomalies.length ? <span className="chip warn" title={row.anomalies.join("; ")}>Check<span className="sr">: {row.anomalies.join("; ")}</span></span> : null);
 
 // 073 AC-20: a header sorts by its column; again reverses it. Low first is one click on Total or Utilisation.
 function SortHead({ g, base, by, label, num }: { g: TeamGrid; base: string; by: string; label: string; num?: boolean }) {
@@ -38,7 +32,9 @@ function SortHead({ g, base, by, label, num }: { g: TeamGrid; base: string; by: 
 
 export function Timesheets({ g, base }: { g: TeamGrid; base: string }) {
   const rows = g.grid;
-  const late = rows.filter((r) => (r.status === "draft" || r.status === "rejected") && r.canApprove && r.weekId) as (GridRow & { weekId: string })[];
+  // Everyone who owes this week's timesheet: drafts and sent-back weeks you approve, and people with none yet (073).
+  const late = rows.filter((r) => ((r.status === "draft" || r.status === "rejected") && r.canApprove && r.weekId) || r.status === "not_started")
+    .map((r) => (r.weekId ? { weekId: r.weekId, personName: r.personName } : { weekId: null, personName: r.personName, userId: r.userId }));
   const viewPin = { label: `Timesheets ${g.key}`, tool: "get_team_week", args: { week: g.key } };
   return (
     <div className="card flush pinnable" style={{ marginTop: 28 }}>
@@ -65,8 +61,8 @@ export function Timesheets({ g, base }: { g: TeamGrid; base: string }) {
               <td className="num" data-label="Total"><b>{r.total.toFixed(1)}</b></td>
               <td data-label="Utilisation"><Util pct={r.utilisation} />{r.overtime && <small className="reminded">overtime</small>}</td>
               <td data-label="From agents"><span className="chip agent">{r.total ? Math.round((r.agentHours / r.total) * 100) : 0}%</span></td>
-              <td data-label="Status"><span className={`chip ${STATE[r.status][0]}`}>{STATE[r.status][1]}</span></td>
-              <td className="num" data-label=""><div className="row-actions"><Action row={r} weekKey={g.key} /><PinButton pin={sheetPin(r, g.key)} /></div></td>
+              <td data-label="Status"><div className="chips"><span className={`chip ${STATE[r.status][0]}`}>{STATE[r.status][1]}</span><Check row={r} /></div></td>
+              <td className="num" data-label=""><PinButton pin={sheetPin(r, g.key)} /></td>
             </tr>
           ))}
           {rows.length === 0 && <tr><td colSpan={g.days.length + 6} className="muted">Nobody matches these filters.</td></tr>}

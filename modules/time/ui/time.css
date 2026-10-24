@@ -55,7 +55,7 @@
 .time th.missing,.time td.missing{color:var(--chip-bad)}
 .time th.missing small.missing-tag{color:var(--chip-bad);font-weight:600}
 /* Phone: a stacked row keeps its actions (pin, Remind, Approve) in its top-right corner, not on a line of their own. */
-@media (max-width:600px){.time .tbl tbody tr{position:relative}.time .tbl tbody td[data-label=""]{position:absolute;top:10px;right:16px;width:auto;padding:0}.time .tbl tbody td[data-label=""]::before{display:none}.time .tbl tbody tr:has(td[data-label=""]) td:first-child{padding-right:44px}.time .tbl.grid tbody tr:has(td[data-label=""]) td:first-child{padding-right:130px}}
+@media (max-width:600px){.time .tbl tbody tr{position:relative}.time .tbl tbody td[data-label=""]{position:absolute;top:10px;right:16px;width:auto;padding:0}.time .tbl tbody td[data-label=""]::before{display:none}.time .tbl tbody tr:has(td[data-label=""]) td:first-child{padding-right:44px}.time .tbl.grid tbody tr:has(td[data-label=""]) td:first-child{padding-right:44px}}
 .time .reminded{display:block;font-size:12px;color:var(--ink-3)}
 /* 073 amendment 1: the grid's cells (state = colour + icon + word), summary strip and toolbar. */
 .time .cellwrap{position:relative;display:inline-block}
@@ -86,6 +86,6 @@
 @media (max-width:860px){.time .stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
 /* Alignment: grid day headings, cells and totals share a centre line; row buttons share a width; header controls share the view switch's height. */
 .time .tbl.grid .day{text-align:center}
-.time .row-actions .btn.sm{min-width:88px;justify-content:center}
+.time .chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
 .time .row.head .actions>a.btn.sm{width:46px;height:46px;padding:0;justify-content:center;font-size:20px;line-height:1}
 @media (min-width:861px){.time .tbl.grid th:last-child,.time .tbl.grid td:last-child{padding-right:24px}.time .tbl.grid td[data-label=Utilisation]{position:relative}.time .tbl.grid td[data-label=Utilisation] small.reminded{position:absolute;left:8px;top:calc(50% + 10px)}}

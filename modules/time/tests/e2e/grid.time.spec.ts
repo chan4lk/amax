@@ -17,6 +17,7 @@ test("073 AC13 AC14 AC17 AC19 the grid: labelled cells, the summary, a day's pro
   await friday.focus();
   await expect(page.getByRole("tooltip")).toContainText("Fleet Tracker: 1.0 h");
   await expect(page.locator("table.grid tfoot th")).toHaveText("Team");
+  await expect(page.locator("table.grid tr", { hasText: "Nimal Silva" }).locator(".chip.warn")).toHaveText("Check: missing Fri Oct 16");
   expect(await axe(page)).toEqual([]);
 });
 

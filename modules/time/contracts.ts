@@ -29,7 +29,8 @@ type RequestRef = { requestId: string; weekId: string; userId: string; week: str
 export type ChangeRequested = RequestRef & { change: string; reason: string; answered: boolean; answer: string | null } & ApproverRoute;
 export type ChangeDecided = RequestRef & { decision: "apply" | "reopen" | "ask" | "decline" | "cancel"; by: string; note: string | null };
 export type ChangeCompleted = { requestId: string; weekId: string; userId: string; week: string };
-export type WeekReminded = { weekId: string; userId: string; week: string; by: string; message?: string | null };
+/** 073: `weekId` is null for someone reminded before they have a timesheet that week (Not started). */
+export type WeekReminded = { weekId: string | null; userId: string; week: string; by: string; message?: string | null };
 /** 073 AC-3: "log your hours for this day", to someone with nothing logged that day. */
 export type DayReminded = { userId: string; day: string; dayLabel: string; week: string; by: string; message: string };
 

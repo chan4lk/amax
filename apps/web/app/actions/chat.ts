@@ -8,7 +8,7 @@ import { currentViewer } from "@amax/auth";
 import { cancelAction, chatTurn, confirmAction, resolvePins, type ChatTurn, type Pin } from "@amax/chat";
 import { myChatUsage } from "../../lib/chat-usage";
 import { doneOutcome, outcomeOf, type CardOutcome } from "../../lib/chat-outcome";
-import { pageInfo, type PageInfo } from "../../lib/page-context";
+import { pageInfo, type PageInfo, type PinnedArgs } from "../../lib/page-context";
 import { installed } from "../../lib/registry";
 import { sameUser, SignedInElsewhere } from "../../lib/same-user";
 import { chatIntents, getDb, toolRegistry } from "../../lib/server";
@@ -36,12 +36,13 @@ export async function sendChat(input: { conversationId?: string; text: string; p
 export type { CardOutcome };
 
 /** 070 amendment 4: the page chat's header and suggestions describe; null for a page with no module route. */
-export async function pageContext(path: string, as?: string): Promise<PageInfo | null> {
+export async function pageContext(path: string, as?: string, pins: PinnedArgs[] = []): Promise<PageInfo | null> {
   try {
     if (typeof path !== "string" || path.length > 300) return null;
     const viewer = await currentViewer();
     sameUser(viewer, as);
-    return await pageInfo(installed, toolRegistry(), viewer, path);
+    const safe = Array.isArray(pins) ? pins.slice(0, 10).filter((p) => p && typeof p.tool === "string" && p.args && typeof p.args === "object") : [];
+    return await pageInfo(installed, toolRegistry(), viewer, path, safe);
   } catch (e) {
     logError("chat.page", e);
     return null;

@@ -92,6 +92,8 @@ export type ToolService = { spec: { name: string } };
 
 export type CardLine = { label: string; value: string };
 export type ChatSuggestion = { routes: string[]; label: string; prompt: string; tool: string; when?: (viewer: never, params: Record<string, string>) => Promise<boolean> };
+/** 073: what chat offers for a pinned record, keyed by the pin's read tool: e.g. "Approve this timesheet" for a pinned week. */
+export type PinSuggestion = { tool: string; suggest: (viewer: never, args: Record<string, unknown>) => Promise<{ label: string; prompt: string; tool: string }[]> };
 export type ToolCard = { title: string; lines: CardLine[] };
 
 export type McpToolDef = {
@@ -255,6 +257,8 @@ export type ModuleManifest = {
    * `when` (if any) passes for the page's route params. A suggestion fills the message box; it never sends.
    */
   chatSuggestions?: ChatSuggestion[];
+  /** Suggestions for a pinned record (073), shown before the page's own; same rule: only for tools the viewer may use. */
+  pinSuggestions?: PinSuggestion[];
   /** A short label for a page's params in chat's header, e.g. "Week of Oct 12" for a week. */
   pageLabel?: (params: Record<string, string>) => string | null;
   jobs?: JobDef[];

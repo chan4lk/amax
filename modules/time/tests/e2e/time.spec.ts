@@ -46,11 +46,13 @@ test("070 AC41, AC42, AC45 chat names the page and suggests the fix; rows have p
   await expect(kasun.getByRole("list", { name: "Suggestions for this page" }).getByRole("button", { name: "Ask for a change" })).toBeVisible();
 });
 
-test("AC2 / 054 AC5 approving through chat locks the week; the My timesheet switch shows your own hours", async ({ page }) => {
+test("AC2 / 054 AC5 / 073 approving through a pinned row's suggestion locks the week; rows carry only their pin; the My timesheet switch shows your own hours", async ({ page }) => {
   test.setTimeout(60_000);
   await signIn(page, "maya@lumenlabs.test", W42);
   await expect(page.locator("main form, main dialog")).toHaveCount(0);
-  await page.getByRole("button", { name: "Approve Nimal Silva" }).click();
+  await expect(page.locator("table.grid tbody").getByRole("button", { name: /^(Approve|Remind) / })).toHaveCount(0);
+  await page.locator("table.grid tbody tr", { hasText: "Nimal Silva" }).getByRole("button", { name: "Add Nimal Silva, 2026-W42 to chat" }).press("Enter");
+  await page.getByRole("list", { name: "Suggestions for this page" }).getByRole("button", { name: "Approve Nimal's timesheet" }).click();
   await expect(page.getByRole("complementary", { name: "amax chat" }).locator(".pinchip > span").last()).toHaveText("Nimal Silva, 2026-W42");
   await expect(page.getByLabel("Message amax")).toHaveValue(/^Approve Nimal Silva's timesheet for 2026-W42 \(week id [0-9a-f-]{36}\)$/);
   await page.getByRole("button", { name: "Send" }).click();
@@ -58,7 +60,7 @@ test("AC2 / 054 AC5 approving through chat locks the week; the My timesheet swit
   await card.getByRole("button", { name: "Add it" }).click();
   await expect(card).toContainText("Done:");
   await page.reload();
-  await expect(page.locator("tr", { hasText: "Nimal Silva" })).toContainText("Locked");
+  await expect(page.locator("tr", { hasText: "Nimal Silva" })).toContainText("Approved");
   await expect(page.getByRole("button", { name: "Approve 2 submitted (56.0 h)" })).toBeVisible();
   await page.getByRole("link", { name: "My timesheet" }).click();
   await expect(page).toHaveURL(/\/time\/my\/2026-W42$/);

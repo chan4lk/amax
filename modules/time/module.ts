@@ -1,6 +1,7 @@
 import { declarePayload, defineModule } from "@amax/core";
 import { chatIntents } from "./chat";
 import { chatSuggestions, pageLabel } from "./chat-suggestions";
+import { pinSuggestions } from "./pin-suggestions";
 import { EVENTS, type ChangeCompleted, type ChangeDecided, type ChangeRequested, type EntryCorrected, type EntryDeleted, type EntryLogged, type WeekDecided, type DayReminded, type WeekReminded, type WeekReopened, type WeekSubmitted } from "./contracts";
 import { timeFixtures } from "./fixtures";
 import { mcpTools } from "./mcp";
@@ -53,6 +54,7 @@ export default defineModule({
   ],
   chatIntents,
   chatSuggestions,
+  pinSuggestions,
   pageLabel,
   jobs: [],
   // 073 AC-5/AC-6: the daily and weekly reminders, per legal entity in its own time zone.
