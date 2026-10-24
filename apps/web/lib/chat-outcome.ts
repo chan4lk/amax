@@ -42,5 +42,14 @@ export function doneOutcome(title: string, result: unknown): CardOutcome {
   if (reveal) return { state: "done", note: `Done. Copy the ${reveal.label.toLowerCase()} now: it is shown only this once.`, reveal };
   const key = (result as { key?: string } | null)?.key;
   const moved = movedOf(result);
-  return { state: "done", note: key ? `Done: ${key} added.` : `Done: ${title}.`, ...(moved ? { moved } : {}) };
+  const many = summaryOf(result);
+  return { state: "done", note: many ?? (key ? `Done: ${key} added.` : `Done: ${title}.`), ...(moved ? { moved } : {}) };
+}
+
+/** 070 amendment 4: a write over several records reports a summary and a result per record. */
+function summaryOf(result: unknown): string | null {
+  const r = result as { summary?: unknown; results?: { person?: unknown; status?: unknown; note?: unknown }[] } | null;
+  if (typeof r?.summary !== "string" || !Array.isArray(r.results)) return null;
+  const each = r.results.map((x) => `${String(x.person)}: ${String(x.status)}${x.note ? ` (${String(x.note)})` : ""}`).join("; ");
+  return `Done: ${r.summary}.${each ? ` ${each}.` : ""}`;
 }

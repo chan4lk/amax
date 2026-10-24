@@ -133,3 +133,11 @@ export async function signOutSession(db: Db, tenantId: string, sessionId: string
   await withTenant(db, tenantId, (tx) => tx.execute(sql`update auth.session set revoked_at = now() where id = ${sessionId} and revoked_at is null`));
 }
 
+/** 070 AC-52: signing in again in a browser ends the session the new one replaces, so none is left alive, audited. */
+export async function endSwitchedSession(db: Db, tenantId: string, sessionId: string) {
+  await withTenant(db, tenantId, async (tx) => {
+    const [s] = await tx.execute(sql`update auth.session set revoked_at = now() where id = ${sessionId} and revoked_at is null returning user_id`);
+    if (s) await audit(tx, tenantId, s.user_id as string, "auth.signout", { reason: "switched" });
+  });
+}
+

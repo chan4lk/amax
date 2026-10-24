@@ -2,6 +2,7 @@
 .time .row{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .time .actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 .time .actions form{display:contents}
+.time .row-actions{display:flex;gap:8px;justify-content:flex-end;align-items:center;flex-wrap:wrap}
 .time .row.head{align-items:flex-end;margin-bottom:24px;flex-wrap:wrap;gap:16px 24px}
 .time .row.head .lede{margin:0}
 .time .row.head>.actions{flex-shrink:0;width:auto}
@@ -39,4 +40,12 @@
 .time .btn.ghost{border-color:transparent;color:var(--ink-2)}
 .time .chip.draft{background:var(--sunken);color:var(--ink-2)}
 .time .chip.bad{background:#FFE1DC;color:#A8321F}
+/* 070 AC-50: the total row is a row, not a second header: body padding, a rule above it, nothing below. */
+.time .tbl tfoot th,.time .tbl tfoot td{padding-top:16px;padding-bottom:16px;border-top:1.5px solid var(--line-2);border-bottom:0;vertical-align:middle}
+.time .requests td[data-label="Person"],.time .requests td[data-label="Week"],.time .requests td[data-label="Asked"]{white-space:nowrap}
+/* 070 AC-50: a change-request notice is one compact block: its heading sits right on its line. */
+.time .notice .card-head{margin-bottom:6px;flex-wrap:nowrap;align-items:flex-start}
+.time .notice p{margin:0;color:var(--ink-2)}
+/* 070 AC-50: on phones the week's total row stacks like the project rows above it. */
+@media (max-width:600px){.time .tbl tfoot,.time .tbl tfoot tr{display:block;width:100%}.time .tbl tfoot tr{padding:14px 22px;background:var(--sunken);border-radius:0 0 24px 24px}.time .tbl tfoot th{display:block;padding:5px 0;text-align:left;font-size:15px}.time .tbl tfoot th,.time .tbl tfoot td{border:0}.time .tbl tfoot td{padding:5px 0}.time .tbl tfoot td:empty{display:none}}
 @media (max-width:860px){.time .row.head>.actions{flex-shrink:1;width:100%}.time .row.head>.actions .seg{flex:1 1 100%}.time .cols{grid-template-columns:minmax(0,1fr)}.time .big{font-size:21px}}

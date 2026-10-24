@@ -42,7 +42,7 @@ export function Timesheets({ rows, weekKey }: { rows: TeamRow[]; weekKey: string
               <td className="num" data-label="Total"><b>{r.total.toFixed(1)}</b></td>
               <td data-label="From agents"><span className="chip agent">{r.total ? Math.round((r.agentHours / r.total) * 100) : 0}%</span></td>
               <td data-label="Status"><span className={`chip ${STATUS[r.status][0]}`}>{STATUS[r.status][1]}</span></td>
-              <td className="num" data-label=""><Action row={r} weekKey={weekKey} /><PinButton pin={sheetPin(r, weekKey)} /></td>
+              <td className="num" data-label=""><div className="row-actions"><Action row={r} weekKey={weekKey} /><PinButton pin={sheetPin(r, weekKey)} /></div></td>
             </tr>
           ))}
         </tbody>

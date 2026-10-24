@@ -1,7 +1,7 @@
 import { sql } from "drizzle-orm";
-import type { Viewer } from "@amax/auth";
+import { can, type Viewer } from "@amax/auth";
 import { myWeek } from "./my";
-import { read } from "./read";
+import { projectNames, read, weekEntries } from "./read";
 import { teamWeek } from "./team";
 import { weekKey } from "../week";
 import { wantedWeek } from "./weeks";
@@ -13,7 +13,8 @@ async function own(v: Viewer, week: string | undefined, project?: string) {
   const rows = project ? m.rows.filter((r) => r.projectName === project) : m.rows;
   // A row pin whose project is no longer on the week is gone, not "0 h logged".
   if (project && !rows.length) return null;
-  return { week: m.key, dates: m.days, person: "you", status: m.status, rows, total: rows.reduce((n, r) => n + r.total, 0), agentHours: project ? undefined : m.agentHours };
+  const entries = project ? m.entries.filter((e) => e.projectName === project) : m.entries;
+  return { week: m.key, dates: m.days, person: "you", status: m.status, rows, entries, total: rows.reduce((n, r) => n + r.total, 0), agentHours: project ? undefined : m.agentHours };
 }
 
 export async function getTimesheet(v: Viewer, ref: SheetRef) {
@@ -24,5 +25,8 @@ export async function getTimesheet(v: Viewer, ref: SheetRef) {
   if (w.user_id === v.userId) return own(v, key, ref.project);
   const t = await teamWeek(v, wantedWeek(key));
   const row = t.rows.find((r) => r.weekId === ref.weekId);
-  return row ? { week: t.key, dates: t.days, ...row } : null;
+  if (!row) return null;
+  // Whoever may fix the week's entries (070 AC-14: its approvers, Admins included) sees their ids; others see the totals only.
+  const entries = row.canApprove || can(v, "time:admin") ? await read(v, async (tx) => weekEntries(tx, row.weekId, await projectNames(tx))) : undefined;
+  return { week: t.key, dates: t.days, ...row, ...(entries ? { entries } : {}) };
 }

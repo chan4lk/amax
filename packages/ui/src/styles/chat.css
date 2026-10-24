@@ -41,6 +41,10 @@ mark.x{background:none;color:inherit;outline:2px dashed var(--f,#6A6681);outline
 @keyframes bob{0%,60%,100%{transform:none;opacity:.5}30%{transform:translateY(-4px);opacity:1}}
 .c-ctx{display:flex;flex-wrap:wrap;gap:6px;padding:0 20px}
 .c-ctx:empty{display:none}
+/* 070 amendment 4: this page's suggestions; each fills the message box. */
+.c-suggest{display:flex;flex-wrap:wrap;gap:6px;padding:8px 20px 0;margin:0;list-style:none}
+.c-suggest button{cursor:pointer;border:1px solid var(--line);background:var(--card)}
+.c-suggest button:hover,.c-suggest button:focus-visible{border-color:var(--violet)}
 .pinchip{display:inline-flex;align-items:center;gap:6px;max-width:100%;background:var(--card);border:1.5px solid var(--line-2);border-radius:10px;padding:4px 6px 4px 9px;font-size:12.5px;font-weight:600}
 .pinchip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:240px}
 .pinchip button{border:0;background:none;color:var(--ink-3);cursor:pointer;font-size:15px;line-height:1;padding:0 2px}

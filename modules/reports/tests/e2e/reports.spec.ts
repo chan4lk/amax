@@ -20,7 +20,7 @@ test.beforeEach(async ({ page }) => page.setViewportSize({ width: 1440, height: 
 test("AC1 AC2 utilisation leads with the team's 84%; trend and table readable by screen readers; CSV export; pinned, no forms", async ({ page }) => {
   await signIn(page, "maya@lumenlabs.test", "/reports");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Utilisation in October");
-  await expect(page.locator(".lede")).toHaveText("Billable hours ÷ available hours, October to date (Oct 1–16, 12 working days, 96 h per full-time person). Team: 222 ÷ 264 = 84%, against an 80% target.");
+  await expect(page.locator(".lede")).toHaveText("Billable hours from submitted and approved time ÷ available hours, October to date (Oct 1–16, 12 working days, 96 h per full-time person). Team: 222 ÷ 264 = 84%, against an 80% target.");
   await expect(page.locator("tr[data-person='Kasun Dias']")).toContainText("80 h2 days medical78.0 h70.0 h88%");
   await expect(page.locator("tr.total")).toContainText("Team264 h260.5 h222.0 h84%");
   await expect(page.getByRole("table", { name: "Utilisation per month against the 80% target" }).locator("tbody tr")).toHaveCount(12);

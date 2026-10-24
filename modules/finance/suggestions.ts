@@ -5,11 +5,10 @@ import { contextFor } from "@amax/core/server";
 import { defineSuggestionKind } from "@amax/agents";
 import { createSuggestion, SuggestionError } from "@amax/agents/server";
 import { EVENTS as DELIVERY, type ReleaseDeployed } from "@amax/delivery/contracts";
-import { EVENTS as TIME, parseWeekKey, projectHours, weekStart, type WeekDecided } from "@amax/time/contracts";
 import { EVENTS, type InvoiceDrafted } from "./contracts";
-import { BILLING_AGENT, billingReader } from "./server/agent";
+import { BILLING_AGENT } from "./server/agent";
 import { issued } from "./server/billing";
-import { draftFromTime, draftMilestones, monthRange, timeInstalled } from "./server/drafts";
+import { draftMilestones } from "./server/drafts";
 import { lockContract, writeInvoice } from "./server/issue";
 import { actorOf, amt, todayOf } from "./server/read";
 
@@ -58,22 +57,6 @@ export const draftAgent: EventHandlerDef = {
       proposed: { draftId: e.draftId, contractId: e.contractId, amount: amt(d.amount), currency: String(d.currency), description: d.description as string },
       confidence: 0.9, agentName: BILLING_AGENT, scope: { legalEntityId: e.legalEntityId, projectId: d.project_id as string }, evidence: [{ type: "record", label: "Financials", ref: `/finance?contract=${e.contractId}` }],
     });
-  },
-};
-
-export const timeAgent: EventHandlerDef = {
-  id: "finance.time-agent",
-  event: TIME.weekApproved,
-  async handle({ tx, tenantId, event }) {
-    const w = parseWeekKey((event.payload as WeekDecided).week);
-    if (!w || !(await timeInstalled(tx))) return;
-    const start = weekStart(w).getTime();
-    const months = [...new Set([0, 4].map((n) => new Date(start + n * 86_400_000).toISOString().slice(0, 7)))];
-    const ctx = contextFor.job(tenantId, "finance.time-agent");
-    for (const month of months) {
-      const hours = await projectHours(tx, billingReader(tenantId), { ...monthRange(month), approvedOnly: true });
-      await draftFromTime(ctx, { month, projects: hours.map((h) => ({ projectId: h.projectId, billableHours: h.billableHours })) });
-    }
   },
 };
 
