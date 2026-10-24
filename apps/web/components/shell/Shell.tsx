@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Chat } from "../chat/Chat";
+import { SessionWatch } from "./SessionWatch";
 import { LiveRegion, MoreSheet, Rail, TopBar, type LinkLike, type NavItem } from "@amax/ui";
 import { ProfileMenu, type MenuLink, type Profile } from "./ProfileMenu";
 import { useRouteFocus } from "./useRouteFocus";
@@ -12,7 +13,7 @@ type ShellProps = {
   children: ReactNode;
   profile?: Profile | null;
   banner?: string | null;
-  onViewAs?: (role: string | null) => Promise<void>;
+  onViewAs?: (role: string | null, as?: string) => Promise<void>;
   onSignOut?: () => Promise<void>;
   /** Voice input allowed by the tenant's AI policy (033). */
   voice?: boolean;
@@ -51,7 +52,7 @@ export function Shell({ items, children, profile = null, banner, onViewAs, onSig
       <div className="app">
         <Rail items={items} current={current} link={link} onMore={() => sheet.current?.showModal()} />
         <div className="content">
-          <TopBar askRef={askRef} askOpen={chatOpen} onAsk={() => setChatOpen((o) => !o)} bell={topBar} profile={<ProfileMenu profile={profile} onViewAs={onViewAs} onSignOut={onSignOut} links={menuLinks} />} />
+          <TopBar askRef={askRef} askOpen={chatOpen} onAsk={() => setChatOpen((o) => !o)} bell={topBar} profile={<ProfileMenu profile={profile} onViewAs={onViewAs && profile ? (role) => onViewAs(role, profile.userId) : undefined} onSignOut={onSignOut} links={menuLinks} />} />
           <main id="main" tabIndex={-1}>
             {banner && <div className="viewbanner" role="note">{banner}</div>}
             {children}
@@ -59,7 +60,8 @@ export function Shell({ items, children, profile = null, banner, onViewAs, onSig
         </div>
       </div>
       <MoreSheet ref={sheet} items={items} current={current} link={link} onClose={() => sheet.current?.close()} />
-      <Chat open={chatOpen} onClose={() => setChatOpen(false)} returnFocus={askRef} signedIn={Boolean(profile)} voice={voice} usage={usage} />
+      <Chat open={chatOpen} onClose={() => setChatOpen(false)} returnFocus={askRef} signedIn={Boolean(profile)} userId={profile?.userId} voice={voice} usage={usage} />
+      {profile && <SessionWatch userId={profile.userId} />}
       <LiveRegion />
     </>
   );

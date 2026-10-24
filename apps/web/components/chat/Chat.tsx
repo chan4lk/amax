@@ -1,16 +1,18 @@
 "use client";
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode, type RefObject } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { announce, Mascot, PinButton, type PinRef } from "@amax/ui";
 import type { Conversation, ConversationSummary, Highlight, PendingAction } from "@amax/chat";
-import { cancelChat, confirmChat, refreshPins, sendChat, type CardOutcome } from "../../app/actions/chat";
+import { cancelChat, confirmChat, pageContext, refreshPins, sendChat, type CardOutcome } from "../../app/actions/chat";
+import type { PageInfo } from "../../lib/page-context";
 import { pinKey, withFresh, type Pin } from "@amax/chat/pins";
 import { followMove } from "../../lib/chat-move";
 import { listChats, openChat } from "../../app/actions/chat-history";
 import { History } from "./History";
 import { SecretConfirm } from "./SecretConfirm";
 import { RevealOnce } from "./RevealOnce";
+import { Suggestions } from "./Suggestions";
 
 type Entry =
   | { kind: "me"; text: string; highlights: Highlight[] }
@@ -61,7 +63,7 @@ export function Markdown({ text }: { text: string }) {
 
 type SpeechCtor = new () => { lang: string; interimResults: boolean; onresult: (e: { results: { 0: { transcript: string } }[] }) => void; onend: () => void; start: () => void; stop: () => void };
 
-export function Chat({ open, onClose, returnFocus, signedIn, voice, usage = null }: { open: boolean; onClose: () => void; returnFocus: RefObject<HTMLButtonElement | null>; signedIn: boolean; voice: boolean; usage?: string | null }) {
+export function Chat({ open, onClose, returnFocus, signedIn, userId, voice, usage = null }: { open: boolean; onClose: () => void; returnFocus: RefObject<HTMLButtonElement | null>; signedIn: boolean; userId?: string; voice: boolean; usage?: string | null }) {
   const [log, setLog] = useState<Entry[]>([]);
   const [pins, setPins] = useState<Pin[]>([]);
   const router = useRouter();
@@ -72,12 +74,21 @@ export function Chat({ open, onClose, returnFocus, signedIn, voice, usage = null
   const [talking, setTalking] = useState(false);
   const [turnUsage, setTurnUsage] = useState<string | null>(null);
   const [history, setHistory] = useState<{ items: ConversationSummary[]; error?: string } | null>(null);
+  // 070 amendment 4: the page chat is open on, read again after each turn so suggestions follow the record's state.
+  const pathname = usePathname();
+  const [page, setPage] = useState<PageInfo | null>(null);
   const convo = useRef<string | undefined>(undefined);
   const input = useRef<HTMLInputElement>(null);
   const logRef = useRef<HTMLDivElement>(null);
   const fields = useRef<string[]>([]);
   // A prompt an Ask amax chip filled, until the person edits it (059 AC-7): what they type finishes it.
   const filled = useRef<string | null>(null);
+  // The pin that came with that prompt, and whether the prompt added it (rather than it being pinned already).
+  const asked = useRef<{ key: string; added: boolean } | null>(null);
+  const textNow = useRef(text);
+  textNow.current = text;
+  const pinsNow = useRef(pins);
+  pinsNow.current = pins;
 
   useEffect(() => { if (open) input.current?.focus(); }, [open]);
   // The caret goes to the end of a filled prompt in the same commit that shows it, so nothing can see
@@ -96,14 +107,42 @@ export function Chat({ open, onClose, returnFocus, signedIn, voice, usage = null
     el.setSelectionRange(el.value.length, el.value.length);
   };
   useEffect(() => { logRef.current?.scrollTo({ top: logRef.current.scrollHeight }); }, [log, busy]);
+  useEffect(() => {
+    if (!open || !signedIn) return;
+    let live = true;
+    pageContext(pathname, userId).then((p) => { if (live) setPage(p); }, () => { if (live) setPage(null); });
+    return () => { live = false; };
+  }, [open, signedIn, pathname, log.length, userId]);
 
   // Pins and intents arrive from anywhere on the page.
   useEffect(() => {
     const onEvent = (e: Event) => {
       const d = (e as CustomEvent<{ pin?: PinRef; intent?: string; prompt?: string }>).detail;
-      if (d.pin) { setPins((p) => (p.some((x) => pinKey(x) === pinKey(d.pin!)) ? p : [...p, d.pin!])); announce(`${d.pin.label} added to chat`); }
-      if (d.intent) { setIntent(d.intent); setText(""); setLog((l) => [...l, { kind: "amax", text: `${d.prompt ?? "New record"}: tell me the details and I'll fill it in.`, tools: [] }]); }
+      const key = d.pin ? pinKey(d.pin) : undefined;
+      // An untouched Ask amax prompt belongs to the record it pinned. A pin or prompt for another record
+      // replaces both, so the agent never gets the last row's pin with this row's question.
+      const ask = asked.current;
+      const untouched = ask !== null && filled.current !== null && filled.current === textNow.current;
+      if (ask && untouched && ask.key !== key) {
+        if (ask.added) setPins((p) => p.filter((x) => pinKey(x) !== ask.key));
+        if (!d.prompt && !d.intent) { filled.current = null; setText(""); }
+        asked.current = null;
+      } else if (untouched && !d.prompt && !d.intent) {
+        // A bare pin (the row's +) on the record the prompt came with keeps the pin and drops the prompt.
+        filled.current = null; setText(""); asked.current = null;
+      }
+      const added = ask && ask.key === key ? ask.added : !pinsNow.current.some((x) => pinKey(x) === key);
+      // A pin replaces pins of the same kind (same read tool and facet), so a second row takes the first
+      // row's place; pins of other kinds (a project, a person) stay, for questions across records.
+      const pin = d.pin;
+      if (pin) {
+        const sameKind = (x: Pin) => x.tool === pin.tool && (x.facet ?? "") === (pin.facet ?? "") && pinKey(x) !== key;
+        setPins((p) => { const rest = p.filter((x) => !sameKind(x)); return rest.some((x) => pinKey(x) === key) ? rest : [...rest, pin]; });
+        announce(`${pin.label} added to chat`);
+      }
+      if (d.intent) { asked.current = null; setIntent(d.intent); setText(""); setLog((l) => [...l, { kind: "amax", text: `${d.prompt ?? "New record"}: tell me the details and I'll fill it in.`, tools: [] }]); }
       else if (d.prompt) {
+        asked.current = key ? { key, added } : null;
         filled.current = d.prompt;
         setText(d.prompt);
       }
@@ -143,7 +182,7 @@ export function Chat({ open, onClose, returnFocus, signedIn, voice, usage = null
 
   async function showHistory() {
     if (history) { setHistory(null); return; }
-    const r = await listChats("");
+    const r = await listChats("", userId);
     setHistory(r.ok ? { items: r.items } : { items: [], error: r.error });
   }
 
@@ -157,7 +196,7 @@ export function Chat({ open, onClose, returnFocus, signedIn, voice, usage = null
   }
 
   async function reopen(id: string) {
-    const r = await openChat(id);
+    const r = await openChat(id, userId);
     if (!r.ok) { setHistory((h) => ({ items: h?.items ?? [], error: r.error })); return; }
     convo.current = r.conversation.id;
     fields.current = r.conversation.pending.flatMap((p) => p.fields);
@@ -176,7 +215,7 @@ export function Chat({ open, onClose, returnFocus, signedIn, voice, usage = null
     setBusy(true);
     setLog((l) => [...l, { kind: "me", text: message, highlights: [] }]);
     const sent = pins;
-    const r = await sendChat({ conversationId: convo.current, text: message, pins: sent, intentId: intent });
+    const r = await sendChat({ conversationId: convo.current, text: message, pins: sent, intentId: intent, path: pathname, as: userId });
     setBusy(false);
     if (!r.ok) { setLog((l) => [...l, { kind: "amax", text: r.error, tools: [], error: true }]); return; }
     convo.current = r.conversationId;
@@ -201,7 +240,7 @@ export function Chat({ open, onClose, returnFocus, signedIn, voice, usage = null
     const apply = (o: CardOutcome) => setLog((l) => l.map((x) => (x.kind === "confirm" && x.action.id === action.id ? { ...x, ...o } : x)));
     try {
       // The server says what the card is now: done, cancelled, back open to retry, or an error.
-      const o = ok ? await confirmChat(convo.current, action.id) : await cancelChat(convo.current, action.id);
+      const o = ok ? await confirmChat(convo.current, action.id, userId) : await cancelChat(convo.current, action.id, userId);
       apply(o);
       announce(o.note);
       // The record this page shows was renamed (a re-tag): follow it, or the page would read "not found".
@@ -212,7 +251,7 @@ export function Chat({ open, onClose, returnFocus, signedIn, voice, usage = null
       // by id, so nothing is rewritten; a pin added or removed meanwhile stays as it is.
       const sent = pins;
       if (o.state === "done" && sent.length) {
-        const fresh = await refreshPins(sent);
+        const fresh = await refreshPins(sent, userId);
         if (fresh) setPins((ps) => withFresh(ps, sent, fresh));
       }
     } catch {
@@ -238,11 +277,11 @@ export function Chat({ open, onClose, returnFocus, signedIn, voice, usage = null
     <aside className={open ? "chat open" : "chat"} id="chat" aria-label="amax chat" inert={!open}>
       <header className="c-head">
         <span className="c-face"><Mascot /></span>
-        <div><b>amax</b><small>{intent ? "Filling in a new record" : "Ask, add or drop anything here"}</small></div>
+        <div><b>amax</b><small data-testid="chat-page">{intent ? "Filling in a new record" : page?.label ?? "Ask, add or drop anything here"}</small></div>
         {signedIn && <button className="iconbtn h-toggle" type="button" aria-label="Chat history" aria-pressed={history !== null} title="History" onClick={showHistory}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v4h4M12 7v5l3 2" /></svg></button>}
         <button className="iconbtn" type="button" aria-label="Close chat" onClick={close}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg></button>
       </header>
-      {history && <History key={history.error ?? "list"} initial={history.items} error={history.error} onOpen={reopen} onNew={newChat} />}
+      {history && <History key={history.error ?? "list"} initial={history.items} error={history.error} onOpen={reopen} onNew={newChat} as={userId} />}
       <div className="c-log" hidden={history !== null} role="log" aria-live="polite" aria-label="Conversation" ref={logRef}>
         {!signedIn && <div className="m"><div className="b">Sign in to use amax chat.</div></div>}
         {log.map((e, i) => {
@@ -256,11 +295,12 @@ export function Chat({ open, onClose, returnFocus, signedIn, voice, usage = null
           return (
             <div key={i} className="m"><div className="b" role="group" aria-label={`Confirm: ${e.action.title}`}>
               <p><b>{e.action.title}</b></p>
-              <dl className="rec">{Object.entries(e.action.input).map(([k, v]) => <div key={k} style={{ display: "contents" }}><dt className={fieldClass(e.action.fields, k)}><span className="fd" />{k}</dt><dd>{String(v)}</dd></div>)}</dl>
+              <dl className="rec">{(e.action.lines ?? Object.entries(e.action.input).map(([label, v]) => ({ label, value: String(v) }))).map(({ label, value }, j) =>
+                <div key={j} style={{ display: "contents" }}><dt className={e.action.lines ? FIELD_CLASSES[j % FIELD_CLASSES.length] : fieldClass(e.action.fields, label)}><span className="fd" />{label}</dt><dd>{value}</dd></div>)}</dl>
               {e.state === "open" ? (<>
                 {e.note && <p className="err">{e.note}</p>}
                 {e.action.secret && convo.current ? (
-                  <SecretConfirm conversationId={convo.current} action={{ ...e.action, secret: e.action.secret }} onCancel={() => decide(e.action, false)}
+                  <SecretConfirm conversationId={convo.current} as={userId} action={{ ...e.action, secret: e.action.secret }} onCancel={() => decide(e.action, false)}
                     onState={(o) => setLog((l) => l.map((x) => (x.kind === "confirm" && x.action.id === e.action.id ? { ...x, ...o } : x)))} />
                 ) : (
                   <div className="acts">
@@ -283,6 +323,7 @@ export function Chat({ open, onClose, returnFocus, signedIn, voice, usage = null
           <span key={pinKey(p)} className={p.unavailable ? "pinchip muted" : "pinchip"}><span>{p.label}</span><button type="button" aria-label={`Remove ${p.label} from chat`} onClick={() => setPins((x) => x.filter((y) => pinKey(y) !== pinKey(p)))}>×</button></span>
         ))}
       </div>
+      {signedIn && !busy && !text && page && <Suggestions items={page.suggestions} onPick={(prompt) => { filled.current = prompt; setText(prompt); }} />}
       <form className="c-input" onSubmit={(e) => { e.preventDefault(); send(text); }}>
         <input ref={input} value={text} onChange={(e) => { filled.current = null; setText(e.target.value); }} onKeyDown={(e) => toEnd(e.currentTarget)} onPointerDown={() => { filled.current = null; }} autoComplete="off" aria-label="Message amax" placeholder={signedIn ? "Type, or tap amax and talk" : "Sign in first"} disabled={!signedIn} />
         <button className="c-send" type="submit" aria-label="Send" disabled={!signedIn || busy}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12 20 4l-6 16-3-7z" /></svg></button>

@@ -892,6 +892,213 @@ body.picking .pinnable:hover{outline:2px dashed var(--violet);outline-offset:2px
 </section>
 
 <!-- ================= 068 Overview deltas ================= -->
+<section data-change="073-time-workflow-enhancements" id="073-time-workflow-enhancements" data-roles="all" data-title="Time: weekend and reminders" data-nav="no" data-parent="001-amax-foundation-time">
+  <h1>Time: weekend hours, reminders, This week</h1>
+  <p class="lede">Changes to <a href="#001-amax-foundation-time">Time</a>. Fictional data.</p>
+  <div class="card pinnable">
+    <h2>This week</h2>
+    <div class="big">118.5 h <span class="muted" style="font-size:15px;font-weight:500">of 176 h allocated</span></div>
+    <div class="gbar" style="margin:16px 0 22px"><i style="width:67%;background:linear-gradient(90deg,#C3B5FF,#7B61FF)"></i></div>
+    <div class="row line pinnable"><span>Fleet Tracker</span><b>58 h</b></div>
+    <div class="row line pinnable"><span>Contoso Portal</span><b>41 h</b></div>
+    <div class="row line pinnable"><span>HR Insights</span><b>19.5 h</b></div>
+    <p class="muted">No allocation data: "118.5 h logged · allocation unknown".</p>
+  </div>
+  <div class="card">
+    <div class="card-head"><h2>My timesheet, 2026-W42</h2><span class="chip">Weekend hours shown</span></div>
+    <table><thead><tr><th>Project</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat <small>weekend</small></th><th>Sun <small>weekend</small></th><th>Total</th></tr></thead>
+      <tbody><tr><td>Fleet Tracker</td><td>8</td><td>8</td><td>7.5</td><td>8</td><td>8</td><td>4</td><td>0</td><td>43.5</td></tr></tbody></table>
+  </div>
+  <div class="card">
+    <div class="card-head"><h2>Notifications</h2><span class="chip">Mon 09:00, Asia/Colombo</span></div>
+    <p>Reminder: submit your timesheet for 2026-W42</p>
+  </div>
+</section>
+<section data-change="072-time-consumers-sync" id="072-time-consumers-sync" data-roles="all" data-title="Time: approvers notified" data-nav="no" data-parent="001-amax-foundation-time">
+  <h1>Time: project approvers hear about submissions</h1>
+  <p class="lede">Only the bell and the Reports lede change. Fictional data.</p>
+  <div class="card">
+    <div class="card-head"><h2>Notifications (Ayesha Perera, PM of Fleet Tracker)</h2><span class="chip">Approvals</span></div>
+    <p><strong>Kasun Dias submitted 2026-W42</strong><br><span class="muted">12 h on Fleet Tracker to approve</span> · <a href="#001-amax-foundation-time">Open Team time</a></p>
+  </div>
+  <div class="card">
+    <h2>Reports</h2>
+    <p class="lede">Utilisation from submitted and approved time: 81% month to date, against a target of 80%.</p>
+  </div>
+</section>
+<section data-change="071-time-access-and-integrity" id="071-time-access-and-integrity" data-roles="admin payroll" data-title="Payroll: time sources" data-nav="no" data-parent="001-amax-foundation">
+  <h1>Payroll run: where overtime came from</h1>
+  <p class="lede">Only the run's Sources line changes. Fictional data.</p>
+  <div class="card">
+    <div class="card-head"><h2>Sources, October 2026, Lumen Labs LK</h2></div>
+    <div class="row line"><span>HR</span><b>Base salary and cost centre from HR</b></div>
+    <div class="row line"><span>Leave</span><b>Approved leave, unpaid days deducted</b></div>
+    <div class="row line"><span>Time</span><b>Approved timesheets, 4 weeks, 12 people</b></div>
+    <div class="row line"><span>Time (incomplete case)</span><b><span class="chip" style="background:#FFF1D6;color:#8A5A00">2 of 14 people unreadable: overtime incomplete</span></b></div>
+  </div>
+  <h2>Update: entry rules in chat (settings off by default)</h2>
+  <div class="card">
+    <div class="card-head"><h2>amax chat</h2><span class="chip">Allocation required</span></div>
+    <p><strong>Tharushi Wijesinghe:</strong> Log 3 h on HR Insights for Wednesday.</p>
+    <p><strong>amax:</strong> You aren't allocated to HR Insights in October, so I can't log it there. You're allocated to <b>Fleet Tracker</b> and <b>Contoso Portal</b> this month. Which one was it?</p>
+  </div>
+  <div class="card">
+    <div class="card-head"><h2>Confirm card</h2><span class="chip">Possible duplicate</span></div>
+    <p><b>Log 2 h to Fleet Tracker, Wed Oct 14</b></p>
+    <p>Note: API work</p>
+    <p><span class="chip" style="background:#FFF1D6;color:#8A5A00">Already logged: Fleet Tracker, Wed Oct 14, 2 h, same note</span></p>
+    <p><button class="btn sm primary">Confirm</button> <button class="btn sm">Cancel</button></p>
+  </div>
+  <div class="card">
+    <div class="card-head"><h2>amax chat</h2><span class="chip">Date window</span></div>
+    <p><strong>Kasun Dias:</strong> Log 4 h on Fleet Tracker for Mon Sep 7.</p>
+    <p><strong>amax:</strong> Time can be logged up to 4 weeks back, so Mon Sep 7 is too early. If those hours are missing, ask your PM to add them with a reason.</p>
+  </div>
+  <div class="card">
+    <div class="card-head"><h2>amax chat</h2><span class="chip">Utilisation</span></div>
+    <p><strong>Kasun Dias (Engineer):</strong> What is Nimal's utilisation this week?</p>
+    <p><strong>amax:</strong> I can only show your own utilisation. Yours for 2026-W42 is 81%: 32.5 h of 40 h, with Friday still open.</p>
+  </div>
+  <p class="muted">Team time shows only weeks in your legal entities. Each rule above is an Admin setting; with it off, logging works as today.</p>
+</section>
+<section data-change="070-time-entry-corrections" id="070-time-entry-corrections" data-roles="all" data-title="Time: fix hours" data-nav="no" data-parent="001-amax-foundation-time">
+  <h1>My timesheet: fix or remove hours through chat</h1>
+  <p class="lede">A rejected week, 2026-W42. No edit fields: Ask amax opens chat with the row pinned. Fictional data.</p>
+  <div class="card">
+    <div class="card-head"><h2>Sent back by Ayesha Perera</h2><span class="chip">Rejected</span></div>
+    <p>"Fleet Tracker Wednesday says 10 h; you were on leave that afternoon."</p>
+  </div>
+  <div class="card pinnable">
+    <table><thead><tr><th>Project</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Total</th><th></th></tr></thead>
+      <tbody>
+        <tr class="pinnable"><td>Fleet Tracker</td><td>8</td><td>8</td><td>10</td><td>8</td><td>8</td><td>42</td><td><button class="btn sm">✦ Fix these hours</button></td></tr>
+        <tr class="pinnable"><td>Contoso Portal</td><td>0</td><td>0</td><td>0</td><td>0</td><td>1.5</td><td>1.5</td><td><button class="btn sm">✦ Fix these hours</button></td></tr>
+      </tbody></table>
+  </div>
+  <div class="card">
+    <div class="card-head"><h2>amax chat</h2><span class="chip">Pinned: Fleet Tracker, 2026-W42</span></div>
+    <p><strong>You:</strong> Wednesday should be 6 h.</p>
+    <p><strong>amax:</strong> Change Fleet Tracker, Wed Oct 14, from 10 h to 6 h? <button class="btn sm primary">Confirm</button> <button class="btn sm">Cancel</button></p>
+  </div>
+  <h2>Amendment: confirm cards, approved weeks, fixes by a PM</h2>
+  <div class="card">
+    <div class="card-head"><h2>Confirm card</h2><span class="chip">Fix hours</span></div>
+    <p><b>Fleet Tracker, Wed Oct 14</b></p>
+    <p>Hours: <s>10 h</s> → <b>6 h</b> · Note: <s>"API work"</s> → <b>"API work, morning only"</b></p>
+    <p><button class="btn sm primary">Confirm</button> <button class="btn sm">Cancel</button></p>
+  </div>
+  <div class="card">
+    <div class="card-head"><h2>amax chat</h2><span class="chip">2026-W41 · Approved</span></div>
+    <p><strong>Ayesha Perera (Admin):</strong> Change Tharushi's Monday on Contoso Portal to 7 h.</p>
+    <p><strong>amax:</strong> 2026-W41 is approved and locked, so nobody can change its entries. To fix it, reopen the week with a reason; it goes back to draft and can be corrected and approved again. <button class="btn sm">✦ Reopen 2026-W41…</button></p>
+  </div>
+  <div class="card">
+    <div class="card-head"><h2>amax chat (PM)</h2><span class="chip">Pinned: Kasun Dias · Fleet Tracker, 2026-W42 · Rejected</span></div>
+    <p><strong>Ayesha Perera (PM):</strong> Wednesday should be 6 h, he was on leave that afternoon.</p>
+    <p><strong>amax:</strong> Change <b>Kasun Dias</b>'s Fleet Tracker, Wed Oct 14: <s>10 h</s> → <b>6 h</b>. Reason: "On leave Wednesday afternoon." Kasun will be notified. <button class="btn sm primary">Confirm</button> <button class="btn sm">Cancel</button></p>
+  </div>
+  <div class="card">
+    <div class="card-head"><h2>Kasun's bell</h2><span class="chip">Approvals</span></div>
+    <p><b>Ayesha Perera changed your Fleet Tracker hours for Wed Oct 14</b><br><small class="muted">On leave Wednesday afternoon. · Open 2026-W42</small></p>
+  </div>
+  <p class="muted">An approved week has no "Fix these hours" button. Removed entries leave the timesheet and totals but stay in the audit trail.</p>
+  <h2 id="070-amendment-2">Amendment 2: confirm cards in plain words, and no card that can only fail</h2>
+  <p class="lede">Chat's confirm cards for Time, in plain words: no ids, no field names. A request that can't go through gets a reply, not a card. Fictional data.</p>
+  <div class="card">
+    <div class="card-head"><h2>Fix Fleet Tracker, Wed Oct 14</h2><span class="chip">Your entry</span></div>
+    <p>Hours <s>2.7 h</s> → <b>2 h</b></p>
+    <p><button class="btn sm primary">Add it</button> <button class="btn sm">Change something</button> <button class="btn sm">Cancel</button></p>
+  </div>
+  <div class="card">
+    <div class="card-head"><h2>Fix Fleet Tracker, Tue Oct 13</h2><span class="chip">Maya Fernando (PM)</span></div>
+    <p>For <b>Tharushi Wijesinghe</b></p>
+    <p>Hours <s>2.7 h</s> → <b>1.5 h</b></p>
+    <p>Reason "Client call was cancelled"</p>
+    <p class="muted">Tharushi will be notified.</p>
+    <p><button class="btn sm primary">Add it</button> <button class="btn sm">Change something</button> <button class="btn sm">Cancel</button></p>
+  </div>
+  <div class="card">
+    <div class="card-head"><h2>Remove Fleet Tracker, Mon Oct 12: 2.4 h</h2><span class="chip">Your entry</span></div>
+    <p><button class="btn sm primary">Add it</button> <button class="btn sm">Change something</button> <button class="btn sm">Cancel</button></p>
+  </div>
+  <div class="card">
+    <div class="card-head"><h2>Approve Nimal Silva's timesheet for 2026-W42 (31.5 h)</h2><span class="chip">Approval</span></div>
+    <p><button class="btn sm primary">Add it</button> <button class="btn sm">Change something</button> <button class="btn sm">Cancel</button></p>
+  </div>
+  <div class="card">
+    <div class="card-head"><h2>amax chat</h2><span class="chip">Kasun Dias · 2026-W42 · Submitted</span></div>
+    <p><strong>Kasun Dias:</strong> Change my Fleet Tracker hours on Wednesday to 6 h.</p>
+    <p><strong>amax:</strong> 2026-W42 is submitted and waiting for approval, so it can't change now. Ask Maya Fernando to send it back; then "Fix these hours" appears on each row. (No card.)</p>
+  </div>
+  <h2 id="070-amendment-3">Amendment 3: change requests for locked weeks</h2>
+  <p class="lede">Kasun's 2026-W42 is submitted. He asks chat for a fix; Maya decides on it. Fictional data.</p>
+  <div class="card">
+    <div class="card-head"><h2>amax chat (Kasun)</h2><span class="chip">2026-W42 · Submitted</span></div>
+    <p><strong>Kasun Dias:</strong> I put 7 h on Fleet Tracker on Wednesday, it should be 5.</p>
+    <p><strong>amax:</strong> Your week is submitted, so I can't change it directly. I can send Maya Fernando a request.</p>
+    <p><b>Request a change to Fleet Tracker, Wed Oct 14</b></p>
+    <p>Hours <s>7 h</s> → <b>5 h</b> · Reason "Left early for the client call" · Week 2026-W42 is submitted; Maya Fernando reviews it</p>
+    <p><button class="btn sm primary">Add it</button> <button class="btn sm">Change something</button> <button class="btn sm">Cancel</button></p>
+  </div>
+  <div class="card pinnable">
+    <div class="card-head"><h2>My timesheet · 2026-W42</h2><span class="chip">Submitted</span></div>
+    <p>Change requested: Fleet Tracker, Wed Oct 14, <s>7 h</s> → <b>5 h</b> · Waiting for review by Maya Fernando</p>
+  </div>
+  <div class="card">
+    <div class="card-head"><h2>Change requests</h2><span class="chip">2 open</span></div>
+    <table><thead><tr><th>Person</th><th>Week</th><th>Entry</th><th>Change</th><th>Reason</th><th>Asked</th><th></th></tr></thead>
+      <tbody>
+        <tr class="pinnable"><td>Kasun Dias</td><td>2026-W42 · Submitted</td><td>Fleet Tracker, Wed Oct 14</td><td>7 h → 5 h</td><td>Left early for the client call</td><td>2 h ago</td><td><button class="btn sm">✦ Review</button></td></tr>
+        <tr class="pinnable"><td>Ayesha Rahman</td><td>2026-W41 · Approved</td><td>Contoso Portal, Fri Oct 9</td><td>Remove 3 h</td><td>Logged on leave day</td><td>1 day ago</td><td><button class="btn sm">✦ Review</button></td></tr>
+      </tbody></table>
+  </div>
+  <div class="card">
+    <div class="card-head"><h2>amax chat (Maya)</h2><span class="chip">Pinned: Kasun Dias · change request</span></div>
+    <p><strong>Maya Fernando:</strong> Apply it.</p>
+    <p><b>Apply Kasun Dias's change: Fleet Tracker, Wed Oct 14</b></p>
+    <p>Hours <s>7 h</s> → <b>5 h</b> · Reason "Left early for the client call" · Week stays submitted · Kasun will be notified</p>
+    <p><button class="btn sm primary">Add it</button> <button class="btn sm">Change something</button> <button class="btn sm">Cancel</button></p>
+    <p class="muted">Other decisions: "Reopen it for Kasun" (sends the week back), "Ask Kasun which client call", "Decline: the call was billed".</p>
+  </div>
+  <div class="card">
+    <div class="card-head"><h2>Kasun's bell</h2><span class="chip">Approvals</span></div>
+    <p><b>Maya Fernando applied your change to Fleet Tracker, Wed Oct 14</b><br><small class="muted">7 h → 5 h · Open 2026-W42</small></p>
+  </div>
+  <h2 id="070-amendment-4">Amendment 4: chat knows the page, suggests what you can do, and does team actions in one card</h2>
+  <div class="card">
+    <div class="card-head"><h2>amax chat</h2><span class="chip">My timesheet · Week of Oct 12</span></div>
+    <p class="muted">Try one of these, or just say what you need:</p>
+    <p><button class="btn sm">Fix an entry</button> <button class="btn sm">Submit my week</button> <button class="btn sm">What did I log this week?</button> <button class="btn sm">What can you help me do here?</button></p>
+  </div>
+  <div class="card pinnable">
+    <div class="card-head"><h2>My timesheet · 2026-W42</h2><span class="chip">Draft</span></div>
+    <table><thead><tr><th>Project</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Total</th><th></th></tr></thead>
+      <tbody><tr class="pinnable"><td>Fleet Tracker</td><td>7</td><td>8</td><td>8</td><td>–</td><td>–</td><td>23</td><td><button class="btn sm" aria-label="Add Fleet Tracker, 2026-W42 to chat">+</button></td></tr></tbody></table>
+    <p class="muted">No "Fix these hours" button: the row keeps its pin; chat's suggestions and plain requests cover the fix.</p>
+  </div>
+  <div class="card">
+    <div class="card-head"><h2>amax chat (Maya)</h2><span class="chip">Team time · Week of Oct 12</span></div>
+    <p><strong>Maya Fernando:</strong> Remind everyone who hasn't submitted.</p>
+    <p><b>Remind 2 people to submit 2026-W42</b></p>
+    <p>Tharushi Wijesinghe · Draft, 25.9 h<br>Dinesh Wickrama · Draft, 25.0 h</p>
+    <p><button class="btn sm primary">Add it</button> <button class="btn sm">Change something</button> <button class="btn sm">Cancel</button></p>
+    <p><b>Done: Reminded 2 · skipped 0 · failed 0</b><br><small class="muted">Tharushi Wijesinghe: sent · Dinesh Wickrama: sent</small></p>
+  </div>
+  <h2 id="070-amendment-5">Amendment 5: one identity per browser, switched on purpose</h2>
+  <p class="lede">What a browser sees when it is already signed in, and what an open tab sees after another tab switches. Fictional data.</p>
+  <div class="card">
+    <div class="card-head"><h2>Sign in to amax</h2></div>
+    <p>You're signed in as <b>Tharushi Wijesinghe</b> (Engineer).</p>
+    <p><button class="btn primary">Continue as Tharushi</button> <button class="btn">Sign out to switch account</button></p>
+    <p class="muted">To use two accounts at once, open the second in another browser profile or a private window.</p>
+  </div>
+  <div class="card">
+    <div class="card-head"><h2>Another tab, after the switch</h2><span class="chip bad">Signed in elsewhere</span></div>
+    <p><b>You're now signed in as Maya Fernando in another tab.</b> Reload to continue as Maya.</p>
+    <p><button class="btn primary">Reload</button></p>
+    <p class="muted">Until then this tab can't send or confirm anything in chat.</p>
+  </div>
+</section>
 <section data-change="069-chat-tool-schema-hotfix" id="069-chat-tool-schema-hotfix" data-roles="all" data-title="Chat answers again" data-nav="no" data-parent="001-amax-foundation">
   <h1>Chat answers again</h1>
   <p class="lede">A fix with no new screen: chat replies instead of showing "AI chat failed". Fictional data.</p>

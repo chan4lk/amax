@@ -5,7 +5,8 @@ import { listEmploymentPeriods, listPeople, type EmploymentPeriod } from "@amax/
 import { approvedLeave, type ApprovedLeave } from "@amax/leave/contracts";
 import { asDay, type Range } from "./days";
 import { installed } from "./read";
-import { seesHours, seesLeave } from "./reach";
+import { hoursVisibleTo } from "@amax/time/contracts";
+import { seesLeave } from "./reach";
 
 export type Person = { userId: string; personId: string; name: string; initials: string; legalEntityId: string; leaveSeen: boolean };
 export type Logged = { day: string; hours: number; billable: boolean };
@@ -21,8 +22,10 @@ const groupBy = <T>(rows: T[], key: (r: T) => string) => {
 };
 
 async function hoursIn(tx: Tx, v: Viewer, range: Range) {
-  const rows = await tx.execute(sql`select user_id, day, hours, billable from reports.logged_hours where day between ${range.from} and ${range.to} order by day`);
-  const seen = rows.filter((r) => seesHours(v, r.user_id as string));
+  const rows = await tx.execute(sql`select user_id, day, hours, billable from reports.logged_hours where day between ${range.from} and ${range.to} and deleted_at is null order by day`);
+  // 071 AC-13: Time decides whose hours the viewer may see (its week scope, with legal entity and PMs' project members).
+  const visible = await hoursVisibleTo(tx, v, { userIds: rows.map((r) => r.user_id as string), ...range });
+  const seen = rows.filter((r) => visible.has(r.user_id as string));
   return groupBy(seen.map((r) => ({ userId: r.user_id as string, day: asDay(r.day), hours: Number(r.hours), billable: Boolean(r.billable) })), (r) => r.userId);
 }
 

@@ -3,12 +3,12 @@ import type { Viewer } from "@amax/auth";
 import { listProjectRefs } from "@amax/delivery/contracts";
 import type { WeekStatus } from "../contracts";
 import { weekKey, workDays, type IsoWeek } from "../week";
-import { entrySums, hoursOf, latestWeek, projectNames, read } from "./read";
+import { entrySums, hoursOf, latestWeek, projectNames, read, weekEntries, type EntryLine } from "./read";
 
 export type MyRow = { projectName: string; days: number[]; total: number };
 export type MyWeek = {
   week: IsoWeek; key: string; days: string[]; status: WeekStatus | null; note: string | null; rejectComment: string | null;
-  rows: MyRow[]; perDay: number[]; total: number; agentHours: number; projects: { key: string; name: string }[];
+  rows: MyRow[]; entries: EntryLine[]; perDay: number[]; total: number; agentHours: number; projects: { key: string; name: string }[];
 };
 
 export const myWeek = (v: Viewer, wanted?: IsoWeek) =>
@@ -24,7 +24,7 @@ export const myWeek = (v: Viewer, wanted?: IsoWeek) =>
     }).sort((a, b) => b.total - a.total);
     return {
       week: w, key: weekKey(w), days, status: (wk?.status as WeekStatus | undefined) ?? null, note: (wk?.note as string | null) ?? null,
-      rejectComment: (wk?.reject_comment as string | null) ?? null, rows, perDay: days.map((d) => hoursOf(sums, (s) => s.day === d)),
+      rejectComment: (wk?.reject_comment as string | null) ?? null, rows, entries: wk ? await weekEntries(tx, wk.id as string, names) : [], perDay: days.map((d) => hoursOf(sums, (s) => s.day === d)),
       total: hoursOf(sums, () => true), agentHours: hoursOf(sums, (s) => s.source === "agent"),
       projects: (await listProjectRefs(tx)).map((p) => ({ key: p.key, name: p.name })),
     };

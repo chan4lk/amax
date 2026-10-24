@@ -2,7 +2,7 @@ import { sql } from "drizzle-orm";
 import { can, type Viewer } from "@amax/auth";
 import type { WeekStatus } from "../contracts";
 import { weekKey, workDays, type IsoWeek } from "../week";
-import { chainFor, seesWeek } from "./chain";
+import { chainFor, entitiesOf, seesWeek } from "./chain";
 import { entrySums, hoursOf, latestWeek, projectNames, read, round1, type DayHours } from "./read";
 
 export type TeamRow = {
@@ -18,14 +18,16 @@ export const teamWeek = (v: Viewer, wanted?: IsoWeek) =>
     const weeks = await tx.execute(sql`select * from time.week where iso_year = ${w.year} and iso_week = ${w.week} order by created_at, person_name`);
     const sums = await entrySums(tx, w);
     const names = await projectNames(tx);
+    const entities = await entitiesOf(tx, weeks.map((wk) => wk.user_id as string));
     const rows = weeks.flatMap((wk): TeamRow[] => {
       const mine = sums.filter((s) => s.week_id === wk.id);
       const projectIds = [...new Set(mine.map((s) => s.project_id))];
-      if (!seesWeek(v, wk.user_id as string, projectIds)) return [];
+      const entity = entities.get(wk.user_id as string) ?? null;
+      if (!seesWeek(v, wk.user_id as string, projectIds, entity)) return [];
       const perDay = days.map((d) => hoursOf(mine, (s) => s.day === d));
       return [{ weekId: wk.id as string, userId: wk.user_id as string, personName: wk.person_name as string, note: (wk.note as string | null) ?? null,
         status: wk.status as WeekStatus, rejectComment: (wk.reject_comment as string | null) ?? null, days: perDay, total: round1(perDay.reduce((a, b) => a + b, 0)),
-        agentHours: hoursOf(mine, (s) => s.source === "agent"), canApprove: chainFor(v, wk.user_id as string, projectIds) !== null }];
+        agentHours: hoursOf(mine, (s) => s.source === "agent"), canApprove: chainFor(v, wk.user_id as string, projectIds, entity) !== null }];
     });
     const seen = new Set(rows.map((r) => r.weekId));
     const visible = sums.filter((s) => seen.has(s.week_id));

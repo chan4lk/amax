@@ -17,6 +17,10 @@ export function weekStart({ year, week }: IsoWeek): Date {
 
 export const isoDate = (d: Date) => d.toISOString().slice(0, 10);
 
+const DAY_LABEL = new Intl.DateTimeFormat("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: "UTC" });
+/** "2026-10-14" → "Wed Oct 14", as confirm cards and the bell name a day (070 amendment 2). */
+export const dayLabel = (day: string) => DAY_LABEL.format(new Date(`${day}T00:00:00Z`)).replace(",", "");
+
 export const workDays = (w: IsoWeek) => [0, 1, 2, 3, 4].map((i) => isoDate(new Date(weekStart(w).getTime() + i * DAY)));
 
 export const shiftWeek = (w: IsoWeek, by: number) => isoWeekOf(new Date(weekStart(w).getTime() + by * 7 * DAY));
