@@ -63,7 +63,7 @@ export function Markdown({ text }: { text: string }) {
 
 type SpeechCtor = new () => { lang: string; interimResults: boolean; onresult: (e: { results: { 0: { transcript: string } }[] }) => void; onend: () => void; start: () => void; stop: () => void };
 
-export function Chat({ open, onClose, returnFocus, signedIn, userId, voice, usage = null }: { open: boolean; onClose: () => void; returnFocus: RefObject<HTMLButtonElement | null>; signedIn: boolean; userId?: string; voice: boolean; usage?: string | null }) {
+export function Chat({ open, fresh = 0, onClose, returnFocus, signedIn, userId, voice, usage = null }: { open: boolean; fresh?: number; onClose: () => void; returnFocus: RefObject<HTMLButtonElement | null>; signedIn: boolean; userId?: string; voice: boolean; usage?: string | null }) {
   const [log, setLog] = useState<Entry[]>([]);
   const [pins, setPins] = useState<Pin[]>([]);
   const router = useRouter();
@@ -86,6 +86,21 @@ export function Chat({ open, onClose, returnFocus, signedIn, userId, voice, usag
   // The pin that came with that prompt, and whether the prompt added it (rather than it being pinned already).
   const asked = useRef<{ key: string; added: boolean } | null>(null);
   const textNow = useRef(text);
+  // Opened from Ask amax or the shortcut (not a pin): a new conversation with nothing pinned and no leftover prompt.
+  // What the person typed themselves stays; the last conversation is in History.
+  const freshSeen = useRef(fresh);
+  useEffect(() => {
+    if (fresh === freshSeen.current) return;
+    freshSeen.current = fresh;
+    if (busy) return;
+    convo.current = undefined;
+    setLog([]);
+    setPins([]);
+    setIntent(undefined);
+    setHistory(null);
+    asked.current = null;
+    if (filled.current !== null && filled.current === textNow.current) { filled.current = null; setText(""); }
+  }, [fresh, busy]);
   textNow.current = text;
   const pinsNow = useRef(pins);
   pinsNow.current = pins;
@@ -143,12 +158,11 @@ export function Chat({ open, onClose, returnFocus, signedIn, userId, voice, usag
         filled.current = null; setText(""); asked.current = null;
       }
       const added = ask && ask.key === key ? ask.added : !pinsNow.current.some((x) => pinKey(x) === key);
-      // A pin replaces pins of the same kind (same read tool and facet), so a second row takes the first
-      // row's place; pins of other kinds (a project, a person) stay, for questions across records.
+      // 073: a pin (a +, an Ask button, a pick) is the record chat is about now: it replaces whatever was pinned, so
+      // the next question never carries an earlier record along.
       const pin = d.pin;
       if (pin) {
-        const sameKind = (x: Pin) => x.tool === pin.tool && (x.facet ?? "") === (pin.facet ?? "") && pinKey(x) !== key;
-        setPins((p) => { const rest = p.filter((x) => !sameKind(x)); return rest.some((x) => pinKey(x) === key) ? rest : [...rest, pin]; });
+        setPins([pin]);
         announce(`${pin.label} added to chat`);
       }
       if (d.intent) { asked.current = null; setIntent(d.intent); setText(""); setLog((l) => [...l, { kind: "amax", text: `${d.prompt ?? "New record"}: tell me the details and I'll fill it in.`, tools: [] }]); }
