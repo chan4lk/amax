@@ -78,7 +78,7 @@ export function Chat({ open, onClose, returnFocus, signedIn, userId, voice, usag
   const pathname = usePathname();
   const [page, setPage] = useState<PageInfo | null>(null);
   const convo = useRef<string | undefined>(undefined);
-  const input = useRef<HTMLInputElement>(null);
+  const input = useRef<HTMLTextAreaElement>(null);
   const logRef = useRef<HTMLDivElement>(null);
   const fields = useRef<string[]>([]);
   // A prompt an Ask amax chip filled, until the person edits it (059 AC-7): what they type finishes it.
@@ -104,11 +104,18 @@ export function Chat({ open, onClose, returnFocus, signedIn, userId, voice, usag
   // Focus can leave and come back before the first key (the route focus after chat follows a record,
   // then a programmatic focus that puts the caret at 0): while the prompt is untouched, the first key
   // still lands at its end. A selection (select all, then type) is left alone, so it replaces the prompt.
-  const toEnd = (el: HTMLInputElement) => {
+  const toEnd = (el: HTMLTextAreaElement) => {
     if (filled.current === null || el.value !== filled.current || el.selectionStart !== el.selectionEnd) return;
     el.setSelectionRange(el.value.length, el.value.length);
   };
   useEffect(() => { logRef.current?.scrollTo({ top: logRef.current.scrollHeight }); }, [log, busy]);
+  // The message box grows with what is typed (up to about six lines, then it scrolls), so a long request reads in full.
+  useLayoutEffect(() => {
+    const el = input.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight, 140)}px`;
+  }, [text, open]);
   useEffect(() => {
     if (!open || !signedIn) return;
     let live = true;
@@ -329,7 +336,10 @@ export function Chat({ open, onClose, returnFocus, signedIn, userId, voice, usag
       </div>
       {signedIn && !busy && !text && page && <Suggestions items={page.suggestions} onPick={(prompt) => { filled.current = prompt; setText(prompt); }} />}
       <form className="c-input" onSubmit={(e) => { e.preventDefault(); send(text); }}>
-        <input ref={input} value={text} onChange={(e) => { filled.current = null; setText(e.target.value); }} onKeyDown={(e) => toEnd(e.currentTarget)} onPointerDown={() => { filled.current = null; }} autoComplete="off" aria-label="Message amax" placeholder={signedIn ? "Type, or tap amax and talk" : "Sign in first"} disabled={!signedIn} />
+        {/* Enter sends; Shift+Enter starts a new line. */}
+        <textarea ref={input} rows={1} value={text} onChange={(e) => { filled.current = null; setText(e.target.value); }}
+          onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); e.currentTarget.form?.requestSubmit(); return; } toEnd(e.currentTarget); }}
+          onPointerDown={() => { filled.current = null; }} autoComplete="off" aria-label="Message amax" placeholder={signedIn ? "Type, or tap amax and talk" : "Sign in first"} disabled={!signedIn} />
         <button className="c-send" type="submit" aria-label="Send" disabled={!signedIn || busy}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12 20 4l-6 16-3-7z" /></svg></button>
       </form>
       <div className="c-dock">
