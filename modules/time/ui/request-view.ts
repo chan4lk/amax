@@ -36,3 +36,20 @@ export function stateOf(r: Pick<ChangeRequest, "status" | "answer">): [string, s
   if (r.status === "reopened") return ["warn", "Week reopened for you"];
   return ["good", "Change applied"];
 }
+
+const firstOf = (name: string) => name.split(" ")[0];
+/** The reviewer's chip: an answered request is ready for a decision; a question waits on the person. */
+export function reviewStateOf(r: Pick<ChangeRequest, "status" | "answer" | "personName">): [string, string] {
+  if (r.status === "needs_info") return ["", `Waiting for ${firstOf(r.personName)}'s answer`];
+  return r.answer ? ["good", `${firstOf(r.personName)} answered`] : ["warn", "New request"];
+}
+/** Answered first (they wait on the reviewer), then new, then those waiting on the person; oldest first within each. */
+export const reviewOrder = (a: ChangeRequest, b: ChangeRequest) => {
+  const rank = (r: ChangeRequest) => (r.status === "pending" ? (r.answer ? 0 : 1) : 2);
+  return rank(a) - rank(b) || a.createdAt.localeCompare(b.createdAt);
+};
+type D = Pick<ChangeRequest, "id" | "personName" | "before" | "dayLabel">;
+const DECISION = { apply: "apply it", ask: "ask: ", decline: "decline, because ", reopen: "reopen the week so they can fix it" } as const;
+/** A decision as a chat prompt naming the request by id; ask and decline leave room for the note. */
+export const decidePromptFor = (r: D, d: keyof typeof DECISION) =>
+  `Decide on ${r.personName}'s change request for ${r.before.projectName}, ${r.dayLabel} (request id ${r.id}): ${DECISION[d]}`;

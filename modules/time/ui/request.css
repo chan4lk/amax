@@ -29,3 +29,15 @@
 .time .rq-steps li.now{color:var(--ink);font-weight:600}
 .time .rq-steps li.now::before{border-color:var(--chip-agent);background:var(--violet-soft)}
 @media (max-width:600px){.time .rq-steps{flex-direction:column;gap:6px}.time .rq-steps li:not(:last-child)::after{display:none}.time .rq-actions .btn.link{margin-left:0}}
+/* The reviewer's list on Team time: each request an item with the person's answer highlighted. */
+.time .requests .card-head{flex-wrap:wrap;gap:8px;justify-content:flex-start}
+.time .requests .card-head h2{margin-right:4px}
+.time .rq-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.time .rq-review{padding:18px 0;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:12px}
+.time .rq-review:first-child{border-top:0;padding-top:4px}
+.time .rq-who{display:flex;align-items:center;gap:12px}
+.time .rq-who b{display:block;font-size:15px}
+.time .rq-who small{color:var(--ink-2);font-size:13px}
+.time .rq-who .pin.inline{margin-left:auto}
+.time .rq-say.reply{background:var(--chip-good-bg);border-left-color:var(--chip-good)}
+.time .rq-wait{margin:0;font-size:13.5px}
