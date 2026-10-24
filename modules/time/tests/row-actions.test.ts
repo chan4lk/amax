@@ -5,6 +5,7 @@ import { pinSuggestions } from "../pin-suggestions";
 import { remindMany } from "../server/bulk";
 import { bulkCard, proposeBulk } from "../server/bulk-card";
 import { ctxFor } from "../server/context";
+import { getTimesheet } from "../server/sheet";
 import { T, timeDb } from "./db";
 
 // 073: Team time's rows keep only their pin. Pinning one offers its approve or remind; "Remind N people" reaches
@@ -21,15 +22,18 @@ describe.skipIf(!hasDb)("073: row actions move to pin suggestions and the bulk r
   afterAll(() => db?.t.drop());
 
   const weekOf = async (key: string) => (await db.q(sql`select w.id from time.week w join auth.user u on u.id = w.user_id where u.email = ${`${key}@lumenlabs.test`} and w.iso_week = 42`))[0].id as string;
-  const [onTimesheet, onTeam] = pinSuggestions;
+  const [onTimesheet] = pinSuggestions;
 
-  it("a pinned week offers approve when submitted and remind when draft, only to its approvers", async () => {
+  it("a pinned person-week offers approve when submitted and remind when draft or not started, only to its approvers", async () => {
     const maya = await db.as("maya");
     expect(await onTimesheet.suggest(maya as never, { weekId: await weekOf("nimal") })).toEqual([{ label: "Approve Nimal's timesheet", prompt: expect.stringMatching(/^Approve Nimal Silva's timesheet for 2026-W42 \(week id [0-9a-f-]{36}\)$/), tool: "approve_week" }]);
     expect((await onTimesheet.suggest(maya as never, { weekId: await weekOf("tharushi") }))[0]).toMatchObject({ label: "Remind Tharushi", tool: "remind_week" });
     expect(await onTimesheet.suggest(maya as never, { weekId: await weekOf("nimal"), project: "Fleet Tracker" })).toEqual([]);
     expect(await onTimesheet.suggest((await db.as("dinesh")) as never, { weekId: await weekOf("nimal") })).toEqual([]);
-    expect(await onTeam.suggest(maya as never, { week: "2026-W42", userId: await db.idOf("ravi") })).toEqual([{ label: "Remind Ravi", prompt: expect.stringContaining("no timesheet yet, user id"), tool: "remind_weeks" }]);
+    // A Not started row pins through get_timesheet too (week + user id), so one person's pin replaces another's in chat.
+    expect(await getTimesheet(maya, { week: "2026-W42", userId: await db.idOf("ravi") })).toMatchObject({ personName: "Ravi Perera", status: "not_started", total: 0 });
+    expect(await getTimesheet(await db.as("dinesh"), { week: "2026-W42", userId: await db.idOf("ravi") })).toBeNull();
+    expect(await onTimesheet.suggest(maya as never, { week: "2026-W42", userId: await db.idOf("ravi") })).toEqual([{ label: "Remind Ravi", prompt: expect.stringContaining("no timesheet yet, user id"), tool: "remind_weeks" }]);
   }, 60_000);
 
   it("one remind card names drafts and people with no timesheet; each is reminded and recorded", async () => {

@@ -1,12 +1,20 @@
 import { sql } from "drizzle-orm";
 import { can, type Viewer } from "@amax/auth";
 import { myWeek } from "./my";
+import { notStartedIn } from "./not-started";
 import { projectNames, read, round1, weekEntries } from "./read";
 import { teamWeek } from "./team";
 import { weekKey } from "../week";
 import { wantedWeek } from "./weeks";
 
-export type SheetRef = { weekId?: string; week?: string; project?: string };
+export type SheetRef = { weekId?: string; week?: string; userId?: string; project?: string };
+
+// 073: a Not started person's week on Team time (no timesheet yet): who, which week, nothing logged. Only for someone the
+// viewer expects to log, as Team time shows them; anyone else is "no such timesheet".
+async function notStartedWeek(v: Viewer, week: string, userId: string) {
+  const [p] = await read(v, (tx) => notStartedIn(tx, v, week, [userId]));
+  return p?.ok ? { week, person: p.name, personName: p.name, userId, status: "not_started", total: 0 } : null;
+}
 
 async function own(v: Viewer, week: string | undefined, project?: string) {
   const m = await myWeek(v, wantedWeek(week));
@@ -18,6 +26,7 @@ async function own(v: Viewer, week: string | undefined, project?: string) {
 }
 
 export async function getTimesheet(v: Viewer, ref: SheetRef) {
+  if (!ref.weekId && ref.userId && ref.userId !== v.userId) return ref.week ? notStartedWeek(v, ref.week, ref.userId) : null;
   if (!ref.weekId) return own(v, ref.week, ref.project);
   const [w] = await read(v, (tx) => tx.execute(sql`select user_id, iso_year, iso_week from time.week where id = ${ref.weekId}`));
   if (!w) return null;

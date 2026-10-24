@@ -17,7 +17,7 @@ const csv = (rows: GridRow[], days: string[]) => encodeURIComponent([["Person", 
   ...rows.map((r) => [csvCell(r.personName), ...r.cells.map((c) => c.hours.toFixed(1)), r.total.toFixed(1), `${r.utilisation}%`, r.agentHours.toFixed(1), STATE[r.status][1]].join(","))].join("\n"));
 
 const sheetPin = (row: GridRow, weekKey: string) => (row.weekId ? { label: `${row.personName}, ${weekKey}`, tool: "get_timesheet", args: { weekId: row.weekId } }
-  : { label: `${row.personName}, ${weekKey} (not started)`, tool: "get_team_week", args: { week: weekKey, userId: row.userId } });
+  : { label: `${row.personName}, ${weekKey} (not started)`, tool: "get_timesheet", args: { week: weekKey, userId: row.userId } });
 
 // 073: a submitted week that approve-all leaves out says why, in words as well as colour.
 const Check = ({ row }: { row: GridRow }) => (row.status === "submitted" && row.anomalies.length ? <span className="chip warn" title={row.anomalies.join("; ")}>Check<span className="sr">: {row.anomalies.join("; ")}</span></span> : null);
