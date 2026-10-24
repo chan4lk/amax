@@ -23,7 +23,7 @@ export async function TeamPage({ viewer: raw, params, searchParams = {} }: Scree
     + `Agents logged ${agent.toFixed(1)} h, ${total ? Math.round((agent / total) * 100) : 0}% of the team's ${total.toFixed(1)} h.`;
   return (
     <div className="time">
-      <Head title="Team time" lede={t.rows.length ? lede : `${weekSpan(t.week, t.days)}.`} week={t.week} base="" />
+      <Head title="Team time" lede={t.rows.length ? lede : `${weekSpan(t.week, t.days)}.`} week={t.week} days={t.days} base="" />
       {requests.length > 0 && <ChangeRequests rows={requests} />}
       {t.rows.length === 0 && t.grid.length === 0 && !Object.values(query).some(Boolean) ? (
         <Card><EmptyState icon="clock" title="No timesheets come to you this week" hint="You see the weeks of people who report to you or who logged time on projects you manage." action={<a className="btn" href={weekHref("/my", t.week)}>Open my timesheet</a>} /></Card>

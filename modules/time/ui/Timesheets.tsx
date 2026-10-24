@@ -23,7 +23,7 @@ function Action({ row, weekKey }: { row: GridRow; weekKey: string }) {
   if (row.status === "not_started") return <AskButton className="btn sm" spark={false} label="Remind" name={`Remind ${row.personName}`} prompt={`Remind ${row.personName} to log their hours for ${weekKey}`} pin={sheetPin(row, weekKey)} />;
   if (!row.canApprove || !row.weekId) return null;
   const verb = row.status === "submitted" ? "Approve" : "Remind";
-  return <AskButton className={`btn sm${verb === "Approve" ? " ghost" : ""}`} spark={false} label={verb} name={`${verb} ${row.personName}`}
+  return <AskButton className="btn sm" spark={false} label={verb} name={`${verb} ${row.personName}`}
     prompt={decidePrompt(verb, { weekId: row.weekId, personName: row.personName }, weekKey)} pin={sheetPin(row, weekKey)} />;
 }
 

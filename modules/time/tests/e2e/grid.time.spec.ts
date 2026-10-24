@@ -22,8 +22,8 @@ test("073 AC13 AC14 AC17 AC19 the grid: labelled cells, the summary, a day's pro
 
 test("073 AC21 the week picker shows the week, highlights it in a themed calendar, and a day opens its week", async ({ page }) => {
   await signIn(page, "maya@lumenlabs.test", W42);
-  const pick = page.getByRole("button", { name: /^Week of Oct 12 – Oct 18, 2026/ });
-  await expect(pick).toHaveText("Oct 12 – Oct 18, 2026");
+  const pick = page.getByRole("button", { name: /^Week of Oct 12 – Oct 16, 2026/ });
+  await expect(pick).toHaveText("Oct 12 – Oct 16, 2026");
   await pick.click();
   const cal = page.getByRole("dialog", { name: "Choose a week" });
   await expect(cal.locator("tr.sel td[aria-selected=true]")).toHaveCount(7);
@@ -39,7 +39,7 @@ test("073 AC21 the week picker shows the week, highlights it in a themed calenda
   await expect(cal).toContainText("November 2026");
   await cal.getByRole("button", { name: "Wednesday, November 4, 2026" }).click();
   await expect(page).toHaveURL(/\/time\/w\/2026-W45$/);
-  await expect(page.getByRole("button", { name: /^Week of Nov 2 – Nov 8, 2026/ })).toBeVisible();
+  await expect(page.getByRole("button", { name: /^Week of Nov 2 – Nov 6, 2026/ })).toBeVisible();
 });
 
 test("073 AC16 AC20 a project filter and a sort only change the URL, and the figures follow", async ({ page }) => {
@@ -60,6 +60,7 @@ test("073 AC18 a name opens that member's week, read-only, with an Ask amax pinn
   await expect(page.locator("h1")).toHaveText("Kasun Dias");
   await expect(page.locator("main form, main dialog")).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Ask amax about this week" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Add Kasun Dias, Fleet Tracker, 2026-W42 to chat" })).toBeAttached();
   expect(await axe(page)).toEqual([]);
 });
 

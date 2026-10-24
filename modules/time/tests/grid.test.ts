@@ -2,6 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { hasDb } from "@amax/db/testdb";
 import manifest from "../module";
 import { stateOf, teamGrid, type GridRow } from "../server/grid";
+import { getTimesheet } from "../server/sheet";
 import { T, timeDb } from "./db";
 
 const W42 = { year: 2026, week: 42 };
@@ -63,6 +64,7 @@ describe.skipIf(!hasDb)("073 amendment 1: the Team grid (Postgres)", () => {
     expect(manifest.routes.map((r) => r.path)).toContain("w/:week/p/:weekId");
     const kasun = row((await grid()).grid, "Kasun Dias");
     expect(kasun.weekId).toBeTruthy();
+    expect(await getTimesheet(await db.as("maya"), { weekId: kasun.weekId!, project: "Fleet Tracker" })).toMatchObject({ person: "Kasun Dias", project: "Fleet Tracker", days: [0, 0, 0, 7.5, 1], total: 8.5 });
     const asDinesh = await teamGrid(await db.as("dinesh"), W42, {});
     expect(asDinesh.grid.find((r) => r.weekId === kasun.weekId)).toBeUndefined();
   }, 60_000);

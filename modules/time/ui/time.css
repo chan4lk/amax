@@ -39,7 +39,6 @@
 .time .btn svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8}
 .time .btn.ghost{border-color:transparent;color:var(--ink-2)}
 .time .chip.draft{background:var(--sunken);color:var(--ink-2)}
-.time .chip.bad{background:#FFE1DC;color:#A8321F}
 /* 070 AC-50: the total row is a row, not a second header: body padding, a rule above it, nothing below. */
 .time .tbl tfoot th,.time .tbl tfoot td{padding-top:16px;padding-bottom:16px;border-top:1.5px solid var(--line-2);border-bottom:0;vertical-align:middle}
 .time .requests td[data-label="Person"],.time .requests td[data-label="Week"],.time .requests td[data-label="Asked"]{white-space:nowrap}
@@ -49,10 +48,12 @@
 /* 070 AC-50: on phones the week's total row stacks like the project rows above it. */
 @media (max-width:600px){.time .tbl tfoot,.time .tbl tfoot tr{display:block;width:100%}.time .tbl tfoot tr{padding:14px 22px;background:var(--sunken);border-radius:0 0 24px 24px}.time .tbl tfoot th{display:block;padding:5px 0;text-align:left;font-size:15px}.time .tbl tfoot th,.time .tbl tfoot td{border:0}.time .tbl tfoot td{padding:5px 0}.time .tbl tfoot td:empty{display:none}}
 @media (max-width:860px){.time .row.head>.actions{flex-shrink:1;width:100%}.time .row.head>.actions .seg{flex:1 1 100%}.time .cols{grid-template-columns:minmax(0,1fr)}.time .big{font-size:21px}}
-/* 073: weekend columns and the day a reminder points to. */
+/* 073: weekend columns, and Missing days (red, as on Team time). */
 .time th small.weekend,.time th small.missing-tag{display:block;font-size:11px;font-weight:500;color:var(--ink-3)}
-.time th.missing{color:var(--chip-warn)}
-.time th.missing small.missing-tag{color:var(--chip-warn);font-weight:600}
+.time th.missing,.time td.missing{color:var(--chip-bad)}
+.time th.missing small.missing-tag{color:var(--chip-bad);font-weight:600}
+/* Phone: a stacked row keeps its actions (pin, Remind, Approve) in its top-right corner, not on a line of their own. */
+@media (max-width:600px){.time .tbl tbody tr{position:relative}.time .tbl tbody td[data-label=""]{position:absolute;top:10px;right:16px;width:auto;padding:0}.time .tbl tbody td[data-label=""]::before{display:none}.time .tbl tbody tr:has(td[data-label=""]) td:first-child{padding-right:44px}.time .tbl.grid tbody tr:has(td[data-label=""]) td:first-child{padding-right:130px}}
 .time .reminded{display:block;font-size:12px;color:var(--ink-3)}
 /* 073 amendment 1: the grid's cells (state = colour + icon + word), summary strip and toolbar. */
 .time .cellwrap{position:relative;display:inline-block}

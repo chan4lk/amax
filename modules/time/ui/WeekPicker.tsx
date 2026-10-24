@@ -10,13 +10,12 @@ const fmt = (d: string, o: Intl.DateTimeFormatOptions) => at(d).toLocaleDateStri
 const localToday = () => new Intl.DateTimeFormat("en-CA", { year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
 
 /** 073 AC-21: beside the week arrows, the shown week as a button that opens a calendar; a day opens its week. Navigation only. */
-export function WeekPicker({ base, monday }: { base: "" | "/my"; monday: string }) {
+export function WeekPicker({ base, monday, last }: { base: "" | "/my"; monday: string; last: string }) {
   const [open, setOpen] = useState(false);
   const wrap = useRef<HTMLDivElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
-  const sunday = at(monday);
-  sunday.setUTCDate(sunday.getUTCDate() + 6);
-  const end = sunday.toISOString().slice(0, 10);
+  // The days the page shows (Mon to Fri, or to Sun with weekend hours), so it reads like the lede.
+  const end = last;
   const label = `${fmt(monday, { month: "short", day: "numeric" })} – ${fmt(end, { month: "short", day: "numeric" })}, ${end.slice(0, 4)}`;
   useEffect(() => {
     if (!open) return;

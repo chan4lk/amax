@@ -42,7 +42,7 @@ export const mcpTools: McpToolDef[] = [
   tool({ ...read, pin: "view", name: "get_my_week", description: "Your own timesheet for a week, by project and day, with its status.", input: z.object({ week }),
     run: (v, a) => myWeek(v, wantedWeek(a.week)) }),
   tool({ ...read, pin: "view", name: "get_timesheet", description: "One person-week: by weekId (a row on Team time), or your own week, optionally just one project's row.",
-    input: z.object({ weekId: z.string().uuid().optional(), week, project: z.string().optional().describe("Project name, for one row of your own week") }),
+    input: z.object({ weekId: z.string().uuid().optional(), week, project: z.string().optional().describe("Project name, for one row of the week (yours, or by weekId)") }),
     run: (v, a) => getTimesheet(v, a) }),
   tool({ name: "log_time", description: "Log hours against a project for a day (YYYY-MM-DD in the person's own calendar; a Saturday or Sunday needs weekend: true, after the person confirms the weekend work). Time logged through MCP counts as agent time.", scope: "write", permission: "time:log",
     input: z.object({ projectKey: z.string(), hours: z.number().positive().max(24), day: z.string().describe("YYYY-MM-DD, the person's local date"), billable: z.boolean().optional(), note: z.string().optional(), agent: z.string().optional(),
