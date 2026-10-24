@@ -1,0 +1,11 @@
+{
+  "change": "072-time-consumers-sync",
+  "phase": "pr",
+  "branch": "specclaw/072-time-consumers-sync",
+  "phases": {
+    "proposal": {"status":"approved","at":"2026-10-24T06:11:59Z"},
+    "tasks": {"status":"done","at":"2026-10-24T06:13:05Z"},
+    "verify": {"status":"done","at":"2026-10-24T06:57:33Z","verdict":"PASS"},
+    "pr": {"status":"raised","at":"2026-10-24T07:01:35Z","tasks":{"done":6,"total":6,"failed":0},"verdict":"PASS","url":"https://github.com/chan4lk/amax/pull/104"}
+  }
+}

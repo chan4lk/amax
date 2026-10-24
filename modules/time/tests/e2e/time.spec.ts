@@ -1,20 +1,11 @@
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
-import AxeBuilder from "@axe-core/playwright";
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 import { capture, diffRatio } from "./diff";
+import { axe, signIn } from "./helpers";
 
 const mock = `${pathToFileURL(join(import.meta.dirname, "../../../../.specclaw/mock/index.html")).href}#001-amax-foundation-time`;
 const W42 = "/time/w/2026-W42";
-
-async function signIn(page: Page, email: string, to: string) {
-  await page.goto(to);
-  await page.getByLabel("Demo user (fixtures only)").fill(email);
-  await page.getByRole("button", { name: "Sign in as demo user" }).click();
-  await expect(page).toHaveURL((url) => url.pathname === to);
-}
-
-const axe = async (page: Page) => (await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa"]).analyze()).violations.map((v) => `${v.id}: ${v.nodes[0]?.target}`);
 
 test.beforeEach(async ({ page }) => page.setViewportSize({ width: 1440, height: 900 }));
 
@@ -37,11 +28,31 @@ test("AC3 the Team week matches the mock: totals, agent share and the This week 
   expect(await axe(page)).toEqual([]);
 });
 
-test("AC2 / 054 AC5 approving through chat locks the week; the My timesheet switch shows your own hours", async ({ page }) => {
+test("070 AC41, AC42, AC45 chat names the page and suggests the fix; rows have pins and no Fix buttons; a locked week suggests a change request", async ({ page, browser }) => {
+  await signIn(page, "tharushi@lumenlabs.test", "/time/my/2026-W42");
+  await expect(page.locator("main form, main dialog")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: /^Fix .* hours$/ })).toHaveCount(0);
+  await page.getByRole("button", { name: "Ask amax", exact: true }).click();
+  const chat = page.getByRole("complementary", { name: "amax chat" });
+  await expect(chat.getByTestId("chat-page")).toHaveText("My timesheet · Week of Oct 12");
+  await chat.getByRole("list", { name: "Suggestions for this page" }).getByRole("button", { name: "Fix an entry" }).click();
+  await expect(page.getByLabel("Message amax")).toHaveValue("Fix an entry on this week's timesheet: ");
+  expect(await axe(page)).toEqual([]);
+  await page.locator("table.tbl tbody tr", { hasText: "Fleet Tracker" }).getByRole("button", { name: "Add Fleet Tracker, 2026-W42 to chat" }).press("Enter");
+  await expect(chat.locator(".pinchip > span")).toHaveText(["Fleet Tracker, 2026-W42"]);
+  const kasun = await (await browser.newContext({ baseURL: test.info().project.use.baseURL })).newPage();
+  await signIn(kasun, "kasun@lumenlabs.test", "/time/my/2026-W42");
+  await kasun.getByRole("button", { name: "Ask amax", exact: true }).click();
+  await expect(kasun.getByRole("list", { name: "Suggestions for this page" }).getByRole("button", { name: "Ask for a change" })).toBeVisible();
+});
+
+test("AC2 / 054 AC5 / 073 approving through a pinned row's suggestion locks the week; rows carry only their pin; the My timesheet switch shows your own hours", async ({ page }) => {
   test.setTimeout(60_000);
   await signIn(page, "maya@lumenlabs.test", W42);
   await expect(page.locator("main form, main dialog")).toHaveCount(0);
-  await page.getByRole("button", { name: "Approve Nimal Silva" }).click();
+  await expect(page.locator("table.grid tbody").getByRole("button", { name: /^(Approve|Remind) / })).toHaveCount(0);
+  await page.locator("table.grid tbody tr", { hasText: "Nimal Silva" }).getByRole("button", { name: "Add Nimal Silva, 2026-W42 to chat" }).press("Enter");
+  await page.getByRole("list", { name: "Suggestions for this page" }).getByRole("button", { name: "Approve Nimal's timesheet" }).click();
   await expect(page.getByRole("complementary", { name: "amax chat" }).locator(".pinchip > span").last()).toHaveText("Nimal Silva, 2026-W42");
   await expect(page.getByLabel("Message amax")).toHaveValue(/^Approve Nimal Silva's timesheet for 2026-W42 \(week id [0-9a-f-]{36}\)$/);
   await page.getByRole("button", { name: "Send" }).click();
@@ -49,7 +60,7 @@ test("AC2 / 054 AC5 approving through chat locks the week; the My timesheet swit
   await card.getByRole("button", { name: "Add it" }).click();
   await expect(card).toContainText("Done:");
   await page.reload();
-  await expect(page.locator("tr", { hasText: "Nimal Silva" })).toContainText("Locked");
+  await expect(page.locator("tr", { hasText: "Nimal Silva" })).toContainText("Approved");
   await expect(page.getByRole("button", { name: "Approve 2 submitted (56.0 h)" })).toBeVisible();
   await page.getByRole("link", { name: "My timesheet" }).click();
   await expect(page).toHaveURL(/\/time\/my\/2026-W42$/);

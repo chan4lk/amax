@@ -34,8 +34,9 @@ ask the product owner first.
 1. **Chat does the writes.** No CRUD forms, write dialogs or inline edit fields in pages. Every
    create, update or delete is an MCP write tool in `modules/<m>/mcp.ts`, and chat runs it only after
    the pending-action confirm. Where a form would go, put an `IntentButton` ("Ask amax") that opens
-   chat with the record pinned and a prompt filled in. Read-only controls (filters, tabs, sort,
-   search, navigation) are fine.
+   chat with the record pinned and a prompt filled in, unless chat already suggests that write on the
+   page (the module's `chatSuggestions`, 070 amendment 4); then the record's pin is enough. Read-only
+   controls (filters, tabs, sort, search, navigation) are fine.
 2. **Everything is pinnable.** Every card, tile, stat, stage step, list item and table row that shows
    a record or a metric has a `PinButton` (`packages/ui/src/components/PinButton.tsx`). Its `PinRef`
    resolves through a read tool to that exact record.

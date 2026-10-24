@@ -8,6 +8,7 @@ const ORDER = ["Admin", "ITAdmin", "Leadership", "PM", "HR", "Payroll", "Finance
 export function profileOf(v: Viewer): Profile {
   const primary = [...v.actualRoles].sort((a, b) => ORDER.indexOf(a) - ORDER.indexOf(b))[0] ?? "Employee";
   return {
+    userId: v.userId,
     name: v.name,
     initials: v.name.split(/\s+/).map((p) => p[0]).join("").slice(0, 2).toUpperCase(),
     chip: roleLabel(v.viewAs ?? primary),

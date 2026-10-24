@@ -17,7 +17,8 @@ const str = (v: unknown) => (typeof v === "string" && v ? v : null);
 export function commitsOf(provider: string, headers: Headers, payload: unknown): Commit[] | null {
   const p = obj(payload);
   if (provider === "github" && headers.get("x-github-event") === "push") {
-    return (Array.isArray(p.commits) ? p.commits : []).map((c: unknown) => {
+    // 071 AC-7: a commit already pushed on another ref (distinct: false) is skipped, so nothing is drafted twice.
+    return (Array.isArray(p.commits) ? p.commits : []).filter((c: unknown) => obj(c).distinct !== false).map((c: unknown) => {
       const x = obj(c), a = obj(x.author);
       return { id: String(x.id ?? ""), message: String(x.message ?? ""), login: str(a.username), email: str(a.email), verified: obj(x.verification).verified === true, at: String(x.timestamp ?? "") };
     });

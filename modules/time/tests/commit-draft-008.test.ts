@@ -26,7 +26,10 @@ describe.skipIf(!hasDb)("008 AC-3 a commit's hours are a draft suggestion on the
     expect(s).toMatchObject({ title: "Add 1.5 h on CON for 2026-10-19", acts_for: `user:${nimal.userId}` });
     await acceptSuggestion(contextForViewer(nimal, "chat"), { id: s.id as string });
     expect(await entries()).toEqual([{ hours: "1.50", source: "agent", agent: "Git", status: "draft" }].map((e) => ({ ...e, hours: expect.anything() })));
+    const [{ id: entryId }] = await db.q(sql`select id from time.entry where user_id = ${nimal.userId} and day = '2026-10-19'`);
     await undoSuggestion(contextForViewer(nimal, "chat"), { id: s.id as string });
     expect(await entries()).toEqual([]);
+    // 070 AC-6: the undo tells consumers the entry is gone.
+    expect(await db.q(sql`select payload->>'revision' as revision from core.event where name = 'time.entry.deleted' and payload->>'entryId' = ${entryId as string}`)).toEqual([{ revision: "2" }]);
   });
 });

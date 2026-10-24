@@ -17,7 +17,15 @@ export function weekStart({ year, week }: IsoWeek): Date {
 
 export const isoDate = (d: Date) => d.toISOString().slice(0, 10);
 
+const DAY_LABEL = new Intl.DateTimeFormat("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: "UTC" });
+/** "2026-10-14" → "Wed Oct 14", as confirm cards and the bell name a day (070 amendment 2). */
+export const dayLabel = (day: string) => DAY_LABEL.format(new Date(`${day}T00:00:00Z`)).replace(",", "");
+
 export const workDays = (w: IsoWeek) => [0, 1, 2, 3, 4].map((i) => isoDate(new Date(weekStart(w).getTime() + i * DAY)));
+const allDays = (w: IsoWeek) => [0, 1, 2, 3, 4, 5, 6].map((i) => isoDate(new Date(weekStart(w).getTime() + i * DAY)));
+export const isWeekend = (day: string) => [0, 6].includes(new Date(`${day}T00:00:00Z`).getUTCDay());
+/** 073 AC-1: the days a week shows: Monday to Friday, plus Saturday and Sunday when it has weekend hours. */
+export const shownDays = (w: IsoWeek, logged: string[]) => (logged.some(isWeekend) ? allDays(w) : workDays(w));
 
 export const shiftWeek = (w: IsoWeek, by: number) => isoWeekOf(new Date(weekStart(w).getTime() + by * 7 * DAY));
 

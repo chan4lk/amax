@@ -51,7 +51,14 @@ export async function PayrollPage({ viewer: raw, searchParams }: ScreenProps) {
       {run.payslips && <div className="gap"><Payslips run={run} /></div>}
       {run.money && run.level === "pay" && <div className="gap"><CostCentres run={run} /></div>}
       {slip && <PayslipDrawer s={slip} close={`/payroll?run=${run.id}`} />}
-      <p className="src">Drafted from: {Object.values(run.sources).join(". ")}.</p>
+      <p className="src">Drafted from: <Sources s={run.sources} />.</p>
     </div>
   );
+}
+
+// 071 AC-2: a time read that missed people is a warning chip, not a plain line.
+function Sources({ s }: { s: RunView["sources"] }) {
+  const { timeIncomplete, ...lines } = s;
+  const text = Object.entries(lines);
+  return <>{text.map(([k, v], i) => <span key={k}>{i ? ". " : ""}{k === "time" && timeIncomplete ? <span className="chip warn">{v}</span> : v}</span>)}</>;
 }

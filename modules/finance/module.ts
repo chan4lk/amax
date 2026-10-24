@@ -3,7 +3,8 @@ import { EVENTS, type ContractCreated, type CreditNoteIssued, type InvoiceDrafte
 import { financeFixtures } from "./fixtures";
 import { mcpTools, search } from "./mcp";
 import { financeOverview } from "./server/overview";
-import { draftAgent, invoiceDraft, releaseAgent, timeAgent } from "./suggestions";
+import { draftAgent, invoiceDraft, releaseAgent } from "./suggestions";
+import { timeHandlers } from "./server/time-sync";
 import { FinancePage } from "./ui/FinancePage";
 
 const WRITE = ["finance:read", "finance:contract:write", "finance:invoice:draft", "finance:invoice:issue", "finance:payment:record"];
@@ -31,7 +32,7 @@ export default defineModule({
   jobs: [],
   events: {
     emits: Object.values(EVENTS),
-    handles: [draftAgent, timeAgent, releaseAgent],
+    handles: [draftAgent, ...timeHandlers, releaseAgent],
     payloads: {
       [EVENTS.contractCreated]: declarePayload<ContractCreated>({ contractId: "plain", projectId: "plain", legalEntityId: "plain", kind: "plain", by: "plain" }),
       [EVENTS.invoiceDrafted]: declarePayload<InvoiceDrafted>({ draftId: "plain", contractId: "plain", legalEntityId: "plain", source: "plain" }),

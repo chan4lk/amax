@@ -24,6 +24,8 @@ describe.skipIf(!hasDb)("030 rules and delivery (Postgres)", () => {
     await db.drain();
     expect((await titles("time.week-submitted")).filter((r) => String(r.title).includes("Tharushi"))).toEqual([
       { email: "maya@lumenlabs.test", title: "Tharushi Wijesinghe submitted 2026-W42", href: "/time/w/2026-W42" },
+      // 072 AC-3: and the PM of a project on her week (Nimal, Fleet Tracker), who isn't her manager.
+      { email: "nimal@lumenlabs.test", title: "Tharushi Wijesinghe submitted 2026-W42", href: "/time/w/2026-W42" },
     ]);
     await registry.call(maya, "approve_week", { person: "tharushi@lumenlabs.test", week: "2026-W42" }, { source: "mcp" });
     await db.drain();
@@ -39,13 +41,14 @@ describe.skipIf(!hasDb)("030 rules and delivery (Postgres)", () => {
 
   it("AC5 a redelivered event makes no second notification; each channel is one audited run, recorded skipped while it has no credential", async () => {
     const [{ event_id: eventId }] = await db.q(sql`select event_id from notifications.notification where rule_id = 'time.week-submitted' and title like 'Tharushi%'`);
+    const count = async () => Number((await db.q(sql`select count(*)::int as n from notifications.notification where event_id = ${eventId as string}`))[0].n);
+    const before = await count();
     await db.t.owner`delete from core.processed_event where event_id = ${eventId as string}`;
     await db.t.owner`update core.event set delivered_at = null where id = ${eventId as string}`;
     await db.drain();
-    const [{ n }] = await db.q(sql`select count(*)::int as n from notifications.notification where event_id = ${eventId as string}`);
-    expect(n).toBe(1);
+    expect(await count()).toBe(before);
     const deliveries = await db.q(sql`select d.channel, d.status from notifications.delivery d join notifications.notification n on n.id = d.notification_id
-      where n.event_id = ${eventId as string} order by d.channel`);
+      where n.event_id = ${eventId as string} and n.user_id = ${await db.idOf("maya")} order by d.channel`);
     expect(deliveries).toEqual([{ channel: "email", status: "skipped" }, { channel: "teams", status: "skipped" }]);
     const runs = await db.t.owner`select status from workflows.run where workflow = 'notifications.deliver'`;
     expect(runs.length).toBeGreaterThanOrEqual(2);

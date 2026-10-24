@@ -1,0 +1,64 @@
+/* 073: the owner's change-request card on My timesheet. Colours come from the theme tokens (light and dark). */
+.time .rq{margin-bottom:20px;display:flex;flex-direction:column;gap:14px}
+.time .rq .card-head{margin:0}
+.time .rq .card-head h2{font-size:17px}
+.time .rq-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.time .rq-change{display:flex;flex-wrap:wrap;align-items:center;gap:10px 28px}
+.time .rq-hours{display:flex;align-items:baseline;gap:12px;margin:0;font-size:26px;font-weight:700;font-variant-numeric:tabular-nums}
+.time .rq-hours span:first-child{color:var(--ink-3);text-decoration:line-through;text-decoration-thickness:2px}
+.time .rq-hours b{color:var(--ink-3);font-size:20px;font-weight:500}
+.time .rq-hours .to{color:var(--ink)}
+.time .rq-other{margin:0;padding:0;list-style:none;display:flex;flex-wrap:wrap;gap:6px}
+.time .rq-other li{background:var(--sunken);border-radius:8px;padding:4px 10px;font-size:13px}
+.time .rq-reason{margin:0;font-size:14px;color:var(--ink-2)}
+.time .rq-reason .muted{display:block;font-size:11.5px;font-weight:600;letter-spacing:.02em;text-transform:uppercase;margin-bottom:2px}
+.time .rq-say{margin:0;padding:12px 16px;border-radius:14px;background:var(--sunken);border-left:3px solid var(--line-2)}
+.time .rq-say.ask{background:var(--chip-warn-bg);border-left-color:var(--chip-warn)}
+.time .rq-say.me{background:var(--violet-soft);border-left-color:var(--chip-agent)}
+.time .rq-say cite{display:block;font-style:normal;font-size:12.5px;font-weight:600;color:var(--ink-2);margin-bottom:4px}
+.time .rq-say p{margin:0;font-size:14.5px;line-height:1.5;color:var(--ink)}
+.time .rq-actions{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.time .rq-actions .btn.link{background:none;box-shadow:none;border:0;color:var(--ink-2);text-decoration:underline;text-underline-offset:3px;margin-left:auto}
+.time .rq-steps{display:flex;gap:0;margin:2px 0 0;padding:0;list-style:none;font-size:12.5px;color:var(--ink-3)}
+.time .rq-steps li{display:flex;align-items:center;gap:8px;flex:1;position:relative}
+.time .rq-steps li:not(:last-child)::after{content:"";flex:1;height:2px;margin:0 10px;background:var(--line-2);border-radius:2px}
+.time .rq-steps li::before{content:"";width:10px;height:10px;flex:none;border-radius:50%;border:2px solid var(--line-2);background:var(--card)}
+.time .rq-steps li.done{color:var(--ink-2)}
+.time .rq-steps li.done::before{background:var(--chip-good);border-color:var(--chip-good)}
+.time .rq-steps li.done:not(:last-child)::after{background:var(--chip-good)}
+.time .rq-steps li.now{color:var(--ink);font-weight:600}
+.time .rq-steps li.now::before{border-color:var(--chip-agent);background:var(--violet-soft)}
+@media (max-width:600px){.time .rq-steps{flex-direction:column;gap:6px}.time .rq-steps li:not(:last-child)::after{display:none}.time .rq-actions .btn.link{margin-left:0}}
+/* The reviewer's list on Team time: each request an item with the person's answer highlighted. */
+.time .requests .card-head{flex-wrap:wrap;gap:8px;justify-content:flex-start}
+.time .requests .card-head h2{margin-right:4px}
+.time .rq-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.time .rq-review{padding:18px 0;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:12px}
+.time .rq-review:first-child{border-top:0;padding-top:4px}
+.time .rq-who{display:flex;align-items:center;gap:12px}
+.time .rq-who b{display:block;font-size:15px}
+.time .rq-who small{color:var(--ink-2);font-size:13px}
+.time .rq-who .pin.inline{margin-left:auto}
+.time .rq-say.reply{background:var(--chip-good-bg);border-left-color:var(--chip-good)}
+.time .rq-wait{margin:0;font-size:13.5px}
+/* Folding: each request is a <details>; folded it is one row (chip, who or what, the change, when, pin, chevron). */
+.time .rq-fold>summary{list-style:none;cursor:pointer;display:flex;align-items:center;flex-wrap:wrap;gap:8px 14px;border-radius:12px;padding:4px 2px}
+.time .rq-fold>summary::-webkit-details-marker{display:none}
+.time .rq-fold>summary:focus-visible{outline:2px solid var(--chip-agent);outline-offset:2px}
+.time .rq-fold>summary:hover .rq-title{text-decoration:underline;text-underline-offset:3px}
+.time .rq-title{flex:1 1 220px;min-width:0}
+.time .rq-title>b{font-size:16px}
+.time .rq-short{font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+.time .rq-foldwrap{position:relative}
+.time .rq-foldwrap>.pin.inline{position:absolute;top:10px;right:0;margin:0}
+.time .rq-fold>summary{padding-right:44px}
+.time .rq-chev{width:10px;height:10px;flex:none;border-right:2px solid var(--ink-3);border-bottom:2px solid var(--ink-3);transform:rotate(-45deg);transition:transform .15s;margin:0 6px}
+.time .rq-fold[open] .rq-chev{transform:rotate(45deg)}
+.time .rq-body{display:flex;flex-direction:column;gap:12px;padding-top:14px}
+.time .rq-fold[open]>summary .rq-short{display:none}
+.time .rq-review{padding:12px 0}
+.time .rq-review:first-child{padding-top:0}
+.time .requests .rq-all,.time .rq-group-head .rq-all{margin-left:auto}
+.time .rq-group-head{display:flex;margin-bottom:8px}
+.time .rq.notice{gap:0}
+@media (prefers-reduced-motion:reduce){.time .rq-chev{transition:none}}

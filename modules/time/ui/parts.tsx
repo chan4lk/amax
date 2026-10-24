@@ -3,11 +3,21 @@ import { Card, EmptyState } from "@amax/ui";
 import type { WeekStatus } from "../contracts";
 import { notFound } from "next/navigation";
 import { wantedWeek } from "../server/weeks";
-import { shiftWeek, weekKey, type IsoWeek } from "../week";
+import { isWeekend, shiftWeek, weekKey, workDays, type IsoWeek } from "../week";
+import { WeekPicker } from "./WeekPicker";
 import "./time.css";
 
 export const hrs = (n: number) => (n ? n.toFixed(1) : "–");
-export const DAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri"];
+/** 073 AC-1: a column's name from its date, so a week with weekend hours shows Sat and Sun too. */
+/** A day cell's label in the stacked phone layout, where the column heads are hidden. */
+export const dayLabelFor = (day: string, mark: DayMark) => `${dayName(day)}${mark === "missing" ? " · Missing" : mark === "leave" ? " · On leave" : ""}`;
+export const dayName = (day: string) => ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][new Date(`${day}T00:00:00Z`).getUTCDay()];
+export type DayMark = "missing" | "leave" | undefined;
+/** A day column head: Sat and Sun say "weekend"; My timesheet also marks Missing and On leave days (073). */
+export function DayHead({ day, mark }: { day: string; mark?: DayMark }) {
+  const end = isWeekend(day);
+  return <th className={`num day${mark === "missing" ? " missing" : ""}`}>{dayName(day)}{end && <small className="weekend"> weekend</small>}{mark === "missing" && <small className="missing-tag"> Missing</small>}{mark === "leave" && <small className="weekend"> On leave</small>}</th>;
+}
 export const COLORS = ["var(--violet)", "var(--amber)", "var(--pink)", "var(--mint)"];
 export const STATUS: Record<WeekStatus, [string, string]> = { draft: ["draft", "Draft"], submitted: ["good", "Submitted"], approved: ["good", "Approved"], rejected: ["bad", "Rejected"] };
 export const initials = (name: string) => name.split(/\s+/).map((p) => p[0]).join("").slice(0, 2).toUpperCase();
@@ -16,7 +26,8 @@ const date = (iso: string) => new Date(`${iso}T00:00:00Z`).toLocaleDateString("e
 
 export function weekSpan(week: IsoWeek, days: string[]) {
   // No "today" marker: these render on the server, which doesn't know the viewer's calendar day.
-  return `Week ${week.week}, Mon ${date(days[0])} to Fri ${date(days[4])}`;
+  const last = days[days.length - 1];
+  return `Week ${week.week}, Mon ${date(days[0])} to ${dayName(last)} ${date(last)}`;
 }
 
 /** The week in a screen URL: absent is the latest week, anything wantedWeek refuses is a 404. */
@@ -36,7 +47,7 @@ export const SignInFirst = () => (
   <Card><EmptyState icon="clock" title="Sign in to see timesheets" hint="Hours, approvals and your own timesheet come from the database once you're signed in." /></Card>
 );
 
-export function Head({ title, lede, week, base }: { title: string; lede: string; week: IsoWeek; base: "" | "/my" }) {
+export function Head({ title, lede, week, days, base }: { title: string; lede: string; week: IsoWeek; days: string[]; base: "" | "/my" }) {
   return (
     <div className="row head">
       <div><h1>{title}</h1><p className="lede">{lede}</p></div>
@@ -46,8 +57,12 @@ export function Head({ title, lede, week, base }: { title: string; lede: string;
           <a href={weekHref("/my", week)} aria-current={base === "/my" ? "page" : undefined}>My timesheet</a>
         </div>
         <a className="btn sm" aria-label="Previous week" href={weekHref(base, shiftWeek(week, -1))}>‹</a>
+        <WeekPicker base={base} monday={workDays(week)[0]} last={days[days.length - 1]} />
         <a className="btn sm" aria-label="Next week" href={weekHref(base, shiftWeek(week, 1))}>›</a>
       </div>
     </div>
   );
 }
+
+/** Utilisation as a bar and its figure on one line, so the % sits on the row's text line (the footer's average lines up under it). */
+export const Util = ({ pct }: { pct: number }) => <span className="util"><span className="ubar" aria-hidden="true"><i style={{ width: `${Math.min(100, pct)}%` }} /></span>{pct}%</span>;

@@ -1,0 +1,11 @@
+{
+  "change": "071-time-access-and-integrity",
+  "phase": "pr",
+  "branch": "specclaw/071-time-access-and-integrity",
+  "phases": {
+    "proposal": {"status":"approved","at":"2026-10-24T04:47:54Z"},
+    "tasks": {"status":"done","at":"2026-10-24T04:49:04Z"},
+    "verify": {"status":"done","at":"2026-10-24T05:38:57Z"},
+    "pr": {"status":"raised","at":"2026-10-24T05:49:45Z","tasks":{"done":8,"total":8,"failed":0},"verdict":"PASS","url":"https://github.com/chan4lk/amax/pull/103"}
+  }
+}
