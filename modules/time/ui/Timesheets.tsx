@@ -55,13 +55,13 @@ export function Timesheets({ g, base }: { g: TeamGrid; base: string }) {
             <tr key={r.weekId ?? r.userId} className="pinnable">
               <td data-label="Person"><div className="who"><span className={`av sm ${avatar(r.personName)}`}>{initials(r.personName)}</span><div>
                 {r.weekId ? <a href={`/time/w/${g.key}/p/${r.weekId}`}>{r.personName}</a> : r.personName}
-                {(r.note || r.rejectComment) && <small>{r.rejectComment ? `Rejected: ${r.rejectComment}` : r.note}</small>}
+                {r.note && <small className="rq-note" title={r.note}>{r.note}</small>}
                 {r.lastReminder && <small className="reminded">Reminded <Since at={r.lastReminder.at} /> by {r.lastReminder.by}</small>}</div></div></td>
               {r.cells.map((c) => <td className="num day" data-label={dayName(c.day)} key={c.day}><DayCell who={r.personName} dayLabel={dayLabel(c.day)} hours={c.hours} state={c.state} projects={c.projects} /></td>)}
               <td className="num" data-label="Total"><b>{r.total.toFixed(1)}</b></td>
               <td data-label="Utilisation"><Util pct={r.utilisation} />{r.overtime && <small className="reminded">overtime</small>}</td>
               <td data-label="From agents"><span className="chip agent">{r.total ? Math.round((r.agentHours / r.total) * 100) : 0}%</span></td>
-              <td data-label="Status"><div className="chips"><span className={`chip ${STATE[r.status][0]}`}>{STATE[r.status][1]}</span><Check row={r} /></div></td>
+              <td data-label="Status"><div className="chips"><span className={`chip ${STATE[r.status][0]}`} title={r.rejectComment ?? undefined}>{STATE[r.status][1]}{r.rejectComment && <span className="sr">: {r.rejectComment}</span>}</span><Check row={r} /></div></td>
               <td className="num" data-label=""><PinButton pin={sheetPin(r, g.key)} /></td>
             </tr>
           ))}

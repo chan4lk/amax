@@ -35,10 +35,11 @@ async function apply(tx: Tx, ctx: ServiceContext, r: ChangeRequest, week: WeekRo
   return { status: "applied", events: done.events, after: done.after };
 }
 
+// 073: submitted or approved, the week goes back to draft for the person's own fix (070 sent a submitted week back as
+// "rejected", which read as a refusal and dropped its hours from Reports until resubmitted).
 async function reopen(tx: Tx, ctx: ServiceContext, r: ChangeRequest, week: WeekRow): Promise<Outcome> {
-  if (week.status === "submitted") return { status: "reopened", events: (await decide(tx, ctx, week, "rejected", summary(r))).events };
   const chain = chainFor(viewerOf(ctx), week.user_id, await weekProjectIds(tx, week.id), await entityOf(tx, week.user_id)) ?? "admin";
-  return { status: "reopened", events: (await writeReopen(tx, ctx, week, summary(r), chain)).events };
+  return { status: "reopened", events: (await writeReopen(tx, ctx, week, summary(r), chain, ["submitted", "approved"])).events };
 }
 
 const act: Record<Decision, (tx: Tx, ctx: ServiceContext, r: ChangeRequest, week: WeekRow) => Promise<Outcome>> = {

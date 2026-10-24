@@ -21,7 +21,7 @@ export const requestTools: McpToolDef[] = [
     input: z.object({ entryId: z.uuid(), hours: z.number().positive().max(24).optional(), billable: z.boolean().optional(), note: z.string().max(500).optional(), projectKey: z.string().optional(),
       remove: z.boolean().optional().describe("true to ask for the entry to be removed"), reason: z.string().describe("Why the entry is wrong, 3 to 500 characters") }),
     propose: proposeRequest, card: requestCard, service: requestChange, run: (v, a, s = "mcp") => requestChange(ctxFor(v, s), a) }),
-  tool({ name: "decide_change_request", description: "Decide on a change request you review. apply: make the requested change now; the week keeps its status and the person is told. reopen: send the week back (submitted) or reopen it (approved) for the person to fix and resubmit. ask: put a question to the person (note). decline: refuse it (note says why).",
+  tool({ name: "decide_change_request", description: "Decide on a change request you review. apply: make the requested change now; the week keeps its status and the person is told. reopen: put the week back to draft (submitted or approved) for the person to fix and resubmit. ask: put a question to the person (note). decline: refuse it (note says why).",
     scope: "write", permission: "time:approve",
     input: z.object({ requestId, decision: z.enum(["apply", "reopen", "ask", "decline"]), note: z.string().optional().describe("Required for ask and decline") }),
     propose: proposeDecide, card: decideCard, service: decideRequest, run: (v, a, s = "mcp") => decideRequest(ctxFor(v, s), a) }),

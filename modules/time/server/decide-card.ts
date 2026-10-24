@@ -29,7 +29,7 @@ const cards: Record<Decide["decision"], (r: ChangeRequest, note?: string) => Too
     lines: [...asLines(changeText(r)), { label: "Reason", value: r.reason }, { label: "Week", value: `${r.week} stays ${r.weekStatus}` }, notice(r)] }),
   reopen: (r) => ({ title: `Reopen ${r.personName}'s ${r.week} for their fix`,
     lines: [...asLines(changeText(r)), { label: "Reason", value: r.reason },
-      { label: "Week", value: r.weekStatus === "submitted" ? `sent back to ${first(r)} to fix and resubmit` : `back to draft for ${first(r)} to fix and resubmit` }, notice(r)] }),
+      { label: "Week", value: `back to draft for ${first(r)} to fix and resubmit` }, notice(r)] }),
   ask: (r, note) => ({ title: `Ask ${r.personName} about their change to ${about(r)}`, lines: [{ label: "Question", value: note ?? "" }, notice(r)] }),
   decline: (r, note) => ({ title: `Decline ${r.personName}'s change to ${about(r)}`, lines: [...asLines(changeText(r)), { label: "Why", value: note ?? "" }, notice(r)] }),
 };

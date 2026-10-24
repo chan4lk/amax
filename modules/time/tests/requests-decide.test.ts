@@ -47,7 +47,7 @@ describe.skipIf(!hasDb)("070 amendment 3: deciding change requests (Postgres)", 
     expect(await w.db.q(sql`select after->>'requestId' as id from core.audit_event where action = 'time.week.locked_change'`)).toEqual([{ id: r.id }]);
   });
 
-  it("AC34 (D8, D9) a PM reopens an approved week, the owner is told, fixes and resubmits, and the request completes; a submitted week is sent back", async () => {
+  it("AC34 (D8, D9) a PM reopens an approved week, the owner is told, fixes and resubmits, and the request completes; a submitted week goes back to draft too (073)", async () => {
     const [kasun, nimal, ayesha, maya] = await Promise.all([as("kasun"), as("nimal"), as("ayesha"), as("maya")]);
     const tue = await w.entry(kasun, "Contoso Portal", "2026-10-13");
     const r = await requestChange(ctxFor(kasun), { entryId: tue.id, hours: 6, reason: "Client workshop ended at 3" });
@@ -62,7 +62,11 @@ describe.skipIf(!hasDb)("070 amendment 3: deciding change requests (Postgres)", 
     const hri = await w.entry(ayesha, "HR Insights", "2026-10-13");
     const sent = await requestChange(ctxFor(ayesha), { entryId: hri.id, hours: 7, reason: "Dentist at 4" });
     await decideRequest(ctxFor(maya), { requestId: sent.id, decision: "reopen" });
-    expect([await weekStatus("ayesha"), await w.status(sent.id)]).toEqual(["rejected", "reopened"]);
+    // 073: a submitted week goes back to draft too, not "rejected".
+    expect([await weekStatus("ayesha"), await w.status(sent.id)]).toEqual(["draft", "reopened"]);
+    await w.tick();
+    expect((await w.bell(ayesha, "time.week-reopened")).map((b) => b.title)).toEqual(["Your timesheet for 2026-W42 was reopened"]);
+    expect(await w.bell(ayesha, "time.week-rejected")).toEqual([]);
   }, 60_000);
 
   it("AC34 the approver's card names the person, the entry, the change and what happens to the week", async () => {
