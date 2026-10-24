@@ -1,0 +1,27 @@
+/* 073 AC-21: the week picker. The shown week is a highlighted range; the week under the pointer or focus is shaded. */
+.time .wkwrap{position:relative}
+.time .wkpick{display:inline-flex;align-items:center;gap:8px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.time .wkpick svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round}
+.time .wkcal{position:absolute;z-index:30;right:0;top:calc(100% + 8px);width:304px;max-width:calc(100vw - 32px);background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:16px;padding:12px;box-shadow:var(--shadow)}
+.time .wkcal .bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.time .wkcal .bar b{font-size:14px;font-weight:600}
+.time .wkcal .bar button,.time .wkcal .foot button{border:0;background:transparent;color:var(--ink-2);font:inherit;cursor:pointer;border-radius:8px}
+.time .wkcal .bar button{width:32px;height:32px;font-size:18px}
+.time .wkcal .bar button:hover,.time .wkcal .foot button:hover{background:var(--sunken);color:var(--ink)}
+.time .wkcal table{width:100%;border-collapse:separate;border-spacing:0 3px}
+.time .wkcal th{font-size:11px;font-weight:500;color:var(--ink-3);padding:4px 0;text-align:center}
+.time .wkcal th abbr{text-decoration:none}
+.time .wkcal th.wn{width:30px;font-variant-numeric:tabular-nums}
+.time .wkcal td{padding:0;text-align:center}
+.time .wkcal td button{width:100%;height:34px;border:0;background:transparent;color:var(--ink);font:inherit;font-size:13px;cursor:pointer;border-radius:9px;font-variant-numeric:tabular-nums}
+.time .wkcal td.out button{color:var(--ink-3)}
+.time .wkcal tr.hov td.d{background:var(--sunken)}
+.time .wkcal tr.sel td.d{background:var(--violet-soft)}
+.time .wkcal tr.sel td.d button{color:var(--chip-agent);font-weight:600}
+.time .wkcal tr td.d:nth-child(2){border-radius:10px 0 0 10px}
+.time .wkcal tr td.d:last-child{border-radius:0 10px 10px 0}
+.time .wkcal td.today button{box-shadow:inset 0 0 0 1.5px var(--chip-agent)}
+.time .wkcal td button:focus-visible,.time .wkcal .bar button:focus-visible,.time .wkcal .foot button:focus-visible{outline:2px solid var(--chip-agent);outline-offset:-2px}
+.time .wkcal .foot{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:6px;padding-top:8px;border-top:1px solid var(--line);font-size:12px;color:var(--ink-3)}
+.time .wkcal .foot button{padding:6px 10px;font-size:12.5px;font-weight:600;color:var(--chip-agent)}
+@media (max-width:600px){.time .wkcal{right:auto;left:50%;transform:translateX(-50%);position:fixed;top:120px}}

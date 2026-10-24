@@ -3,7 +3,7 @@ import { Card, EmptyState } from "@amax/ui";
 import type { WeekStatus } from "../contracts";
 import { notFound } from "next/navigation";
 import { wantedWeek } from "../server/weeks";
-import { isWeekend, shiftWeek, weekKey, type IsoWeek } from "../week";
+import { isWeekend, shiftWeek, weekKey, workDays, type IsoWeek } from "../week";
 import { WeekPicker } from "./WeekPicker";
 import "./time.css";
 
@@ -53,7 +53,7 @@ export function Head({ title, lede, week, base }: { title: string; lede: string;
           <a href={weekHref("/my", week)} aria-current={base === "/my" ? "page" : undefined}>My timesheet</a>
         </div>
         <a className="btn sm" aria-label="Previous week" href={weekHref(base, shiftWeek(week, -1))}>‹</a>
-        <WeekPicker base={base} />
+        <WeekPicker base={base} monday={workDays(week)[0]} />
         <a className="btn sm" aria-label="Next week" href={weekHref(base, shiftWeek(week, 1))}>›</a>
       </div>
     </div>

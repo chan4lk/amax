@@ -20,10 +20,26 @@ test("073 AC13 AC14 AC17 AC19 the grid: labelled cells, the summary, a day's pro
   expect(await axe(page)).toEqual([]);
 });
 
-test("073 AC21 the date beside the week arrows opens the week that contains it", async ({ page }) => {
+test("073 AC21 the week picker shows the week, highlights it in a themed calendar, and a day opens its week", async ({ page }) => {
   await signIn(page, "maya@lumenlabs.test", W42);
-  await page.getByLabel("Jump to the week of").fill("2026-11-04");
+  const pick = page.getByRole("button", { name: /^Week of Oct 12 – Oct 18, 2026/ });
+  await expect(pick).toHaveText("Oct 12 – Oct 18, 2026");
+  await pick.click();
+  const cal = page.getByRole("dialog", { name: "Choose a week" });
+  await expect(cal.locator("tr.sel td[aria-selected=true]")).toHaveCount(7);
+  await expect(cal.getByRole("button", { name: "Monday, October 12, 2026" })).toBeFocused();
+  expect(await axe(page)).toEqual([]);
+  await page.emulateMedia({ colorScheme: "dark" });
+  expect(await axe(page)).toEqual([]);
+  await page.keyboard.press("Escape");
+  await expect(cal).toHaveCount(0);
+  await expect(pick).toBeFocused();
+  await pick.click();
+  await cal.getByRole("button", { name: "Next month" }).click();
+  await expect(cal).toContainText("November 2026");
+  await cal.getByRole("button", { name: "Wednesday, November 4, 2026" }).click();
   await expect(page).toHaveURL(/\/time\/w\/2026-W45$/);
+  await expect(page.getByRole("button", { name: /^Week of Nov 2 – Nov 8, 2026/ })).toBeVisible();
 });
 
 test("073 AC16 AC20 a project filter and a sort only change the URL, and the figures follow", async ({ page }) => {
