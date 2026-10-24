@@ -16,7 +16,7 @@ export type DayMark = "missing" | "leave" | undefined;
 /** A day column head: Sat and Sun say "weekend"; My timesheet also marks Missing and On leave days (073). */
 export function DayHead({ day, mark }: { day: string; mark?: DayMark }) {
   const end = isWeekend(day);
-  return <th className={`num${mark === "missing" ? " missing" : ""}`}>{dayName(day)}{end && <small className="weekend"> weekend</small>}{mark === "missing" && <small className="missing-tag"> Missing</small>}{mark === "leave" && <small className="weekend"> On leave</small>}</th>;
+  return <th className={`num day${mark === "missing" ? " missing" : ""}`}>{dayName(day)}{end && <small className="weekend"> weekend</small>}{mark === "missing" && <small className="missing-tag"> Missing</small>}{mark === "leave" && <small className="weekend"> On leave</small>}</th>;
 }
 export const COLORS = ["var(--violet)", "var(--amber)", "var(--pink)", "var(--mint)"];
 export const STATUS: Record<WeekStatus, [string, string]> = { draft: ["draft", "Draft"], submitted: ["good", "Submitted"], approved: ["good", "Approved"], rejected: ["bad", "Rejected"] };
@@ -63,3 +63,6 @@ export function Head({ title, lede, week, days, base }: { title: string; lede: s
     </div>
   );
 }
+
+/** Utilisation as a bar and its figure on one line, so the % sits on the row's text line (the footer's average lines up under it). */
+export const Util = ({ pct }: { pct: number }) => <span className="util"><span className="ubar" aria-hidden="true"><i style={{ width: `${Math.min(100, pct)}%` }} /></span>{pct}%</span>;

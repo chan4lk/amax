@@ -1,6 +1,6 @@
 /* 073 AC-21: the week picker. The shown week is a highlighted range; the week under the pointer or focus is shaded. */
 .time .wkwrap{position:relative}
-.time .wkpick{display:inline-flex;align-items:center;gap:8px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.time .wkpick{display:inline-flex;align-items:center;gap:8px;height:46px;white-space:nowrap;font-variant-numeric:tabular-nums}
 .time .wkpick svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round}
 .time .wkcal{position:absolute;z-index:30;right:0;top:calc(100% + 8px);width:304px;max-width:calc(100vw - 32px);background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:16px;padding:12px;box-shadow:var(--shadow)}
 .time .wkcal .bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}

@@ -6,7 +6,7 @@ import { DayCell } from "./DayCell";
 import { Filters } from "./Filters";
 import { Since } from "./Since";
 import { decidePrompt, remindAllPrompt } from "./prompts";
-import { avatar, DayHead, dayName, initials, STATUS } from "./parts";
+import { avatar, DayHead, dayName, initials, STATUS, Util } from "./parts";
 
 // Quote every text cell, double embedded quotes, and defuse leading formula characters (CSV injection).
 export const csvCell = (v: string) => `"${(/^[=+\-@\t\r]/.test(v) ? `'${v}` : v).replace(/"/g, '""')}"`;
@@ -60,9 +60,9 @@ export function Timesheets({ g, base }: { g: TeamGrid; base: string }) {
                 {r.weekId ? <a href={`/time/w/${g.key}/p/${r.weekId}`}>{r.personName}</a> : r.personName}
                 {(r.note || r.rejectComment) && <small>{r.rejectComment ? `Rejected: ${r.rejectComment}` : r.note}</small>}
                 {r.lastReminder && <small className="reminded">Reminded <Since at={r.lastReminder.at} /> by {r.lastReminder.by}</small>}</div></div></td>
-              {r.cells.map((c) => <td className="num" data-label={dayName(c.day)} key={c.day}><DayCell who={r.personName} dayLabel={dayLabel(c.day)} hours={c.hours} state={c.state} projects={c.projects} /></td>)}
+              {r.cells.map((c) => <td className="num day" data-label={dayName(c.day)} key={c.day}><DayCell who={r.personName} dayLabel={dayLabel(c.day)} hours={c.hours} state={c.state} projects={c.projects} /></td>)}
               <td className="num" data-label="Total"><b>{r.total.toFixed(1)}</b></td>
-              <td data-label="Utilisation"><div className="ubar" aria-hidden="true"><i style={{ width: `${Math.min(100, r.utilisation)}%` }} /></div>{r.utilisation}%{r.overtime && <small className="reminded">overtime</small>}</td>
+              <td data-label="Utilisation"><Util pct={r.utilisation} />{r.overtime && <small className="reminded">overtime</small>}</td>
               <td data-label="From agents"><span className="chip agent">{r.total ? Math.round((r.agentHours / r.total) * 100) : 0}%</span></td>
               <td data-label="Status"><span className={`chip ${STATE[r.status][0]}`}>{STATE[r.status][1]}</span></td>
               <td className="num" data-label=""><div className="row-actions"><Action row={r} weekKey={g.key} /><PinButton pin={sheetPin(r, g.key)} /></div></td>
@@ -70,8 +70,8 @@ export function Timesheets({ g, base }: { g: TeamGrid; base: string }) {
           ))}
           {rows.length === 0 && <tr><td colSpan={g.days.length + 6} className="muted">Nobody matches these filters.</td></tr>}
         </tbody>
-        <tfoot><tr><th scope="row">Team</th>{g.footer.map((h, i) => <td className="num" data-label={dayName(g.days[i])} key={g.days[i]}>{h ? h.toFixed(1) : "–"}</td>)}
-          <td className="num" data-label="Week"><b>{g.summary.hours.toFixed(1)}</b></td><td data-label="Average">{g.summary.utilisation === null ? "–" : `${g.summary.utilisation}%`}</td><td colSpan={3} aria-hidden="true" /></tr></tfoot>
+        <tfoot><tr><th scope="row">Team</th>{g.footer.map((h, i) => <td className="num day" data-label={dayName(g.days[i])} key={g.days[i]}>{h ? h.toFixed(1) : "–"}</td>)}
+          <td className="num" data-label="Week"><b>{g.summary.hours.toFixed(1)}</b></td><td data-label="Average">{g.summary.utilisation === null ? "–" : <Util pct={g.summary.utilisation} />}</td><td colSpan={3} aria-hidden="true" /></tr></tfoot>
       </table></div>
     </div>
   );

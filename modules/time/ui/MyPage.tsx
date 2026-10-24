@@ -4,7 +4,7 @@ import { AskButton } from "./AskButton";
 import { myWeek } from "../server/my";
 import { openOfMine } from "../server/requests-read";
 import { MyRequests } from "./ChangeRequests";
-import { myLeaveDays } from "../server/my-days";
+import { myDayMarks } from "../server/my-days";
 import { DayHead, dayLabelFor, type DayMark, Head, hrs, SignInFirst, weekParam, STATUS, viewerOrNull, weekSpan } from "./parts";
 
 export async function MyPage({ viewer: raw, params, searchParams }: ScreenProps) {
@@ -13,9 +13,9 @@ export async function MyPage({ viewer: raw, params, searchParams }: ScreenProps)
   const m = await myWeek(viewer, weekParam(params.week));
   // 073 AC-3: a day reminder links here with ?day=, and that day's column is marked.
   const marked = searchParams?.day && m.days.includes(searchParams.day) ? searchParams.day : null;
-  // Approved leave days say so, as on Team time; only a reminder's day is marked Missing (073 AC-3).
-  const leave = await myLeaveDays(viewer, m.days);
-  const markOf = (d: string): DayMark => (d === marked ? "missing" : leave.includes(d) ? "leave" : undefined);
+  // As Team time marks them: past working days with nothing logged and no leave, and approved leave.
+  const marks = await myDayMarks(viewer, m.days, m.perDay);
+  const markOf = (d: string): DayMark => (d === marked || marks.missing.includes(d) ? "missing" : marks.leave.includes(d) ? "leave" : undefined);
   const requests = m.status === "submitted" || m.status === "approved" ? await openOfMine(viewer, m.key) : [];
   const open = m.status !== "approved";
   const canSubmit = m.total > 0 && (m.status === "draft" || m.status === "rejected");
@@ -42,7 +42,7 @@ export async function MyPage({ viewer: raw, params, searchParams }: ScreenProps)
           <caption className="sr">My hours for {m.key}</caption>
           <thead><tr><th>Project</th>{m.days.map((d) => <DayHead key={d} day={d} mark={markOf(d)} />)}<th className="num">Total</th><th className="num"><span className="sr">Actions</span></th></tr></thead>
           <tbody>
-            {m.rows.map((r) => <tr key={r.projectName} className="pinnable"><td data-label="Project">{r.projectName}</td>{r.days.map((h, i) => <td className="num" data-label={dayLabelFor(m.days[i], markOf(m.days[i]))} key={i}>{hrs(h)}</td>)}<td className="num" data-label="Total"><b>{r.total.toFixed(1)}</b></td><td className="num" data-label="">{pin(r.projectName)}</td></tr>)}
+            {m.rows.map((r) => <tr key={r.projectName} className="pinnable"><td data-label="Project">{r.projectName}</td>{r.days.map((h, i) => <td className={`num${markOf(m.days[i]) === "missing" ? " missing" : ""}`} data-label={dayLabelFor(m.days[i], markOf(m.days[i]))} key={i}>{hrs(h)}</td>)}<td className="num" data-label="Total"><b>{r.total.toFixed(1)}</b></td><td className="num" data-label="">{pin(r.projectName)}</td></tr>)}
             {m.rows.length === 0 && <tr><td colSpan={m.days.length + 3} className="muted">No time logged this week.</td></tr>}
           </tbody>
           <tfoot><tr><th scope="row">Total</th>{m.perDay.map((h, i) => <td className={`num${markOf(m.days[i]) === "missing" ? " missing" : ""}`} data-label={dayLabelFor(m.days[i], markOf(m.days[i]))} key={i}>{hrs(h)}</td>)}<td className="num" data-label="Week"><b>{m.total.toFixed(1)}</b></td><td aria-hidden="true" /></tr></tfoot>

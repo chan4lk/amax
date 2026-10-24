@@ -406,3 +406,10 @@ Polish, second pass (2026-10-24, product owner: "polished end to end"):
 Time 132/132; `tsc` clean; `pnpm lint` exit 0; `check-graph --root` only the known R7 fixture; web build exit 0; time e2e 9/9. Checked by eye: Ayesha and Tharushi W43 (light, dark), My timesheet and Team time at 390 px.
 
 Product owner, 2026-10-24: "Missing label is not needed". My timesheet no longer marks every empty past day Missing; it marks approved leave days "On leave", and only the day a reminder links to (`?day=`, AC-3) says Missing, as before the polish pass. `server/my-days.ts` is now `myLeaveDays`; `tests/my-days.test.ts` checks Ayesha's W42 leave (Fri) and none for Kasun. Missing stays red where it shows.
+
+Product owner, 2026-10-24: keep "Missing" and restore it; align the labels; fix all UI misalignments in 070–073. Done:
+- My timesheet's Missing marks are restored (`myDayMarks`: Missing for past working days with nothing logged and no leave, On leave for approved leave); the Missing column's "–" cells are red too.
+- Column heads are top-aligned, so day names sit on one line whether or not a day has a tag (weekend, On leave, Missing); tags share one size and spacing.
+- Team grid: day heads, cells and the footer's daily totals share a centre line; utilisation is a bar and its figure on one line (the footer's average uses the same layout, so the figures line up), with "overtime" under the figure without moving it off the row's line; row buttons (Approve, Remind) share a width; the last column has its padding back.
+- Header: the week arrows and the week button are the view switch's height (46 px), with larger arrows.
+Checked at 2× in light and dark, and at 390 px. Time 132/132; `tsc` clean; `pnpm lint` exit 0; web build exit 0; time e2e 9/9.
