@@ -3,10 +3,12 @@ import { changeText, type ChangeRequest } from "../server/requests-read";
 import { AskButton } from "./AskButton";
 import { reviewPrompt } from "./prompts";
 import { Since } from "./Since";
+import { MyRequest } from "./MyRequest";
 import { avatar, initials, STATUS } from "./parts";
 
 // 070 amendment 3: open change requests the viewer reviews. Decisions are made in chat, on a confirm card.
-export const requestPin = (r: ChangeRequest) => ({ label: `${r.personName}, change request`, tool: "get_change_requests", args: { id: r.id } });
+export { requestPin } from "./request-view";
+import { requestPin } from "./request-view";
 
 export function ChangeRequests({ rows }: { rows: ChangeRequest[] }) {
   return (
@@ -36,11 +38,7 @@ export function ChangeRequests({ rows }: { rows: ChangeRequest[] }) {
   );
 }
 
+// 073: the owner's requests on My timesheet, one card each (`MyRequest`).
 export function MyRequests({ rows }: { rows: ChangeRequest[] }) {
-  return <>{rows.map((r) => (
-    <div key={r.id} className="card pinnable notice" role="status" style={{ marginBottom: 20 }}>
-      <div className="card-head"><h2>Change requested: {r.before.projectName}, {r.dayLabel}</h2><PinButton inline pin={requestPin(r)} /></div>
-      <p>{changeText(r).join(" · ")} · {r.status === "needs_info" ? `Your approver asks: ${r.question}` : "Waiting for review"} · asked <Since at={r.createdAt} /></p>
-    </div>
-  ))}</>;
+  return <>{rows.map((r) => <MyRequest key={r.id} r={r} />)}</>;
 }

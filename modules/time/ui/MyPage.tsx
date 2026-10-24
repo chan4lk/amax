@@ -2,7 +2,7 @@ import type { ScreenProps } from "@amax/core";
 import { PinButton } from "@amax/ui";
 import { AskButton } from "./AskButton";
 import { myWeek } from "../server/my";
-import { openOfMine } from "../server/requests-read";
+import { shownToOwner } from "../server/requests-read";
 import { MyRequests } from "./ChangeRequests";
 import { myDayMarks } from "../server/my-days";
 import { DayHead, dayLabelFor, type DayMark, Head, hrs, SignInFirst, weekParam, STATUS, viewerOrNull, weekSpan } from "./parts";
@@ -16,7 +16,8 @@ export async function MyPage({ viewer: raw, params, searchParams }: ScreenProps)
   // As Team time marks them: past working days with nothing logged and no leave, and approved leave.
   const marks = await myDayMarks(viewer, m.days, m.perDay);
   const markOf = (d: string): DayMark => (d === marked || marks.missing.includes(d) ? "missing" : marks.leave.includes(d) ? "leave" : undefined);
-  const requests = m.status === "submitted" || m.status === "approved" ? await openOfMine(viewer, m.key) : [];
+  // Open requests, and ones decided this past week (a reopened week is a draft again, so any status).
+  const requests = m.status ? await shownToOwner(viewer, m.key) : [];
   const open = m.status !== "approved";
   const canSubmit = m.total > 0 && (m.status === "draft" || m.status === "rejected");
   const weekPin = { label: `My timesheet ${m.key}`, tool: "get_my_week", args: { week: m.key } };
