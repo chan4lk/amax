@@ -90,13 +90,14 @@ export function Chat({ open, onClose, returnFocus, signedIn, userId, voice, usag
   const pinsNow = useRef(pins);
   pinsNow.current = pins;
 
-  useEffect(() => { if (open) input.current?.focus(); }, [open]);
+  // Chat is fixed to the screen, so focusing in or out of it never needs to scroll the page under it.
+  useEffect(() => { if (open) input.current?.focus({ preventScroll: true }); }, [open]);
   // The caret goes to the end of a filled prompt in the same commit that shows it, so nothing can see
   // the prompt with the caret elsewhere, and no later frame moves a caret the person already placed.
   useLayoutEffect(() => {
     const el = input.current;
     if (!el || filled.current === null || filled.current !== text) return;
-    el.focus();
+    el.focus({ preventScroll: true });
     el.setSelectionRange(text.length, text.length);
   }, [text]);
   // Focus can leave and come back before the first key (the route focus after chat follows a record,
@@ -168,13 +169,13 @@ export function Chat({ open, onClose, returnFocus, signedIn, userId, voice, usag
     return () => document.removeEventListener("click", onClick, true);
   }, [picking]);
 
-  const close = useCallback(() => { setPicking(false); onClose(); returnFocus.current?.focus(); }, [onClose, returnFocus]);
+  const close = useCallback(() => { setPicking(false); onClose(); returnFocus.current?.focus({ preventScroll: true }); }, [onClose, returnFocus]);
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== "Escape") return;
       e.preventDefault();
-      if (history) { setHistory(null); input.current?.focus(); } else close();
+      if (history) { setHistory(null); input.current?.focus({ preventScroll: true }); } else close();
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
@@ -192,7 +193,7 @@ export function Chat({ open, onClose, returnFocus, signedIn, userId, voice, usag
     setPins([]);
     setIntent(undefined);
     setHistory(null);
-    input.current?.focus();
+    input.current?.focus({ preventScroll: true });
   }
 
   async function reopen(id: string) {
@@ -204,7 +205,7 @@ export function Chat({ open, onClose, returnFocus, signedIn, userId, voice, usag
     setPins(r.conversation.pins);
     setIntent(undefined);
     setHistory(null);
-    input.current?.focus();
+    input.current?.focus({ preventScroll: true });
     announce(`Reopened ${r.conversation.title}`);
   }
 
@@ -263,7 +264,7 @@ export function Chat({ open, onClose, returnFocus, signedIn, userId, voice, usag
 
   function talk() {
     const Ctor = (window as unknown as { SpeechRecognition?: SpeechCtor; webkitSpeechRecognition?: SpeechCtor }).SpeechRecognition ?? (window as unknown as { webkitSpeechRecognition?: SpeechCtor }).webkitSpeechRecognition;
-    if (!voice || !Ctor) { input.current?.focus(); return; }
+    if (!voice || !Ctor) { input.current?.focus({ preventScroll: true }); return; }
     const rec = new Ctor();
     rec.lang = navigator.language.startsWith("si") || navigator.language.endsWith("LK") ? "en-LK" : "en-AU";
     rec.interimResults = false;
@@ -305,7 +306,7 @@ export function Chat({ open, onClose, returnFocus, signedIn, userId, voice, usag
                 ) : (
                   <div className="acts">
                   <button className="btn sm primary" type="button" onClick={() => decide(e.action, true)}>Add it</button>
-                  <button className="btn sm" type="button" onClick={() => { setText("Change "); input.current?.focus(); }}>Change something</button>
+                  <button className="btn sm" type="button" onClick={() => { setText("Change "); input.current?.focus({ preventScroll: true }); }}>Change something</button>
                   <button className="btn sm" type="button" onClick={() => decide(e.action, false)}>Cancel</button>
                   </div>
                 )}

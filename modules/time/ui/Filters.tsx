@@ -1,13 +1,16 @@
 "use client";
 
-// 073 AC-16: read-only controls that only change the URL: project, team and status.
+import { useRouter } from "next/navigation";
+
+// 073 AC-16: read-only controls that only change the URL: project, team and status. The page updates in place and keeps its scroll.
 type Props = { projects: string[]; teams: string[] | null; query: Record<string, string | undefined>; base: string };
 const STATUSES: [string, string][] = [["", "Any status"], ["not_submitted", "Not submitted"], ["submitted", "Submitted"], ["approved", "Approved"], ["rejected", "Rejected"]];
 
 export function Filters({ projects, teams, query, base }: Props) {
+  const router = useRouter();
   const go = (path: string, change: Record<string, string>) => {
     const next = new URLSearchParams(Object.entries({ ...query, ...change }).filter(([, val]) => val) as [string, string][]);
-    window.location.assign(`${path}${next.size ? `?${next}` : ""}`);
+    router.push(`${path}${next.size ? `?${next}` : ""}`, { scroll: false });
   };
   const pick = (key: string) => (e: { target: { value: string } }) => go(base, { [key]: e.target.value });
   return (

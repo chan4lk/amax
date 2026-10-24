@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { PinButton } from "@amax/ui";
 import type { GridRow, TeamGrid } from "../server/grid";
 import { dayLabel } from "../week";
@@ -32,7 +33,7 @@ function SortHead({ g, base, by, label, num }: { g: TeamGrid; base: string; by: 
   const on = (g.query.sort ?? "name") === by;
   const dir = on && g.query.dir !== "desc" ? "desc" : "asc";
   const q = new URLSearchParams(Object.entries({ ...g.query, sort: by, dir }).filter(([, v]) => v) as [string, string][]);
-  return <th className={num ? "num" : undefined} aria-sort={on ? (g.query.dir === "desc" ? "descending" : "ascending") : "none"}><a className="sort" href={`${base}?${q}`}>{label}{on ? (g.query.dir === "desc" ? " ↓" : " ↑") : ""}</a></th>;
+  return <th className={num ? "num" : undefined} aria-sort={on ? (g.query.dir === "desc" ? "descending" : "ascending") : "none"}><Link className="sort" href={`${base}?${q}`} scroll={false}>{label}{on ? (g.query.dir === "desc" ? " ↓" : " ↑") : ""}</Link></th>;
 }
 
 export function Timesheets({ g, base }: { g: TeamGrid; base: string }) {
