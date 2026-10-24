@@ -41,3 +41,24 @@
 .time .rq-who .pin.inline{margin-left:auto}
 .time .rq-say.reply{background:var(--chip-good-bg);border-left-color:var(--chip-good)}
 .time .rq-wait{margin:0;font-size:13.5px}
+/* Folding: each request is a <details>; folded it is one row (chip, who or what, the change, when, pin, chevron). */
+.time .rq-fold>summary{list-style:none;cursor:pointer;display:flex;align-items:center;flex-wrap:wrap;gap:8px 14px;border-radius:12px;padding:4px 2px}
+.time .rq-fold>summary::-webkit-details-marker{display:none}
+.time .rq-fold>summary:focus-visible{outline:2px solid var(--chip-agent);outline-offset:2px}
+.time .rq-fold>summary:hover .rq-title{text-decoration:underline;text-underline-offset:3px}
+.time .rq-title{flex:1 1 220px;min-width:0}
+.time .rq-title>b{font-size:16px}
+.time .rq-short{font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+.time .rq-foldwrap{position:relative}
+.time .rq-foldwrap>.pin.inline{position:absolute;top:10px;right:0;margin:0}
+.time .rq-fold>summary{padding-right:44px}
+.time .rq-chev{width:10px;height:10px;flex:none;border-right:2px solid var(--ink-3);border-bottom:2px solid var(--ink-3);transform:rotate(-45deg);transition:transform .15s;margin:0 6px}
+.time .rq-fold[open] .rq-chev{transform:rotate(45deg)}
+.time .rq-body{display:flex;flex-direction:column;gap:12px;padding-top:14px}
+.time .rq-fold[open]>summary .rq-short{display:none}
+.time .rq-review{padding:12px 0}
+.time .rq-review:first-child{padding-top:0}
+.time .requests .rq-all,.time .rq-group-head .rq-all{margin-left:auto}
+.time .rq-group-head{display:flex;margin-bottom:8px}
+.time .rq.notice{gap:0}
+@media (prefers-reduced-motion:reduce){.time .rq-chev{transition:none}}
