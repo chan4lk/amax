@@ -1,7 +1,7 @@
 # 🦞 SpecClaw Dashboard
 
 **Project:** amax
-**Last Updated:** 2026-10-27 14:03 UTC
+**Last Updated:** 2026-10-27 14:08 UTC
 
 _1 unnumbered change · run `/specclaw-extras:renumber` to order them_
 
@@ -11,7 +11,7 @@ _1 unnumbered change · run `/specclaw-extras:renumber` to order them_
 - 🔀 **067-glob-security-bump** — pr raised | 2/2 tasks (100%) | 0 failed | PR #96 merged
 - 🔀 **068-overview-dashboard** — pr raised | 6/6 tasks (100%) | 0 failed | PR #97 merged
 - 🔀 **069-chat-tool-schema-hotfix** — pr raised | 3/3 tasks (100%) | 0 failed | PR #98 merged
-- 📝 **074-fork-pr-review-gate** — tasks done | 0/4 tasks (0%) | 0 failed
+- 📝 **074-fork-pr-review-gate** — tasks done | 4/4 tasks (100%) | 0 failed
 
 ## Pending Proposals
 

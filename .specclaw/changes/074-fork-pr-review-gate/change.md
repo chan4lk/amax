@@ -41,3 +41,5 @@ There is no app screen. The mock shows the new `review-gate` CI check output for
   Depends: T2
 
 ## Verify
+
+Quality: not_run (specclaw-quality-scan: jq "Argument list too long" on this repo); specclaw-preset-check reports nothing for the new files.
