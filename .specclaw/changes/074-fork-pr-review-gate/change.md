@@ -1,6 +1,6 @@
 # Fork PRs must carry a specclaw-review loop
 
-**Change:** 074-fork-pr-review-gate · **Created:** 2026-10-27
+**Change:** 074-fork-pr-review-gate · **Created:** 2026-10-27 · **Review:** change
 
 ## Problem
 
@@ -14,7 +14,7 @@ There is no app screen. The mock shows the new `review-gate` CI check output for
 
 ## Acceptance Criteria
 
-1. **AC-1** `change.md` can declare its review scope in the header: `**Review:** change` or `**Review:** module-end`. A missing line means `change`. The lean template and AGENTS.md document it, and a module-end review is run with `--since`, so its rounds record a non-null `since`.
+1. **AC-1** `change.md` can declare its review scope in the header: `**Review:** change` or `**Review:** module-end`. A missing line means `change`. AGENTS.md and `.specclaw/context.md` document it (the lean template lives in the plugin, outside this repo), and a module-end review is run with `--since`, so its rounds record a non-null `since`.
 2. **AC-2** `scripts/check-review-gate.mjs` takes the base and head refs, finds every `.specclaw/changes/<NNN>-*/` (active or archive) touched by the PR diff, and prints one line per change: `pass`, `fail — <reason>` or `skip — <reason>`. It exits non-zero on any fail. Unit tests cover each rule below.
 3. **AC-3** When the PR comes from a fork, each touched change needs review evidence in `review/round-N.json`:
    - a round with `final: true` and `status: "ran"`;
@@ -28,5 +28,16 @@ There is no app screen. The mock shows the new `review-gate` CI check output for
 6. **AC-6** `.github/workflows/ci.yml` has a `review-gate` job on `pull_request`: checkout with full history, pass `github.event.pull_request.head.repo.full_name != github.repository` as the fork flag, and run the script with a read-only token and no secrets. Pushes to `main` don't run it.
 
 ## Tasks
+
+- [ ] `T1` — Document the `**Review:** change | module-end` header and the fork rule (AC-1)
+  Files: AGENTS.md, .specclaw/context.md
+- [ ] `T2` — `check-review-gate.mjs`: pure rule core plus git-backed CLI; scope parse, evidence checks, fork and same-repo rules, no-proposal fail (AC-2, AC-3, AC-4, AC-5)
+  Files: scripts/check-review-gate.mjs
+- [ ] `T3` — Tests for every gate rule, using fixture change dirs (AC-2, AC-3, AC-4, AC-5)
+  Files: packages/testing/tests/review-gate.test.ts
+  Depends: T2
+- [ ] `T4` — `review-gate` job in CI on pull_request, full history, fork flag, read-only (AC-6)
+  Files: .github/workflows/ci.yml
+  Depends: T2
 
 ## Verify

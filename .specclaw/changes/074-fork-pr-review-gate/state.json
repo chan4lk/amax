@@ -1,0 +1,9 @@
+{
+  "change": "074-fork-pr-review-gate",
+  "phase": "tasks",
+  "branch": "",
+  "phases": {
+    "proposal": {"status":"approved","at":"2026-10-27T14:02:44Z"},
+    "tasks": {"status":"done","at":"2026-10-27T14:03:11Z"}
+  }
+}
