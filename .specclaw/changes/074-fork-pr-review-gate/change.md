@@ -36,7 +36,7 @@ There is no app screen. The mock shows the new `review-gate` CI check output for
 - [x] `T3` — Tests for every gate rule, using fixture change dirs (AC-2, AC-3, AC-4, AC-5)
   Files: packages/testing/tests/review-gate.test.ts
   Depends: T2
-- [ ] `T4` — `review-gate` job in CI on pull_request, full history, fork flag, read-only (AC-6)
+- [x] `T4` — `review-gate` job in CI on pull_request, full history, fork flag, read-only (AC-6)
   Files: .github/workflows/ci.yml
   Depends: T2
 

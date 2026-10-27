@@ -54,6 +54,22 @@ jobs:
           path: apps/web/test-results
           retention-days: 7
 
+  # 074: a fork PR must carry a finished specclaw-review loop; same-repo PRs only at module end.
+  review-gate:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Review evidence for touched specclaw changes
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          FORK: ${{ github.event.pull_request.head.repo.full_name != github.repository }}
+        run: node scripts/check-review-gate.mjs --base "$BASE_SHA" --head "$HEAD_SHA" --fork "$FORK"
+
   vercel:
     runs-on: ubuntu-latest
     steps:
