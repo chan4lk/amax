@@ -1,0 +1,8 @@
+$ node scripts/check-review-gate.mjs --base b257a6d57eb44e0a3e685cc9f48af58183393d40 --head HEAD --fork false
+same-repo PR: module cadence
+074-fork-pr-review-gate      scope=change     skip — single change, review runs at module end
+exit 0
+$ ... --fork true
+fork PR: review evidence required
+074-fork-pr-review-gate      scope=change     fail — no final review round (review/ has 0 rounds)
+exit 1

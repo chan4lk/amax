@@ -898,21 +898,26 @@ body.picking .pinnable:hover{outline:2px dashed var(--violet);outline-offset:2px
   <div class="card">
     <div class="card-head"><h2>PR #201 · from fork demo-contributor/amax</h2><span class="chip">review-gate: passed</span></div>
     <pre>fork PR: review evidence required
-075-leave-carryover      scope=change      pass — final round 4/5 ran, 0 blockers, head 3f9c2e1 in PR
+075-leave-carryover      scope=change      pass — final round 4/5 clean, 0 blockers, head 3f9c2e1 in PR
 </pre>
   </div>
   <div class="card">
     <div class="card-head"><h2>PR #202 · from fork sample-dev/amax</h2><span class="chip">review-gate: failed</span></div>
-    <pre>fork PR: review evidence required
-076-expense-limits       scope=change      fail — no final review round (review/ has round-1..2, final:false)
-(no change dir)                            fail — modules/finance/** changed with no specclaw change: propose first
+    <pre style="white-space:pre-wrap">fork PR: review evidence required
+076-expense-limits       scope=change      fail — no final review round (review/ has 2 rounds)
+</pre>
+  </div>
+  <div class="card">
+    <div class="card-head"><h2>PR #204 · from fork sample-dev/amax</h2><span class="chip">review-gate: failed</span></div>
+    <pre style="white-space:pre-wrap">fork PR: review evidence required
+(no change dir)                            fail — code changed with no specclaw change: propose first
 </pre>
   </div>
   <div class="card">
     <div class="card-head"><h2>PR #203 · from chan4lk/amax (same repo)</h2><span class="chip">review-gate: passed</span></div>
     <pre>same-repo PR: module cadence
 077-time-export          scope=change      skip — single change, review runs at module end
-078-time-close           scope=module-end  pass — final round 3/5 ran, since=a1b2c3d, head in PR
+078-time-close           scope=module-end  pass — final round 3/5 clean, 0 blockers, head a1b2c3d in PR
 </pre>
   </div>
 </section>
