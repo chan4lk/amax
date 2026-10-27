@@ -30,7 +30,10 @@ _Not yet documented._
 
 <!-- What NOT to do — banned patterns, deprecated APIs, performance floors, security rules. -->
 
-_Not yet documented._
+- Review gate (074): a PR from a fork fails CI unless every change dir it touches holds a final
+  specclaw-review round (`final: true`, `status: "ran"`, no open blocker, head inside the PR, at most
+  five passes). Same-repo PRs are checked only for changes whose header says `**Review:** module-end`;
+  that loop must run with `--since`. A fork PR that changes code with no change dir fails: propose first.
 
 ## Recent Decisions
 

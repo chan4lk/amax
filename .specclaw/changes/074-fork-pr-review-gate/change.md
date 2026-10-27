@@ -29,7 +29,7 @@ There is no app screen. The mock shows the new `review-gate` CI check output for
 
 ## Tasks
 
-- [ ] `T1` — Document the `**Review:** change | module-end` header and the fork rule (AC-1)
+- [x] `T1` — Document the `**Review:** change | module-end` header and the fork rule (AC-1)
   Files: AGENTS.md, .specclaw/context.md
 - [ ] `T2` — `check-review-gate.mjs`: pure rule core plus git-backed CLI; scope parse, evidence checks, fork and same-repo rules, no-proposal fail (AC-2, AC-3, AC-4, AC-5)
   Files: scripts/check-review-gate.mjs

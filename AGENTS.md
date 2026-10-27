@@ -29,6 +29,12 @@ counts rounds and final passes; a round that returns not_run doesn't count. Afte
 record the open findings and the stop under `## Verify`, then go to the PR. If a blocker is still open,
 ask the product owner first.
 
+**Review scope.** Each `change.md` header declares `**Review:** change` (the default when the line is
+missing) or `**Review:** module-end` for a module's last change, whose loop runs with `--since` over the
+whole module. CI's `review-gate` job (`scripts/check-review-gate.mjs`) checks the review files under
+`review/`. A PR from a fork must carry a finished loop for every change it touches, whatever the scope.
+A same-repo PR needs one only for a `module-end` change.
+
 ## Core rules
 
 1. **Chat does the writes.** No CRUD forms, write dialogs or inline edit fields in pages. Every
