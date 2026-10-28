@@ -891,6 +891,74 @@ body.picking .pinnable:hover{outline:2px dashed var(--violet);outline-offset:2px
   </div>
 </section>
 
+<!-- ================= 074 Fork PR review gate ================= -->
+<section data-change="074-fork-pr-review-gate" id="074-fork-pr-review-gate" data-roles="all" data-title="Review gate on fork PRs" data-nav="no" data-parent="001-amax-foundation">
+  <h1>Review gate on fork PRs</h1>
+  <p class="lede">A CI check with no app screen. Below is sample output from the <code>review-gate</code> job. Fictional PRs and forks.</p>
+  <div class="card">
+    <div class="card-head"><h2>PR #201 · from fork demo-contributor/amax</h2><span class="chip">review-gate: passed</span></div>
+    <pre>fork PR: review evidence required
+075-leave-carryover      scope=change      pass — final round 4/5 clean, 0 blockers, head 3f9c2e1 in PR
+</pre>
+  </div>
+  <div class="card">
+    <div class="card-head"><h2>PR #202 · from fork sample-dev/amax</h2><span class="chip">review-gate: failed</span></div>
+    <pre style="white-space:pre-wrap">fork PR: review evidence required
+076-expense-limits       scope=change      fail — no final review round (review/ has 2 rounds)
+</pre>
+  </div>
+  <div class="card">
+    <div class="card-head"><h2>PR #204 · from fork sample-dev/amax</h2><span class="chip">review-gate: failed</span></div>
+    <pre style="white-space:pre-wrap">fork PR: review evidence required
+(no change dir)                            fail — code changed with no specclaw change: propose first
+</pre>
+  </div>
+  <div class="card">
+    <div class="card-head"><h2>PR #203 · from chan4lk/amax (same repo)</h2><span class="chip">review-gate: passed</span></div>
+    <pre>same-repo PR: module cadence
+077-time-export          scope=change      skip — single change, review runs at module end
+078-time-close           scope=module-end  pass — final round 3/5 clean, 0 blockers, head a1b2c3d in PR
+</pre>
+  </div>
+</section>
+<!-- ================= 068 Overview deltas ================= -->
+<section data-change="069-chat-tool-schema-hotfix" id="069-chat-tool-schema-hotfix" data-roles="all" data-title="Chat answers again" data-nav="no" data-parent="001-amax-foundation">
+  <h1>Chat answers again</h1>
+  <p class="lede">A fix with no new screen: chat replies instead of showing "AI chat failed". Fictional data.</p>
+  <div class="card">
+    <div class="card-head"><h2>amax chat</h2><span class="chip">Before: every turn failed</span></div>
+    <p><strong>You:</strong> What needs my attention on Fleet Tracker?</p>
+    <p><strong>amax:</strong> Two items: the March invoice for Northwind Demo Co. is 12 days overdue, and Kasun Dias logged 46 h this week.</p>
+  </div>
+</section>
+<section data-change="068-overview-dashboard" id="068-overview-dashboard" data-roles="all" data-title="Overview: changed blocks" data-nav="no" data-parent="001-amax-foundation">
+  <h1>Overview: changed blocks</h1>
+  <p class="lede">The Overview is built as in <a href="#001-amax-foundation">Delivery overview</a>. Only these two blocks differ.</p>
+  <div class="card">
+    <div class="card-head"><h2>Where time went</h2><span class="chip">This week, by project</span></div>
+    <div class="donut-wrap">
+      <svg viewBox="0 0 170 170" role="img" aria-label="Hours this week by project: Fleet Tracker 58 h, Contoso Portal 51 h, HR Insights 32.5 h">
+        <circle cx="85" cy="85" r="60" fill="none" stroke="#7B61FF" stroke-width="22" stroke-dasharray="155 377" transform="rotate(-90 85 85)"/>
+        <circle cx="85" cy="85" r="60" fill="none" stroke="#2FCB8C" stroke-width="22" stroke-dasharray="136 377" stroke-dashoffset="-155" transform="rotate(-90 85 85)"/>
+        <circle cx="85" cy="85" r="60" fill="none" stroke="#F7B23B" stroke-width="22" stroke-dasharray="86 377" stroke-dashoffset="-291" transform="rotate(-90 85 85)"/>
+        <text x="85" y="90" text-anchor="middle" font-size="18" font-weight="700" fill="currentColor">141.5 h</text>
+      </svg>
+      <ul class="donut-legend">
+        <li><i style="background:#7B61FF"></i>Fleet Tracker <b>58 h · 41%</b></li>
+        <li><i style="background:#2FCB8C"></i>Contoso Portal <b>51 h · 36%</b></li>
+        <li><i style="background:#F7B23B"></i>HR Insights <b>32.5 h · 23%</b></li>
+      </ul>
+    </div>
+  </div>
+  <div class="card">
+    <h2>Release readiness</h2>
+    <div class="split">
+      <div><div class="k">Contoso v2.4.0</div><div class="big">2 of 4</div><div class="gbar"><i style="width:50%;background:linear-gradient(90deg,#C3B5FF,#7B61FF)"></i></div><small class="muted" style="display:block;margin-top:10px;font-size:12.5px">Dev, QA passed. In QA, UAT next</small></div>
+      <div><div class="k">Fleet v1.8.0</div><div class="big">2 of 4</div><div class="gbar"><i style="width:50%;background:linear-gradient(90deg,#FFC2B8,#F26B5B)"></i></div><small class="muted" style="display:block;margin-top:10px;font-size:12.5px">Rolled back from UAT on Oct 14</small></div>
+    </div>
+  </div>
+</section>
+
 <!-- ================= Insights ================= -->
 <section data-change="026-insights" id="001-amax-foundation-insights" data-roles="admin leadership pm" data-title="Insights" data-icon="spark">
   <div class="row head">
@@ -2779,6 +2847,95 @@ Apply 3 updates? (y/N)</pre></div>
         </ul></div>
     </div>
   </div>
+</section>
+<!-- ================= 066 Career tree ================= -->
+<section data-change="066-career-tree" id="066-career-tree" class="career-tree" data-roles="admin leadership hr pm" data-title="Kasun Dias, career" data-nav="no" data-parent="001-amax-foundation-people">
+  <style>
+    .career-tree .ct{width:100%;max-width:900px;height:auto;display:block;margin:0 auto}
+    .career-tree .ct text{font:500 11px var(--font);fill:var(--ink-3)}
+    .career-tree .ct .pj,.career-tree .ct .gr{fill:var(--ink);font-weight:600;font-size:12px}
+    .career-tree .ct .grid{stroke:var(--line);stroke-width:1}
+    .career-tree .ct .leader{stroke:var(--line-2);stroke-width:1;stroke-dasharray:2 3}
+    .career-tree .ct .trunk{fill:var(--ink-2)} .career-tree .ct .trunkroot{stroke:var(--ink-2);stroke-width:8}
+    .career-tree .ct .halo{fill:none;stroke:var(--card)}
+    .career-tree .ct .branch{fill:none;stroke:var(--ink-2);stroke-linecap:round;stroke-linejoin:round}
+    .career-tree .ct .stem{stroke:var(--ink-3);stroke-width:1}
+    .career-tree .ct .lf{stroke:var(--card);stroke-width:1.5} .career-tree .ct .lf.prop{fill-opacity:.35;stroke:var(--ink-3);stroke-dasharray:2 2}
+    .career-tree .ct .ring{stroke:var(--violet);stroke-width:3;stroke-linecap:round}
+    .career-tree .ct .fruit{fill:var(--mint);stroke:var(--card);stroke-width:2} .career-tree .ct .fruit.old{fill:var(--ink-3);fill-opacity:.5}
+    .career-tree .ct .ground{stroke:var(--line-2);stroke-width:1.5}
+    .career-tree .ct .root{stroke:var(--ink-3);stroke-width:1.5;stroke-dasharray:3 4} .career-tree .ct .rn{fill:var(--card);stroke:var(--ink-2);stroke-width:2}
+    .career-tree .ct .node{cursor:pointer} .career-tree .ct .node:focus{outline:none}
+    .career-tree .ct .node:focus-visible>:first-child,.career-tree .ct .node:hover>:first-child{stroke:var(--violet)}
+    .career-tree .ct .sel .ring{stroke-width:5} .career-tree .ct .sel .gr{fill:var(--violet)}
+    .career-tree .tkey{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px;justify-content:center}
+    .career-tree .tkey i{display:inline-block;width:9px;height:9px;border-radius:50%}
+    @media (max-width:720px){ .career-tree .cols{display:flex;flex-direction:column-reverse} }
+  </style>
+  <nav class="crumb" aria-label="Breadcrumb"><a href="#001-amax-foundation-people">People</a><span>/</span><a href="#001-amax-foundation-person">Kasun Dias</a><span>/</span>Career</nav>
+  <div class="row head"><div><h1>Kasun Dias, career</h1><p class="lede">2 technologies proposed by the agent wait for confirmation, and the Azure AZ-204 certification expired in May 2024. Everything below is read from HR, allocations, learning and delivery; nothing is typed in here.</p></div>
+    <div class="actions"><button class="btn primary" title="Prompt: Review the technologies the agent proposed for Kasun Dias"><svg viewBox="0 0 24 24"><path d="M4 5h16v11H8l-4 4z"/></svg>✦ Ask amax to review 2 proposed</button><button class="btn" title="Prompt: Correct Kasun Dias's career history">✦ Ask amax to correct history</button></div></div>
+  <div class="tickets four">
+    <div class="ticket t-violet"><div class="k">Tenure <span class="chip">📌</span></div><div class="v">5 yrs 4 mo</div><div class="p">Joined Jun 7, 2021</div></div>
+    <div class="ticket t-yellow"><div class="k">Promotions <span class="chip">📌</span></div><div class="v">2</div><div class="p">Senior Engineer since Apr 2024</div></div>
+    <div class="ticket t-mint"><div class="k">Projects <span class="chip">📌</span></div><div class="v">5</div><div class="p">9 technologies · 3 at once in Apr 2025</div></div>
+    <div class="ticket"><div class="k">Certifications <span class="chip">📌</span></div><div class="v">2</div><div class="p">1 expired</div></div>
+  </div>
+  <div class="card" style="margin-top:24px"><div class="card-head"><h2>Career tree</h2><div class="seg" role="group" aria-label="Show"><button aria-pressed="true">Everything</button><button aria-pressed="false">Promotions</button><button aria-pressed="false">Projects</button><button aria-pressed="false">Technologies</button><button aria-pressed="false">Certifications</button><button aria-pressed="false">Moves</button></div></div>
+      <svg class="ct" viewBox="0 18 820 596" role="group" aria-label="Career tree for Kasun Dias, Jun 2021 to today, drawn to scale. The What changed list has the same events in date order.">
+<line class="grid" x1="40" y1="425.2" x2="670" y2="425.2"/><text class="tick" x="40" y="421.2">2022</text>
+<line class="grid" x1="40" y1="348.4" x2="670" y2="348.4"/><text class="tick" x="40" y="344.4">2023</text>
+<line class="grid" x1="40" y1="271.6" x2="670" y2="271.6"/><text class="tick" x="40" y="267.6">2024</text>
+<line class="grid" x1="40" y1="194.8" x2="670" y2="194.8"/><text class="tick" x="40" y="190.8">2025</text>
+<line class="grid" x1="40" y1="118.0" x2="670" y2="118.0"/><text class="tick" x="40" y="114.0">2026</text>
+<text class="tick" x="40" y="466.0">Jun 2021</text>
+<g class="node" tabindex="0" role="button" aria-label="Project Contoso Portal, Jun 2021 to Aug 2022, 100 percent. Technologies: React, TypeScript, .NET"><path class="halo" d="M410 470.0 H350 A10 10 0 0 1 340 460.0 V380.4" style="stroke-width:11.5"/><path class="branch" d="M410 470.0 H350 A10 10 0 0 1 340 460.0 V380.4" style="stroke-width:5.5"/><line class="stem" x1="340" y1="380.4" x2="328.7" y2="363.1"/><circle class="lf" cx="328.7" cy="363.1" r="5" style="fill:var(--sky)"><title>React</title></circle><line class="stem" x1="340" y1="380.4" x2="340.0" y2="358.4"/><circle class="lf" cx="340.0" cy="358.4" r="5" style="fill:var(--violet)"><title>TypeScript</title></circle><line class="stem" x1="340" y1="380.4" x2="351.3" y2="363.1"/><circle class="lf" cx="351.3" cy="363.1" r="5" style="fill:var(--pink)"><title>.NET</title></circle><text class="pj" x="314" y="384.4" text-anchor="end">Contoso Portal</text><text class="sub" x="314" y="397.4" text-anchor="end">Jun 2021 – Aug 2022</text></g>
+<g class="node" tabindex="0" role="button" aria-label="Project Northwind Claims, Sep 2022 to Oct 2023, 100 percent. Technologies: Python, Azure Functions, PostgreSQL"><path class="halo" d="M410 374.0 H470 A10 10 0 0 0 480 364.0 V290.8" style="stroke-width:11.5"/><path class="branch" d="M410 374.0 H470 A10 10 0 0 0 480 364.0 V290.8" style="stroke-width:5.5"/><line class="stem" x1="480" y1="290.8" x2="468.7" y2="273.5"/><circle class="lf" cx="468.7" cy="273.5" r="5" style="fill:var(--amber)"><title>Python</title></circle><line class="stem" x1="480" y1="290.8" x2="480.0" y2="268.8"/><circle class="lf" cx="480.0" cy="268.8" r="5" style="fill:#3B82F6"><title>Azure Functions</title></circle><line class="stem" x1="480" y1="290.8" x2="491.3" y2="273.5"/><circle class="lf" cx="491.3" cy="273.5" r="5" style="fill:var(--mint)"><title>PostgreSQL</title></circle><text class="pj" x="506" y="294.8" text-anchor="start">Northwind Claims</text><text class="sub" x="506" y="307.8" text-anchor="start">Sep 2022 – Oct 2023</text></g>
+<g class="node" tabindex="0" role="button" aria-label="Project Fleet Tracker, Nov 2023 to today, 70 percent. Technologies: Go, AWS (proposed), PostgreSQL (proposed)"><path class="halo" d="M410 284.4 H350 A10 10 0 0 1 340 274.4 V60.4" style="stroke-width:10.3"/><path class="branch" d="M410 284.4 H350 A10 10 0 0 1 340 274.4 V60.4" style="stroke-width:4.3"/><line class="stem" x1="340" y1="60.4" x2="328.7" y2="43.1"/><circle class="lf" cx="328.7" cy="43.1" r="5" style="fill:var(--sw-on)"><title>Go</title></circle><line class="stem" x1="340" y1="60.4" x2="340.0" y2="38.4"/><circle class="lf prop" cx="340.0" cy="38.4" r="5" style="fill:var(--coral)"><title>AWS</title></circle><line class="stem" x1="340" y1="60.4" x2="351.3" y2="43.1"/><circle class="lf prop" cx="351.3" cy="43.1" r="5" style="fill:var(--mint)"><title>PostgreSQL</title></circle><text class="pj" x="314" y="64.4" text-anchor="end">Fleet Tracker</text><text class="sub" x="314" y="77.4" text-anchor="end">Nov 2023 – today · 70%</text></g>
+<g class="node" tabindex="0" role="button" aria-label="Project Internal Design System, Mar 2025 to Sep 2025, 20 percent. Technologies: TypeScript, Storybook"><path class="halo" d="M410 182.0 H470 A10 10 0 0 0 480 172.0 V143.6" style="stroke-width:8.3"/><path class="branch" d="M410 182.0 H470 A10 10 0 0 0 480 172.0 V143.6" style="stroke-width:2.3"/><line class="stem" x1="480" y1="143.6" x2="472.0" y2="123.7"/><circle class="lf" cx="472.0" cy="123.7" r="5" style="fill:var(--violet)"><title>TypeScript</title></circle><line class="stem" x1="480" y1="143.6" x2="488.0" y2="123.7"/><circle class="lf" cx="488.0" cy="123.7" r="5" style="fill:var(--yellow)"><title>Storybook</title></circle><text class="pj" x="506" y="147.6" text-anchor="start">Internal Design System</text><text class="sub" x="506" y="160.6" text-anchor="start">Mar 2025 – Sep 2025 · 20%</text></g>
+<g class="node" tabindex="0" role="button" aria-label="Project Adatum claims spike, Apr 2025 to May 2025, 10 percent. Technologies: Python, AWS"><path class="halo" d="M410 175.6 H258 A10 10 0 0 1 248 165.6 V169.2" style="stroke-width:7.9"/><path class="branch" d="M410 175.6 H258 A10 10 0 0 1 248 165.6 V169.2" style="stroke-width:1.9"/><line class="stem" x1="248" y1="169.2" x2="240.0" y2="149.3"/><circle class="lf" cx="240.0" cy="149.3" r="5" style="fill:var(--amber)"><title>Python</title></circle><line class="stem" x1="248" y1="169.2" x2="256.0" y2="149.3"/><circle class="lf" cx="256.0" cy="149.3" r="5" style="fill:var(--coral)"><title>AWS</title></circle><text class="pj" x="222" y="173.2" text-anchor="end">Adatum claims spike</text><text class="sub" x="222" y="186.2" text-anchor="end">Apr 2025 – May 2025 · 10%</text></g>
+<polygon class="trunk" points="406.0,470.0 406.0,406.0 404.0,386.8 404.0,271.6 402.0,252.4 402.0,60.4 418.0,60.4 418.0,252.4 416.0,271.6 416.0,386.8 414.0,406.0 414.0,470.0"/>
+<g class="node" tabindex="0" role="button" aria-label="Joined as Associate Engineer, Jun 2021"><line class="ring" x1="399.0" y1="470.0" x2="421.0" y2="470.0"/><line class="leader" x1="423.0" y1="470.0" x2="670" y2="470.0"/><text class="gr" x="678" y="474.0">Associate Engineer</text><text class="sub" x="678" y="487.0">Jun 2021</text></g>
+<g class="node" tabindex="0" role="button" aria-label="Promoted to Engineer, Jul 2022"><line class="ring" x1="397.0" y1="386.8" x2="423.0" y2="386.8"/><line class="leader" x1="425.0" y1="386.8" x2="670" y2="386.8"/><text class="gr" x="678" y="390.8">Engineer</text><text class="sub" x="678" y="403.8">Jul 2022</text></g>
+<g class="node sel" tabindex="0" role="button" aria-label="Promoted to Senior Engineer, Apr 2024. Selected"><line class="ring" x1="395.0" y1="252.4" x2="425.0" y2="252.4"/><line class="leader" x1="427.0" y1="252.4" x2="670" y2="252.4"/><text class="gr" x="678" y="256.4">Senior Engineer</text><text class="sub" x="678" y="269.4">Apr 2024</text></g>
+<g class="node" tabindex="0" role="button" aria-label="Certification Azure Developer AZ-204, issued May 2022, expired May 2024"><rect class="fruit old" x="334" y="393.6" width="12" height="12" transform="rotate(45 340 399.6)"/></g>
+<g class="node" tabindex="0" role="button" aria-label="Certification AWS Developer Associate, issued Jul 2024, valid"><rect class="fruit" x="334" y="227.2" width="12" height="12" transform="rotate(45 340 233.2)"/></g>
+<line class="ground" x1="40" y1="494.0" x2="780" y2="494.0"/><text class="tick" x="424" y="64.4">Today</text>
+<g class="node" tabindex="0" role="button" aria-label="Engineering, Department"><line class="root" x1="410" y1="494.0" x2="178.2" y2="510.6"/><circle class="rn" cx="178.2" cy="510.6" r="4"/><text class="pj" x="178.2" y="528.6" text-anchor="middle">Engineering</text><text class="sub" x="178.2" y="541.6" text-anchor="middle">Department</text></g>
+<g class="node" tabindex="0" role="button" aria-label="Lumen Labs Lanka, Entity"><line class="root" x1="410" y1="494.0" x2="308.6" y2="552.0"/><circle class="rn" cx="308.6" cy="552.0" r="4"/><text class="pj" x="308.6" y="570.0" text-anchor="middle">Lumen Labs Lanka</text><text class="sub" x="308.6" y="583.0" text-anchor="middle">Entity</text></g>
+<g class="node" tabindex="0" role="button" aria-label="Nimal Silva, Manager to Oct 2023"><line class="root" x1="410" y1="494.0" x2="511.4" y2="552.0"/><circle class="rn" cx="511.4" cy="552.0" r="4"/><text class="pj" x="511.4" y="570.0" text-anchor="middle">Nimal Silva</text><text class="sub" x="511.4" y="583.0" text-anchor="middle">Manager to Oct 2023</text></g>
+<g class="node" tabindex="0" role="button" aria-label="Maya Fernando, Manager since Nov 2023"><line class="root" x1="410" y1="494.0" x2="641.8" y2="510.6"/><circle class="rn" cx="641.8" cy="510.6" r="4"/><text class="pj" x="641.8" y="528.6" text-anchor="middle">Maya Fernando</text><text class="sub" x="641.8" y="541.6" text-anchor="middle">Manager since Nov 2023</text></g>
+<line class="trunkroot" x1="410" y1="470.0" x2="410" y2="494.0"/>
+</svg>
+      <div class="tkey" aria-label="Technology colours"><span class="chip"><i style="background:var(--sky)"></i>React</span> <span class="chip"><i style="background:var(--violet)"></i>TypeScript</span> <span class="chip"><i style="background:var(--pink)"></i>.NET</span> <span class="chip"><i style="background:var(--amber)"></i>Python</span> <span class="chip"><i style="background:#3B82F6"></i>Azure Functions</span> <span class="chip"><i style="background:var(--mint)"></i>PostgreSQL</span> <span class="chip"><i style="background:var(--sw-on)"></i>Go</span> <span class="chip"><i style="background:var(--coral)"></i>AWS</span> <span class="chip"><i style="background:var(--yellow)"></i>Storybook</span></div>
+      <p class="muted" style="font-size:13px;margin:12px 0 0;text-align:center">Drawn to scale: one month is the same height everywhere. Branches run for exactly the time on the project, thicker for a larger allocation, and projects at the same time take parallel lanes. Rings are grades, diamonds certifications (grey when expired), faint leaves are technologies proposed by the agent.</p>
+    </div>
+  <div class="cols even" style="margin-top:24px">
+      <div class="card"><div class="card-head"><h2>Selected</h2><span class="chip">📌</span></div>
+        <p style="margin:0 0 6px"><b>Promoted to Senior Engineer</b></p>
+        <ul class="list">
+          <li><div class="l"><div>Grade<small>Engineer → Senior Engineer</small></div></div></li>
+          <li><div class="l"><div>Effective<small>Apr 1, 2024</small></div></div></li>
+          <li><div class="l"><div>Recorded by<small>HR agent for Dilini Perera, Mar 22, 2024</small></div></div></li>
+          <li><div class="l"><div>Approved by<small>Maya Fernando, Mar 25, 2024</small></div></div></li>
+          <li><div class="l"><div>Source<small><a href="#001-amax-foundation-person">HR employment period</a> · trace #a41f…</small></div></div></li>
+        </ul>
+        <p class="muted" style="font-size:13px;margin:12px 0 0">Pay is never shown here; a grade change shows the grade only.</p></div>
+      <div class="card"><div class="card-head"><h2>What changed</h2><span class="muted" style="font-size:13px">Newest first</span></div>
+        <ul class="list">
+          <li><div class="l"><div>AWS, PostgreSQL proposed on Fleet Tracker<small>Agent for Maya Fernando, Oct 16, 2026 · from linked repo</small></div></div><span class="chip warn">To confirm</span> <span class="chip">📌</span></li>
+          <li><div class="l"><div>Adatum claims spike, 10%<small>Apr – May 2025 · Python, AWS</small></div></div><span class="chip">📌</span></li>
+          <li><div class="l"><div>Internal Design System, 20%<small>Mar – Sep 2025 · allocations</small></div></div><span class="chip">📌</span></li>
+          <li><div class="l"><div>AWS Developer Associate<small>Jul 2024 · valid to Jul 2027</small></div></div><span class="chip good">Valid</span> <span class="chip">📌</span></li>
+          <li aria-current="true"><div class="l"><div><b>Senior Engineer</b><small>Apr 1, 2024 · approved by Maya Fernando</small></div></div><span class="chip">📌</span></li>
+          <li><div class="l"><div>Fleet Tracker; manager Maya Fernando<small>Nov 2023</small></div></div><span class="chip">📌</span></li>
+          <li><div class="l"><div>Northwind Claims<small>Sep 2022 – Oct 2023 · Python, Azure Functions, PostgreSQL</small></div></div><span class="chip">📌</span></li>
+          <li><div class="l"><div>Engineer<small>Jul 1, 2022 · approved by Nimal Silva</small></div></div><span class="chip">📌</span></li>
+          <li><div class="l"><div>Azure Developer AZ-204<small>May 2022 · expired May 2024</small></div></div><span class="chip warn">Expired</span> <span class="chip">📌</span></li>
+          <li><div class="l"><div>Contoso Portal<small>Jun 2021 – Aug 2022 · React, TypeScript, .NET</small></div></div><span class="chip">📌</span></li>
+          <li><div class="l"><div>Joined as Associate Engineer<small>Jun 7, 2021 · Engineering, Lumen Labs Lanka · manager Nimal Silva</small></div></div><span class="chip">📌</span></li>
+        </ul></div>
+    </div>
 </section>
 <!-- ================= 006 Agent governance ================= -->
 <section data-change="006-agent-governance" id="006-agent-governance" data-roles="all" data-title="Suggestions" data-icon="spark">
