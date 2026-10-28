@@ -2,7 +2,7 @@
 
 **Change:** 074-fork-pr-review-gate
 **Started:** 2026-10-27
-**Last Updated:** 2026-10-27
+**Last Updated:** 2026-10-28
 
 ## Progress
 
@@ -14,6 +14,7 @@
 | Tasks | ✅ Done |  |
 | Build | - | - |
 | Verify | ✅ Done |  |
+| PR | ✅ Raised | https://github.com/chan4lk/amax/pull/108 |
 
 ## Task Progress
 
