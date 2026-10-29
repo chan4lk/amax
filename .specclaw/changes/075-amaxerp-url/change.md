@@ -28,3 +28,20 @@ has no section.
   Files: plugins/amax/.mcp.json, plugins/amax/README.md, docs/parallel-builds.md
 
 ## Verify
+
+**Verdict:** PASS
+
+- AC-1: pass — `plugins/amax/.mcp.json` defaults to `${AMAX_MCP_URL:-https://amaxerp.com/api/mcp}`; `claude plugin validate plugins/amax` passes; `POST https://amaxerp.com/api/mcp` answers 401 (live, needs sign-in).
+- AC-2: pass — `plugins/amax/README.md` and `docs/parallel-builds.md` name `https://amaxerp.com`.
+- AC-3: pass — `git grep tecbizsolutions -- ':!.specclaw/changes/archive' ':!.specclaw/changes/075-amaxerp-url'` exits 1 (no hits). The only remaining hits are in this change doc, which leaves the grep scope when it's archived.
+
+Commands:
+- `pnpm lint` exit 0 (includes `amax graph check: ok`); `claude plugin validate plugins/amax` exit 0.
+- No code changed (one JSON value, two doc lines), so test/build/e2e were not re-run.
+
+Notes:
+- `specclaw-preset-check .`: exit 1 from the repo-wide comment backlog; none in 075 files.
+- Quality: `specclaw-quality-scan` not_run (jq "Argument list too long", as in 066–074).
+- Screenshots: no app UI and no mock section.
+- specclaw-review: not run per change (operator rule: review once per module end). Same-repo `change`-scope PR, so the review gate skips it.
+- Server side (not in repo): Caddy `@amax` matches only `amaxerp.com` and `amax.tecbizsolutions.com` returns 404. The operator was asked to delete the old DNS CNAME in Cloudflare.
