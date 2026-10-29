@@ -14,7 +14,7 @@ one skill under `skills/`.
 /plugin install amax@amax
 ```
 
-The plugin connects to `https://amax.tecbizsolutions.com/api/mcp`. Set `AMAX_MCP_URL` to use another
+The plugin connects to `https://amaxerp.com/api/mcp`. Set `AMAX_MCP_URL` to use another
 amax. Sign in when Claude Code asks, the first time a tool runs. If you already added amax as an MCP
 server yourself, either connection works.
 

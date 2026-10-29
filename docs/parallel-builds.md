@@ -1,6 +1,6 @@
 # Building on two machines
 
-Two Claude Code sessions build amax at the same time: **vps** (the primary, a VPS that also hosts https://amax.tecbizsolutions.com) and **mac** (the secondary). They coordinate only through git on `github.com/chan4lk/amax`. There's no other service to run.
+Two Claude Code sessions build amax at the same time: **vps** (the primary, a VPS that also hosts https://amaxerp.com) and **mac** (the secondary). They coordinate only through git on `github.com/chan4lk/amax`. There's no other service to run.
 
 ## How it works
 

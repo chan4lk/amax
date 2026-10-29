@@ -24,7 +24,7 @@ has no section.
 
 ## Tasks
 
-- [ ] `T1` — Point the plugin's default MCP URL and the docs at amaxerp.com (AC-1, AC-2, AC-3)
+- [x] `T1` — Point the plugin's default MCP URL and the docs at amaxerp.com (AC-1, AC-2, AC-3)
   Files: plugins/amax/.mcp.json, plugins/amax/README.md, docs/parallel-builds.md
 
 ## Verify
