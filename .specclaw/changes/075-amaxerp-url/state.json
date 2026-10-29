@@ -1,0 +1,9 @@
+{
+  "change": "075-amaxerp-url",
+  "phase": "tasks",
+  "branch": "",
+  "phases": {
+    "proposal": {"status":"approved","at":"2026-10-29T11:44:47Z"},
+    "tasks": {"status":"done","at":"2026-10-29T11:44:56Z"}
+  }
+}
