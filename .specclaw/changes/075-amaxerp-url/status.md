@@ -14,6 +14,7 @@
 | Tasks | ✅ Done |  |
 | Build | - | - |
 | Verify | ✅ Done |  |
+| PR | ✅ Raised | https://github.com/chan4lk/amax/pull/109 |
 
 ## Task Progress
 
