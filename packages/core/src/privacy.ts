@@ -10,3 +10,5 @@ export { completePrivacyRequest, ERASED_LABEL, HOLD_KEPT, requestNameRows } from
 export { type NameDecision, type NameRows } from "./privacy/name-rows";
 export { secondApproval, setSecondApproval, twoPersonRule, type SecondApproval } from "./privacy/approval";
 export { accessPackage, listHolds, listRequests, listRules, privacyOverview, purgedSince, readPrivacy, type Hold, type RequestView, type RuleView } from "./privacy/view";
+// 070 review round 4: what retention writes, so a module can tell an anonymised row from a changed one.
+export { ANONYMISED, applyRule } from "./privacy/apply";

@@ -1,0 +1,9 @@
+{
+  "change": "074-dev-demo-data",
+  "phase": "tasks",
+  "branch": "",
+  "phases": {
+    "proposal": {"status":"approved","at":"2026-10-25T14:31:55Z"},
+    "tasks": {"status":"done","at":"2026-10-25T14:32:58Z"}
+  }
+}

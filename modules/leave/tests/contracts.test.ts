@@ -1,7 +1,12 @@
 import { describe, expect, it } from "vitest";
 import manifest from "../module";
 import { chatIntents } from "../chat";
-import { EVENTS, LEAVE_SENSITIVE, LEAVE_TYPES, REQUEST_STATUSES } from "../contracts";
+import { setGrants, type Viewer } from "@amax/auth";
+import { EVENTS, LEAVE_SENSITIVE, LEAVE_TYPES, leaveVisibleTo, REQUEST_STATUSES } from "../contracts";
+
+const OWNER = "dddddddd-0000-4000-8000-000000000001";
+const LK = "11111111-0000-4000-8000-0000000000aa";
+const AU = "22222222-0000-4000-8000-0000000000bb";
 import { fillerHistory, NAMED, openingTaken } from "../fixtures/history";
 import { mcpTools } from "../mcp";
 import { PACKS } from "../packs";
@@ -47,4 +52,18 @@ describe("leave contracts", () => {
     expect(mcpTools.filter((t) => t.scope === "write").map((t) => t.name)).toEqual(["request_leave", "approve_leave", "reject_leave", "cancel_leave", "apply_leave_pack"]);
     expect(manifest).toMatchObject({ id: "leave", group: "People", dependsOn: ["hr"], integratesWith: ["delivery"] });
   });
+
+  // 072: leaveVisibleTo is Leave's own visibility rule on its contract, for Time and Reports to show leave beside their data.
+  it.each([
+    ["their own leave", { userId: OWNER, legalEntityId: LK }, [], [], true],
+    ["a report's leave, as their manager", { userId: OWNER, legalEntityId: LK }, [OWNER], [], true],
+    ["leave:team in the person's entity", { userId: OWNER, legalEntityId: LK }, [], [{ role: "HR", legalEntityIds: [LK], departments: null }], true],
+    ["leave:team in another entity", { userId: OWNER, legalEntityId: LK }, [], [{ role: "HR", legalEntityIds: [AU], departments: null }], false],
+    ["a colleague with no leave scope", { userId: OWNER, legalEntityId: LK }, [], [{ role: "Engineer", legalEntityIds: null, departments: null }], false],
+  ] as const)("072 leaveVisibleTo: %s", (_, person, reports, assignments, want) => {
+    setGrants([manifest]);
+    const viewer = { userId: person.userId === OWNER && !reports.length && !assignments.length ? OWNER : "eeeeeeee-0000-4000-8000-000000000009", reports: [...reports], assignments: [...assignments] } as unknown as Viewer;
+    expect(leaveVisibleTo(viewer, person)).toBe(want);
+  });
 });
+

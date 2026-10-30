@@ -2,8 +2,17 @@
 .time .row{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .time .actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 .time .actions form{display:contents}
+.time .row-actions{display:flex;gap:8px;justify-content:flex-end;align-items:center;flex-wrap:wrap}
 .time .row.head{align-items:flex-end;margin-bottom:24px;flex-wrap:wrap;gap:16px 24px}
 .time .row.head .lede{margin:0}
+.time .row.head .title{display:flex;align-items:center;flex-wrap:wrap;gap:8px 14px}
+.time .row.head .title h1{margin:0}
+.time .wk{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 12px;border-radius:999px;background:var(--sunken);font-size:13.5px;line-height:1;color:var(--ink-2);white-space:nowrap}
+.time .wk b{font-weight:700;color:var(--ink)}
+.time .wk.now{background:var(--violet-soft);color:var(--chip-agent)}
+.time .wk.now b{color:var(--chip-agent)}
+/* Desktop: centred on the title's lowercase letters ("My timesheet" reads lower than its capitals), not its capitals. */
+@media (min-width:861px){.time .wk{position:relative;top:3px}}
 .time .row.head>.actions{flex-shrink:0;width:auto}
 .time .row.head>.actions .seg{flex:0 1 auto}
 .time .cols{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:28px;align-items:start}
@@ -12,7 +21,7 @@
 .time .legend{display:flex;gap:16px;font-size:12.5px;color:var(--ink-2);flex-wrap:wrap;row-gap:6px}
 .time .legend span{display:inline-flex;align-items:center;gap:10px}
 .time .legend i{display:inline-block;width:12px;height:12px;border-radius:4px}
-.time .week{display:grid;grid-template-columns:44px repeat(5,1fr);gap:0 18px;height:220px;align-items:end;position:relative}
+.time .week{display:grid;grid-template-columns:44px repeat(var(--days,5),1fr);gap:0 18px;height:220px;align-items:end;position:relative}
 .time .week .yax{display:flex;flex-direction:column;justify-content:space-between;height:100%;font-size:12px;color:var(--ink-3);padding-bottom:26px}
 .time .week .day{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:4px;position:relative}
 .time .week .day span{width:min(56px,70%);border-radius:10px}
@@ -38,5 +47,55 @@
 .time .btn svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8}
 .time .btn.ghost{border-color:transparent;color:var(--ink-2)}
 .time .chip.draft{background:var(--sunken);color:var(--ink-2)}
-.time .chip.bad{background:#FFE1DC;color:#A8321F}
+/* 070 AC-50: the total row is a row, not a second header: body padding, a rule above it, nothing below. */
+.time .tbl tfoot th,.time .tbl tfoot td{padding-top:16px;padding-bottom:16px;border-top:1.5px solid var(--line-2);border-bottom:0;vertical-align:middle}
+.time .requests td[data-label="Person"],.time .requests td[data-label="Week"],.time .requests td[data-label="Asked"]{white-space:nowrap}
+/* 070 AC-50: a change-request notice is one compact block: its heading sits right on its line. */
+.time .notice .card-head{margin-bottom:6px;flex-wrap:nowrap;align-items:flex-start}
+.time .notice p{margin:0;color:var(--ink-2)}
+/* 070 AC-50: on phones the week's total row stacks like the project rows above it. */
+@media (max-width:600px){.time .tbl tfoot,.time .tbl tfoot tr{display:block;width:100%}.time .tbl tfoot tr{padding:14px 22px;background:var(--sunken);border-radius:0 0 24px 24px}.time .tbl tfoot th{display:block;padding:5px 0;text-align:left;font-size:15px}.time .tbl tfoot th,.time .tbl tfoot td{border:0}.time .tbl tfoot td{padding:5px 0}.time .tbl tfoot td:empty{display:none}}
 @media (max-width:860px){.time .row.head>.actions{flex-shrink:1;width:100%}.time .row.head>.actions .seg{flex:1 1 100%}.time .cols{grid-template-columns:minmax(0,1fr)}.time .big{font-size:21px}}
+/* 073: weekend columns, and Missing days (red, as on Team time). */
+/* Day names line up on one row whether or not a day has a tag (weekend, On leave, Missing); the tag sits under its name. */
+.time .tbl thead th{vertical-align:top}
+.time th small.weekend,.time th small.missing-tag{display:block;margin-top:3px;font-size:11px;line-height:1.2;font-weight:500;color:var(--ink-3)}
+.time th.missing,.time td.missing{color:var(--chip-bad)}
+.time th.missing small.missing-tag{color:var(--chip-bad);font-weight:600}
+/* Phone: a stacked row keeps its actions (pin, Remind, Approve) in its top-right corner, not on a line of their own. */
+@media (max-width:600px){.time .tbl tbody tr{position:relative}.time .tbl tbody td[data-label=""]{position:absolute;top:10px;right:16px;width:auto;padding:0}.time .tbl tbody td[data-label=""]::before{display:none}.time .tbl tbody tr:has(td[data-label=""]) td:first-child{padding-right:44px}.time .tbl.grid tbody tr:has(td[data-label=""]) td:first-child{padding-right:44px}}
+.time .reminded{display:block;font-size:12px;color:var(--ink-3)}
+/* 073 amendment 1: the grid's cells (state = colour + icon + word), summary strip and toolbar. */
+.time .cellwrap{position:relative;display:inline-block}
+.time .cell{border:0;border-radius:8px;padding:4px 8px;font:inherit;font-variant-numeric:tabular-nums;cursor:pointer;background:transparent;color:inherit;display:inline-flex;align-items:center;justify-content:center;gap:4px;white-space:nowrap}
+.time .cell .glyph{font-size:11px}
+.time .cell.missing{background:var(--chip-bad-bg);color:var(--chip-bad)}
+.time .cell.low{background:var(--chip-warn-bg);color:var(--chip-warn)}
+.time .cell.on_target{background:var(--chip-good-bg);color:var(--chip-good)}
+.time .cell.over{background:var(--violet-soft);color:var(--chip-agent)}
+.time .cell.not_yet,.time .cell.leave,.time .cell.weekend{color:var(--ink-3)}
+.time .cell:focus-visible{outline:2px solid var(--chip-agent);outline-offset:2px}
+.time .pop{position:absolute;z-index:40;right:0;top:calc(100% + 6px);min-width:190px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;box-shadow:0 8px 24px rgba(0,0,0,.12);display:flex;flex-direction:column;gap:4px;text-align:left;font-size:12.5px;white-space:nowrap}
+.time .pop small{color:var(--ink-3)}
+.time .stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:20px;margin:0 0 28px}
+.time .stats .card{padding:18px 20px}
+.time .stats .k{font-size:12.5px;color:var(--ink-3)}
+.time .stats .big{font-size:26px;font-weight:700;margin-top:6px}
+.time .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;padding:0 24px 16px}
+.time .toolbar select,.time .toolbar input{height:36px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:inherit;padding:0 10px;font:inherit}
+.time .util{display:inline-flex;align-items:center;gap:8px;font-variant-numeric:tabular-nums}
+.time .ubar{display:block;flex:none;height:6px;border-radius:6px;background:var(--sunken);overflow:hidden;width:56px}
+.time .ubar i{display:block;height:100%;background:var(--chip-agent)}
+.time th a.sort{color:inherit;text-decoration:none}
+.time th a.sort:hover{text-decoration:underline}
+.time .tbl .who a{color:var(--ink);text-decoration:underline;text-underline-offset:2px}
+@media (min-width:861px){.time .tbl.grid th,.time .tbl.grid td{padding-left:8px;padding-right:8px}
+.time .tbl.grid th:first-child,.time .tbl.grid td:first-child{padding-left:24px}}
+@media (max-width:860px){.time .stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+/* Alignment: grid day headings, cells and totals share a centre line; row buttons share a width; header controls share the view switch's height. */
+.time .tbl.grid .day{text-align:center}
+.time .chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.time .row.head .actions>a.btn.sm{width:46px;height:46px;padding:0;justify-content:center;font-size:20px;line-height:1}
+@media (min-width:861px){.time .tbl.grid th:last-child,.time .tbl.grid td:last-child{padding-right:24px}.time .tbl.grid td[data-label=Utilisation]{position:relative}.time .tbl.grid td[data-label=Utilisation] small.reminded{position:absolute;left:8px;top:calc(50% + 10px)}}
+/* A row's note stays on one line (the full text on hover); a sent-back comment lives on the status chip, not under the name. */
+.time .tbl .who small.rq-note{display:block;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}

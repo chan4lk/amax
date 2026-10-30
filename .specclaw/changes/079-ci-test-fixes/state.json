@@ -1,0 +1,10 @@
+{
+  "change": "079-ci-test-fixes",
+  "phase": "verify",
+  "branch": "",
+  "phases": {
+    "proposal": {"status":"approved","at":"2026-10-30T13:05:32Z"},
+    "tasks": {"status":"done","at":"2026-10-30T13:05:44Z"},
+    "verify": {"status":"done","at":"2026-10-30T13:16:50Z"}
+  }
+}

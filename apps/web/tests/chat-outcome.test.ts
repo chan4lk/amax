@@ -31,3 +31,13 @@ describe("059 doneOutcome after a committed write", () => {
     expect(o).toEqual({ state: "done", note: expect.any(String), ...(want ? { moved: want } : {}) });
   });
 });
+
+// 073: a card's past-tense receipt replaces "Done: {title}"; a bulk write keeps its real summary, without "Done:".
+describe("073 receipts", () => {
+  it.each([
+    ["no receipt", {}, undefined, "Done: Log 1.5 h to Fleet Tracker, Tue Oct 27."],
+    ["a receipt", {}, "Logged 1.5 h · Fleet Tracker, Tue Oct 27", "Logged 1.5 h · Fleet Tracker, Tue Oct 27"],
+    ["a bulk write with a receipt", { summary: "Approved 2 · skipped 0 · failed 0", results: [] }, "Approved", "Approved 2 · skipped 0 · failed 0."],
+    ["a bulk write without one", { summary: "Approved 2 · skipped 0 · failed 0", results: [] }, undefined, "Done: Approved 2 · skipped 0 · failed 0."],
+  ])("%s", (_n, result, receipt, note) => expect(doneOutcome("Log 1.5 h to Fleet Tracker, Tue Oct 27", result, receipt).note).toBe(note));
+});

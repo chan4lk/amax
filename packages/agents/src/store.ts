@@ -66,6 +66,24 @@ export const createSuggestion = defineService({
   },
 });
 
+/**
+ * 073: an agent withdraws its own open suggestions about records that no longer stand (a superseded invoice draft),
+ * so nobody accepts a stale amount. They read as dismissed, with the reason, and leave no decision to a person.
+ */
+export const withdrawSuggestions = defineService({
+  name: "agents.suggestion.withdraw",
+  action: SUGGEST,
+  resource: "agents.suggestion",
+  input: z.object({ kind: z.string(), targetType: z.string(), targetIds: z.array(z.string()).max(200), reason: z.string().min(3).max(300) }),
+  async run(tx, a, ctx) {
+    if (!a.targetIds.length) return { result: { withdrawn: 0 }, resourceId: null, after: { withdrawn: 0 } };
+    const ids = sql.join(a.targetIds.map((t) => sql`${t}`), sql`, `);
+    const rows = await tx.execute(sql`update agents.suggestion set status = 'dismissed', decided_by = ${ctx.actor.id}, decided_at = now(), query_note = ${a.reason}, updated_at = now()
+      where kind = ${a.kind} and target_type = ${a.targetType} and target_id in (${ids}) and status in ('open', 'queried', 'approved') returning id`);
+    return { result: { withdrawn: rows.length }, resourceId: (rows[0]?.id as string | undefined) ?? null, after: { withdrawn: rows.length, reason: a.reason } };
+  },
+});
+
 export type Row = Record<string, unknown> & { id: string; kind: string; status: Status; proposed: unknown; applied: unknown; scope: SuggestionScope; acts_for: string | null; first_approved_by: string | null };
 
 export async function lockRow(tx: Tx, id: string, allowed: Status[]): Promise<Row> {

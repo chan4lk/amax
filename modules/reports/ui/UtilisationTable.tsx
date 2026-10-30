@@ -3,7 +3,8 @@ import { personPin, reportPin } from "../pins";
 import type { Report } from "../server/view";
 import { hrs, logged, Meter, Who } from "./parts";
 
-const leaveNote = (r: Report["rows"][number]) => (r.leaveHidden ? "Leave not visible to you" : r.leaveLabel);
+// 072: a row whose hours include a week of unknown status says so, rather than showing a figure that may be wrong.
+const leaveNote = (r: Report["rows"][number]) => [r.leaveHidden ? "Leave not visible to you" : r.leaveLabel, r.hoursIncomplete ? "Some hours' timesheet status unknown" : null].filter(Boolean).join(" · ") || null;
 
 export function UtilisationTable({ r }: { r: Report }) {
   if (!r.rows.length) return <p className="empty-line">No logged hours you can see for {r.monthName} yet.</p>;

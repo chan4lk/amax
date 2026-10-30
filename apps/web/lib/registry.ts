@@ -1,6 +1,7 @@
 import type { ModuleManifest, NavEntry } from "@amax/core";
 import type { NavItem } from "@amax/ui";
 import { modules } from "../generated/modules";
+import { setInstalledModules } from "@amax/core/server";
 import { OPERATIONS } from "./operations";
 
 const GROUPS = ["Work", "People", "Business", "Operations"];
@@ -8,6 +9,8 @@ const rank = (group?: string) => (group ? GROUPS.indexOf(group) : -1);
 const ordered = (mods: readonly ModuleManifest[]) => [...mods].sort((a, b) => rank(a.group) - rank(b.group) || (a.order ?? 50) - (b.order ?? 50) || a.id.localeCompare(b.id));
 
 export const installed: ModuleManifest[] = ordered(modules);
+// 072: what hasModule answers for this deployment (AMAX_MODULES_DISABLED is already out of the generated list).
+setInstalledModules(installed.map((m) => m.id));
 
 const inRail = (n: NavEntry) => n.parent !== "settings";
 

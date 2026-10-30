@@ -34,7 +34,7 @@ describe.skipIf(!hasDb)("time schema and the Team week (Postgres)", () => {
       ["Nimal Silva", 31.5, "submitted"], ["Kasun Dias", 32.5, "submitted"], ["Ayesha Rahman", 23.5, "submitted"], ["Tharushi Wijesinghe", 29, "draft"], ["Dinesh Wickrama", 25, "draft"]]);
     expect([Math.round(total * 10) / 10, Math.round(agent * 10) / 10, Math.round((agent / total) * 100)]).toEqual([141.5, 90.2, 64]);
     expect(t.rows.filter((r) => r.status === "submitted").reduce((n, r) => n + r.total, 0)).toBe(87.5);
-    expect(t.projects).toEqual([{ name: "Contoso Portal", hours: 68 }, { name: "Fleet Tracker", hours: 51.5 }, { name: "HR Insights", hours: 22 }]);
+    expect(t.projects.map(({ name, hours }) => ({ name, hours }))).toEqual([{ name: "Contoso Portal", hours: 68 }, { name: "Fleet Tracker", hours: 51.5 }, { name: "HR Insights", hours: 22 }]);
     expect(t.perDay.map((d) => Math.round((d.agent + d.person) * 10) / 10)).toEqual([38.1, 40.1, 30.6, 31.7, 1]);
     expect(t.rows.find((r) => r.personName === "Kasun Dias")?.days).toEqual([8, 8, 8, 7.5, 1]);
     expect(t.rows.every((r) => r.canApprove)).toBe(true);

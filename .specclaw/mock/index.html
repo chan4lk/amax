@@ -891,6 +891,77 @@ body.picking .pinnable:hover{outline:2px dashed var(--violet);outline-offset:2px
   </div>
 </section>
 
+<!-- ================= 077 Time requests history ================= -->
+<section data-change="077-time-requests-history" id="077-time-requests-history" data-roles="all" data-title="Time: requests" data-nav="no" data-parent="001-amax-foundation-time">
+  <h1>Requests</h1>
+  <p class="lede">Every change request and what came of it, for the person who asked and the person who decides. Fictional data.</p>
+  <p><span class="chip">Team</span> <span class="chip">My timesheet</span> <span class="chip good">Requests 2</span></p>
+  <p><b>To review 2</b> · Mine 1 &nbsp;&nbsp; Status: All ▾ &nbsp; Week: Any ▾</p>
+  <div class="card"><div class="card-head"><h2>Needs attention</h2></div>
+    <p><span class="chip">New request</span> <b>Kasun Dias</b> · Fleet Tracker, Thu Oct 15 · 7.5 h → 7 h · asked 2 h ago ⌄ +</p>
+    <p><span class="chip">Needs answer</span> <b>Nimal Silva</b> · Contoso Portal, Mon Oct 12 · 2.3 h → 1.3 h · asked yesterday ⌄ +</p></div>
+  <div class="card"><div class="card-head"><h2>Decided</h2></div>
+    <p><span class="chip good">Applied</span> <b>Tharushi Wijesinghe</b> · Fleet Tracker, Sat Oct 24 · + 2 h (weekend) · by Maya, Oct 25 ⌄ +</p>
+    <p><span class="chip">Reopened</span> <b>Ayesha Rahman</b> · HR Insights, Thu Oct 22 · removed · by Maya, Oct 23 ⌄ +</p>
+    <p><span class="chip bad">Declined</span> <b>Dinesh Wickrama</b> · HR Insights, Tue Oct 13 · 8 h → 6 h · by Maya, Oct 20 ⌄ +</p></div>
+  <div class="card"><div class="card-head"><h2>My timesheet · Week 42</h2></div>
+    <p>▸ History · 2 decided</p></div>
+</section>
+
+<!-- ================= 076 Chat choice cards ================= -->
+<section data-change="076-chat-choice-cards" id="076-chat-choice-cards" data-roles="all" data-title="Chat: choice cards" data-nav="no" data-parent="001-amax-foundation-time">
+  <h1>Chat: one card for a choice</h1>
+  <p class="lede">When each alternative is a write, amax offers them on one card. Fictional data.</p>
+  <div class="card" style="max-width:420px">
+    <p class="muted" style="margin:0 0 8px">You: Change Wednesday to 6 h</p>
+    <div class="card" style="padding:16px 18px">
+      <div class="card-head"><span style="font-size:11.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase">Choose · Fix hours</span><span class="chip">for you</span></div>
+      <p style="font-weight:600">Wed Oct 14 has 8 h on Fleet Tracker. Which entry should change so the day is 6 h?</p>
+      <label style="display:flex;gap:10px;padding:10px;border:1px solid #d9d6ea;border-radius:12px;margin-bottom:6px"><input type="radio" name="c76" checked> <span><b>3.3 h</b> Agent entry · 5.3 h → 3.3 h</span></label>
+      <label style="display:flex;gap:10px;padding:10px;border:1px solid #d9d6ea;border-radius:12px;margin-bottom:6px"><input type="radio" name="c76"> <span><b>0.7 h</b> Your entry · 2.7 h → 0.7 h</span></label>
+      <label style="display:flex;gap:10px;padding:10px;border:1px dashed #d9d6ea;border-radius:12px"><input type="radio" name="c76"> <span>Something else…</span></label>
+      <p><span class="btn">Save the fix</span> &nbsp; Cancel</p>
+      <p class="muted" style="font-size:12px">Nothing is saved until you confirm.</p>
+    </div>
+    <p class="muted">After confirming: ✓ Saved the fix · Fleet Tracker, Wed Oct 14</p>
+  </div>
+</section>
+
+<!-- ================= 075 Team time status band ================= -->
+<section data-change="075-team-time-status-band" id="075-team-time-status-band" data-roles="admin leadership pm" data-title="Time: status band" data-nav="no" data-parent="001-amax-foundation-time">
+  <h1>Team time</h1>
+  <p class="lede">The header sentence becomes a status band. Fictional data.</p>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+    <div class="card"><div class="card-head"><h2 style="font-size:12px;letter-spacing:.06em;text-transform:uppercase">Submissions</h2><span class="chip">+</span></div>
+      <p style="font-size:28px;font-weight:700;margin:4px 0">3 <span class="muted" style="font-size:15px;font-weight:500">of 5 submitted</span></p>
+      <div style="display:flex;height:10px;border-radius:99px;overflow:hidden;gap:2px"><i style="flex:1;background:#0F6E4A"></i><i style="flex:2;background:#5B44D6"></i><i style="flex:1;background:#8A5200"></i><i style="flex:1;background:#d9d6ea"></i></div>
+      <p style="font-size:13px"><a href="#">✓ 1 approved</a> · <a href="#">● 2 submitted</a> · <a href="#">◐ 1 draft</a> · <a href="#">○ 1 not started</a></p></div>
+    <div class="card"><div class="card-head"><h2 style="font-size:12px;letter-spacing:.06em;text-transform:uppercase">Who logged it</h2><span class="chip">+</span></div>
+      <p style="font-size:28px;font-weight:700;margin:4px 0">66% <span class="muted" style="font-size:15px;font-weight:500">by agents, of 137.4 h</span></p>
+      <div style="display:flex;height:10px;border-radius:99px;overflow:hidden;gap:2px"><i style="flex:66;background:#5B44D6"></i><i style="flex:34;background:#9aa0b4"></i></div>
+      <p style="font-size:13px">✦ Agents 90.2 h · 66% &nbsp; ● People 47.2 h · 34%</p></div>
+  </div>
+  <p class="muted">Clicking a status filters the Timesheets grid below to it. The summary strip and grid stay as they are.</p>
+</section>
+
+<!-- ================= 074 Dev demo data ================= -->
+<section data-change="074-dev-demo-data" id="074-dev-demo-data" data-roles="admin" data-title="Dev: demo data on start" data-nav="no" data-parent="001-amax-foundation-time">
+  <h1>Local dev starts with the demo data</h1>
+  <p class="lede">No app screen changes. The terminal on <code>pnpm --filter @amax/web dev</code>, then the result. Fictional data.</p>
+  <div class="card"><div class="card-head"><h2>First start on a fresh database</h2></div>
+<pre style="white-space:pre-wrap;font-size:13px">&gt; pnpm --filter @amax/web dev
+demo data: seeded auth, hr, delivery, time, finance, reports, … + 070–073 walkthrough extras
+  ▲ Next.js 16.4.2 · Local: http://localhost:3000</pre></div>
+  <div class="card"><div class="card-head"><h2>Every later start</h2></div>
+<pre style="white-space:pre-wrap;font-size:13px">demo data: already loaded
+  ▲ Next.js 16.4.2 · Local: http://localhost:3000</pre></div>
+  <div class="card"><div class="card-head"><h2>Against a remote database, or with AMAX_SEED_DEMO=0</h2></div>
+<pre style="white-space:pre-wrap;font-size:13px">demo data: skipped (db.example.com is not a local database)</pre></div>
+  <div class="card"><div class="card-head"><h2>Team time · Week of Oct 19 (Maya Fernando)</h2><span class="chip">125.0 h</span></div>
+    <p>Nimal Silva · Submitted · 40.0 h<br>Kasun Dias · Submitted · 47.0 h · Check<br>Ayesha Rahman · Submitted · 8.0 h · Check<br>Tharushi Wijesinghe · Draft · 30.0 h<br>Dinesh Wickrama · Not started · 0.0 h</p>
+  </div>
+</section>
+
 <!-- ================= 074 Fork PR review gate ================= -->
 <section data-change="074-fork-pr-review-gate" id="074-fork-pr-review-gate" data-roles="all" data-title="Review gate on fork PRs" data-nav="no" data-parent="001-amax-foundation">
   <h1>Review gate on fork PRs</h1>
@@ -921,7 +992,336 @@ body.picking .pinnable:hover{outline:2px dashed var(--violet);outline-offset:2px
 </pre>
   </div>
 </section>
+<section data-change="078-review-covered-by" id="078-review-covered-by" data-roles="all" data-title="Review gate: covering loop" data-nav="no" data-parent="001-amax-foundation">
+  <h1>Review gate: a covering loop counts</h1>
+  <p class="lede">A CI check with no app screen. Sample <code>review-gate</code> output for fork PRs from a stacked branch. Fictional PRs and forks.</p>
+  <div class="card">
+    <div class="card-head"><h2>PR #211 · from fork demo-contributor/amax</h2><span class="chip">review-gate: passed</span></div>
+    <pre style="white-space:pre-wrap">fork PR: review evidence required
+081-leave-requests       scope=change      pass — final round 4/5 clean, 0 blockers, head 9d1e4a2 in PR
+082-leave-calendar       scope=covered-by  pass — covered by 081-leave-requests: final round 4/5 clean, 0 blockers, head 9d1e4a2 in PR
+083-leave-reminders      scope=covered-by  pass — covered by 081-leave-requests: final round 4/5 clean, 0 blockers, head 9d1e4a2 in PR
+</pre>
+  </div>
+  <div class="card">
+    <div class="card-head"><h2>PR #212 · from fork sample-dev/amax</h2><span class="chip">review-gate: failed</span></div>
+    <pre style="white-space:pre-wrap">fork PR: review evidence required
+084-expense-export       scope=covered-by  fail — covered by 085-expense-close: no final review round (review/ has 0 rounds)
+</pre>
+  </div>
+</section>
+<section data-change="079-ci-test-fixes" id="079-ci-test-fixes" data-roles="all" data-title="CI test fixes" data-nav="no" data-parent="001-amax-foundation">
+  <h1>CI test fixes</h1>
+  <p class="lede">No screen changes. Delivery's specclaw sync stops re-writing a proposal whose tasks are listed out of order, and a chat test expects the choice-card tool.</p>
+</section>
 <!-- ================= 068 Overview deltas ================= -->
+<section data-change="073-time-workflow-enhancements" id="073-time-workflow-enhancements" data-roles="all" data-title="Time: weekend and reminders" data-nav="no" data-parent="001-amax-foundation-time">
+  <h1>Time: weekend hours, reminders, This week</h1>
+  <p class="lede">Changes to <a href="#001-amax-foundation-time">Time</a>. Fictional data.</p>
+  <div class="card pinnable">
+    <h2>This week</h2>
+    <div class="big">118.5 h <span class="muted" style="font-size:15px;font-weight:500">of 176 h allocated</span></div>
+    <div class="gbar" style="margin:16px 0 22px"><i style="width:67%;background:linear-gradient(90deg,#C3B5FF,#7B61FF)"></i></div>
+    <div class="row line pinnable"><span>Fleet Tracker</span><b>58 h</b></div>
+    <div class="row line pinnable"><span>Contoso Portal</span><b>41 h</b></div>
+    <div class="row line pinnable"><span>HR Insights</span><b>19.5 h</b></div>
+    <p class="muted">No allocation data: "118.5 h logged · allocation unknown".</p>
+  </div>
+  <div class="card">
+    <div class="card-head"><h2>My timesheet, 2026-W42</h2><span class="chip">Weekend hours shown</span></div>
+    <table><thead><tr><th>Project</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat <small>weekend</small></th><th>Sun <small>weekend</small></th><th>Total</th></tr></thead>
+      <tbody><tr><td>Fleet Tracker</td><td>8</td><td>8</td><td>7.5</td><td>8</td><td>8</td><td>4</td><td>0</td><td>43.5</td></tr></tbody></table>
+  </div>
+  <div class="card">
+    <div class="card-head"><h2>Notifications</h2><span class="chip">Mon 09:00, Asia/Colombo</span></div>
+    <p>Reminder: submit your timesheet for 2026-W42</p>
+  </div>
+  <h2>Update: daily reminders, last reminder, approval checks</h2>
+  <div class="card">
+    <div class="card-head"><h2>amax chat (Maya Fernando, PM)</h2><span class="chip">Team time · Week of Oct 19</span></div>
+    <p><strong>Maya:</strong> Remind everyone who hasn't logged today.</p>
+    <p><b>Remind 3 people to log Tue Oct 20</b></p>
+    <ul>
+      <li>Dinesh Wickrama: nothing logged since Mon</li>
+      <li>Tharushi Wijesinghe: nothing logged today</li>
+      <li>Kasun Dias: nothing logged today · <span class="chip" style="background:#FFF1D6;color:#8A5A00">reminded 1 h ago by Maya Fernando</span></li>
+    </ul>
+    <p>Message: "Please update your hours for today."</p>
+    <p class="muted">Ayesha Rahman is on approved leave today, so she's left out.</p>
+    <p><button class="btn sm primary">Confirm</button> <button class="btn sm">Cancel</button></p>
+  </div>
+  <div class="card">
+    <div class="card-head"><h2>Team time row</h2><span class="chip">Draft</span></div>
+    <p><b>Dinesh Wickrama</b> · 8.0 h · <span class="muted">Reminded 2 h ago by Maya Fernando</span></p>
+  </div>
+  <div class="card">
+    <div class="card-head"><h2>Dinesh's bell</h2><span class="chip">Reminders</span></div>
+    <p><b>Log your hours for Tue Oct 20</b><br><span class="muted">Please update your hours for today. · Opens My timesheet with Tue Oct 20 marked "Missing"</span></p>
+  </div>
+  <div class="card">
+    <div class="card-head"><h2>Confirm card (Admin)</h2><span class="chip">Settings</span></div>
+    <p><b>Change the timesheet rules</b></p>
+    <p>Daily reminder: off → 16:00 on working days, for people with no hours that day</p>
+    <p class="muted">PMs can switch it off for a project they manage.</p>
+  </div>
+  <div class="card">
+    <div class="card-head"><h2>Confirm card (Kasun Dias)</h2><span class="chip">Submit</span></div>
+    <p><b>Submit your timesheet for 2026-W43 (32 h)</b></p>
+    <p><span class="chip" style="background:#FFF1D6;color:#8A5A00">Missing: Fri Oct 23</span> You can still submit.</p>
+  </div>
+  <div class="card">
+    <div class="card-head"><h2>Confirm card (Maya Fernando)</h2><span class="chip">Approve all</span></div>
+    <p><b>Approve 3 timesheets for 2026-W43 (96 h)</b></p>
+    <p class="muted">Skipped, needs individual review: Kasun Dias (a day over 14 h), Dinesh Wickrama (missing Fri Oct 23).</p>
+  </div>
+</section>
+<section data-change="073-time-workflow-enhancements" id="073-amendment-1" data-roles="admin leadership pm" data-title="Time: Team grid" data-nav="no" data-parent="001-amax-foundation-time">
+  <h1>Team time: the grid (073 amendment 1)</h1>
+  <p class="lede">Week 42, Mon Oct 12 to Fri Oct 16. Cells say Missing, Low, On target, Over or Not yet, with an icon as well as a colour. Fictional data.</p>
+  <div class="tickets">
+    <div class="card pinnable"><div class="k">Team hours</div><div class="big">141.5 h</div></div>
+    <div class="card pinnable"><div class="k">Average utilisation</div><div class="big">59%</div></div>
+    <div class="card pinnable"><div class="k">People with missing days</div><div class="big">5</div></div>
+    <div class="card pinnable"><div class="k">Waiting for your approval</div><div class="big">3</div></div>
+  </div>
+  <div class="card">
+    <div class="card-head"><h2>Timesheets</h2>
+      <div class="actions"><select class="select" aria-label="Project"><option>All projects</option><option>Fleet Tracker</option></select>
+        <select class="select" aria-label="Team"><option>All teams</option><option>Delivery</option></select>
+        <select class="select" aria-label="Status"><option>Any status</option><option>Not submitted</option><option>Submitted</option><option>Approved</option><option>Rejected</option></select>
+        <input class="select" type="date" aria-label="Jump to the week of" value="2026-10-14"></div></div>
+    <table class="tbl"><thead><tr><th><a href="#073-amendment-1">Person ↑</a></th><th class='num'>Mon</th><th class='num'>Tue</th><th class='num'>Wed</th><th class='num'>Thu</th><th class='num'>Fri</th><th class="num"><a href="#073-amendment-1">Total</a></th><th><a href="#073-amendment-1">Utilisation</a></th><th>Status</th></tr></thead>
+      <tbody><tr class="pinnable"><td><a href="#073-amendment-1">Nimal Silva</a></td><td class="num" style="background:#E3F7EC" title="Mon: 8.0 h"><span aria-hidden="true">✓</span> 8.0</td><td class="num" style="background:#E3F7EC" title="Tue: 8.5 h"><span aria-hidden="true">✓</span> 8.5</td><td class="num" style="background:#E3F7EC" title="Wed: 7.0 h"><span aria-hidden="true">✓</span> 7.0</td><td class="num" style="background:#E3F7EC" title="Thu: 8.0 h"><span aria-hidden="true">✓</span> 8.0</td><td class="num" style="background:#FDE2E2" title="Fri: – h"><span aria-hidden="true">✕</span> –</td><td class="num"><b>31.5</b></td><td><div class="gbar" style="height:8px;margin:0 0 4px"><i style="width:79%;background:#7B61FF"></i></div>79%</td><td><span class="chip">Submitted</span></td></tr><tr class="pinnable"><td><a href="#073-amendment-1">Kasun Dias</a></td><td class="num" style="background:#E3F7EC" title="Mon: 8.0 h"><span aria-hidden="true">✓</span> 8.0</td><td class="num" style="background:#E3F7EC" title="Tue: 8.0 h"><span aria-hidden="true">✓</span> 8.0</td><td class="num" style="background:#E3F7EC" title="Wed: 8.0 h"><span aria-hidden="true">✓</span> 8.0</td><td class="num" style="background:#E3F7EC" title="Thu: 7.5 h"><span aria-hidden="true">✓</span> 7.5</td><td class="num" style="background:#FFF1D6" title="Fri: 1.0 h"><span aria-hidden="true">▲</span> 1.0</td><td class="num"><b>32.5</b></td><td><div class="gbar" style="height:8px;margin:0 0 4px"><i style="width:81%;background:#7B61FF"></i></div>81%</td><td><span class="chip">Submitted</span></td></tr><tr class="pinnable"><td><a href="#073-amendment-1">Ayesha Rahman</a></td><td class="num" style="background:#E3F7EC" title="Mon: 7.5 h"><span aria-hidden="true">✓</span> 7.5</td><td class="num" style="background:#E3F7EC" title="Tue: 8.0 h"><span aria-hidden="true">✓</span> 8.0</td><td class="num" style="background:#FDE2E2" title="Wed: – h"><span aria-hidden="true">✕</span> –</td><td class="num" style="background:#E3F7EC" title="Thu: 8.0 h"><span aria-hidden="true">✓</span> 8.0</td><td class="num" style="background:transparent" title="Fri: leave h"><span aria-hidden="true">–</span> leave</td><td class="num"><b>23.5</b></td><td><div class="gbar" style="height:8px;margin:0 0 4px"><i style="width:59%;background:#7B61FF"></i></div>59%</td><td><span class="chip">Submitted</span></td></tr><tr class="pinnable"><td><a href="#073-amendment-1">Tharushi Wijesinghe</a></td><td class="num" style="background:#E3F7EC" title="Mon: 7.0 h"><span aria-hidden="true">✓</span> 7.0</td><td class="num" style="background:#E3F7EC" title="Tue: 8.0 h"><span aria-hidden="true">✓</span> 8.0</td><td class="num" style="background:#E3F7EC" title="Wed: 8.0 h"><span aria-hidden="true">✓</span> 8.0</td><td class="num" style="background:#E3F7EC" title="Thu: 6.0 h"><span aria-hidden="true">✓</span> 6.0</td><td class="num" style="background:#FDE2E2" title="Fri: – h"><span aria-hidden="true">✕</span> –</td><td class="num"><b>29.0</b></td><td><div class="gbar" style="height:8px;margin:0 0 4px"><i style="width:73%;background:#7B61FF"></i></div>73%</td><td><span class="chip">Draft</span></td></tr><tr class="pinnable"><td><a href="#073-amendment-1">Dinesh Wickrama</a></td><td class="num" style="background:#E3F7EC" title="Mon: 7.6 h"><span aria-hidden="true">✓</span> 7.6</td><td class="num" style="background:#E3F7EC" title="Tue: 7.6 h"><span aria-hidden="true">✓</span> 7.6</td><td class="num" style="background:#E3F7EC" title="Wed: 7.6 h"><span aria-hidden="true">✓</span> 7.6</td><td class="num" style="background:#FFF1D6" title="Thu: 2.2 h"><span aria-hidden="true">▲</span> 2.2</td><td class="num" style="background:#FDE2E2" title="Fri: – h"><span aria-hidden="true">✕</span> –</td><td class="num"><b>25.0</b></td><td><div class="gbar" style="height:8px;margin:0 0 4px"><i style="width:63%;background:#7B61FF"></i></div>63%</td><td><span class="chip">Draft</span></td></tr><tr class="pinnable"><td><a href="#073-amendment-1">Sanduni Perera</a></td><td class="num" style="background:#FDE2E2" title="Mon: – h"><span aria-hidden="true">✕</span> –</td><td class="num" style="background:#FDE2E2" title="Tue: – h"><span aria-hidden="true">✕</span> –</td><td class="num" style="background:#FDE2E2" title="Wed: – h"><span aria-hidden="true">✕</span> –</td><td class="num" style="background:#FDE2E2" title="Thu: – h"><span aria-hidden="true">✕</span> –</td><td class="num" style="background:#FDE2E2" title="Fri: – h"><span aria-hidden="true">✕</span> –</td><td class="num"><b>0.0</b></td><td><div class="gbar" style="height:8px;margin:0 0 4px"><i style="width:0%;background:#7B61FF"></i></div>0%</td><td><span class="chip">Not started</span></td></tr></tbody>
+      <tfoot><tr><th scope="row">Team</th><td class="num">38.1</td><td class="num">40.1</td><td class="num">30.6</td><td class="num">31.7</td><td class="num">1.0</td><td class="num"><b>141.5</b></td><td>59%</td><td></td></tr></tfoot></table>
+    <p class="muted">✓ On target · ▲ Low · ● Over · ✕ Missing · – Not yet. Hover, focus or tap a cell: "Kasun Dias, Fri Oct 16: Fleet Tracker 1.0 h".</p>
+  </div>
+  <div class="card">
+    <div class="card-head"><h2>Kasun Dias · 2026-W42</h2><span class="chip">Submitted</span></div>
+    <p class="muted">Opened from his name: his week by project and day, read-only. Chat offers "Approve", "Send back" or "Ask for a change".</p>
+    <table class="tbl"><thead><tr><th>Project</th><th class='num'>Mon</th><th class='num'>Tue</th><th class='num'>Wed</th><th class='num'>Thu</th><th class='num'>Fri</th><th class="num">Total</th></tr></thead>
+      <tbody><tr><td>Contoso Portal</td><td class="num">8.0</td><td class="num">8.0</td><td class="num">8.0</td><td class="num">–</td><td class="num">–</td><td class="num">24.0</td></tr>
+      <tr><td>Fleet Tracker</td><td class="num">–</td><td class="num">–</td><td class="num">–</td><td class="num">7.5</td><td class="num">1.0</td><td class="num">8.5</td></tr></tbody></table>
+  </div>
+</section>
+<section data-change="072-time-consumers-sync" id="072-time-consumers-sync" data-roles="all" data-title="Time: approvers notified" data-nav="no" data-parent="001-amax-foundation-time">
+  <h1>Time: project approvers hear about submissions</h1>
+  <p class="lede">Only the bell and the Reports lede change. Fictional data.</p>
+  <div class="card">
+    <div class="card-head"><h2>Notifications (Ayesha Perera, PM of Fleet Tracker)</h2><span class="chip">Approvals</span></div>
+    <p><strong>Kasun Dias submitted 2026-W42</strong><br><span class="muted">12 h on Fleet Tracker to approve</span> · <a href="#001-amax-foundation-time">Open Team time</a></p>
+  </div>
+  <div class="card">
+    <h2>Reports</h2>
+    <p class="lede">Utilisation from submitted and approved time: 81% month to date, against a target of 80%.</p>
+  </div>
+  <h2>Update: change requests reach project approvers; weekly utilisation in chat</h2>
+  <div class="card">
+    <div class="card-head"><h2>Notifications (Ayesha Perera, PM of Fleet Tracker)</h2><span class="chip">Approvals</span></div>
+    <p><strong>Kasun Dias asked to change Fleet Tracker, Thu Oct 15</strong><br><span class="muted">Hours 7 h → 5 h · Review on Team time</span></p>
+  </div>
+  <div class="card">
+    <div class="card-head"><h2>amax chat (Maya Fernando, PM)</h2><span class="chip">Team time · Week of Oct 12</span></div>
+    <p><strong>Maya:</strong> Who is below 80% this week?</p>
+    <p><strong>amax:</strong> Four people, lowest first (2026-W42, Friday still open):</p>
+    <ul>
+      <li><b>Ayesha Rahman</b>: 23.5 h of 40 h, 59%; with Friday's casual leave, 23.5 h of 32 h, 73%. Missing: none.</li>
+      <li><b>Dinesh Wickrama</b>: 25.0 h of 40 h, 63%. Missing: Fri Oct 16.</li>
+      <li><b>Tharushi Wijesinghe</b>: 29.0 h of 40 h, 73%. Missing: Fri Oct 16.</li>
+      <li><b>Nimal Silva</b>: 31.5 h of 40 h, 79%. Missing: Fri Oct 16.</li>
+    </ul>
+    <p class="muted">Kasun Dias is at 81%, so not listed.</p>
+  </div>
+  <div class="card">
+    <div class="card-head"><h2>amax chat (Kasun Dias, Engineer)</h2><span class="chip">My timesheet</span></div>
+    <p><strong>Kasun:</strong> What did I log this week?</p>
+    <p><strong>amax:</strong> 2026-W42: Mon 8 h, Tue 8 h, Wed 8 h, Thu 7.5 h, Fri 1 h. <b>32.5 h of 40 h, 81%.</b></p>
+    <p><strong>Kasun:</strong> And Nimal's?</p>
+    <p><strong>amax:</strong> I can only show your own utilisation; yours is 81% this week.</p>
+  </div>
+  <div class="card">
+    <div class="card-head"><h2>Confirm card</h2><span class="chip">Admin</span></div>
+    <p><b>Weekly target for Dinesh Wickrama</b></p>
+    <p>Target: <s>40 h</s> → <b>24 h</b> (part-time)</p>
+    <p><button class="btn sm primary">Confirm</button> <button class="btn sm">Cancel</button></p>
+  </div>
+  <div class="card">
+    <div class="card-head"><h2>amax chat</h2><span class="chip">Overtime</span></div>
+    <p><strong>amax:</strong> Kasun Dias logged 44.8 h of 40 h in 2026-W43: <b>112%, overtime</b>.</p>
+  </div>
+</section>
+<section data-change="071-time-access-and-integrity" id="071-time-access-and-integrity" data-roles="admin payroll" data-title="Payroll: time sources" data-nav="no" data-parent="001-amax-foundation">
+  <h1>Payroll run: where overtime came from</h1>
+  <p class="lede">Only the run's Sources line changes. Fictional data.</p>
+  <div class="card">
+    <div class="card-head"><h2>Sources, October 2026, Lumen Labs LK</h2></div>
+    <div class="row line"><span>HR</span><b>Base salary and cost centre from HR</b></div>
+    <div class="row line"><span>Leave</span><b>Approved leave, unpaid days deducted</b></div>
+    <div class="row line"><span>Time</span><b>Approved timesheets, 4 weeks, 12 people</b></div>
+    <div class="row line"><span>Time (incomplete case)</span><b><span class="chip" style="background:#FFF1D6;color:#8A5A00">2 of 14 people unreadable: overtime incomplete</span></b></div>
+  </div>
+  <h2>Update: entry rules in chat (settings off by default)</h2>
+  <div class="card">
+    <div class="card-head"><h2>amax chat</h2><span class="chip">Allocation required</span></div>
+    <p><strong>Tharushi Wijesinghe:</strong> Log 3 h on HR Insights for Wednesday.</p>
+    <p><strong>amax:</strong> You aren't allocated to HR Insights in October, so I can't log it there. You're allocated to <b>Fleet Tracker</b> and <b>Contoso Portal</b> this month. Which one was it?</p>
+  </div>
+  <div class="card">
+    <div class="card-head"><h2>Confirm card</h2><span class="chip">Possible duplicate</span></div>
+    <p><b>Log 2 h to Fleet Tracker, Wed Oct 14</b></p>
+    <p>Note: API work</p>
+    <p><span class="chip" style="background:#FFF1D6;color:#8A5A00">Already logged: Fleet Tracker, Wed Oct 14, 2 h, same note</span></p>
+    <p><button class="btn sm primary">Confirm</button> <button class="btn sm">Cancel</button></p>
+  </div>
+  <div class="card">
+    <div class="card-head"><h2>amax chat</h2><span class="chip">Date window</span></div>
+    <p><strong>Kasun Dias:</strong> Log 4 h on Fleet Tracker for Mon Sep 7.</p>
+    <p><strong>amax:</strong> Time can be logged up to 4 weeks back, so Mon Sep 7 is too early. If those hours are missing, ask your PM to add them with a reason.</p>
+  </div>
+  <div class="card">
+    <div class="card-head"><h2>amax chat</h2><span class="chip">Utilisation</span></div>
+    <p><strong>Kasun Dias (Engineer):</strong> What is Nimal's utilisation this week?</p>
+    <p><strong>amax:</strong> I can only show your own utilisation. Yours for 2026-W42 is 81%: 32.5 h of 40 h, with Friday still open.</p>
+  </div>
+  <p class="muted">Team time shows only weeks in your legal entities. Each rule above is an Admin setting; with it off, logging works as today.</p>
+</section>
+<section data-change="070-time-entry-corrections" id="070-time-entry-corrections" data-roles="all" data-title="Time: fix hours" data-nav="no" data-parent="001-amax-foundation-time">
+  <h1>My timesheet: fix or remove hours through chat</h1>
+  <p class="lede">A rejected week, 2026-W42. No edit fields: Ask amax opens chat with the row pinned. Fictional data.</p>
+  <div class="card">
+    <div class="card-head"><h2>Sent back by Ayesha Perera</h2><span class="chip">Rejected</span></div>
+    <p>"Fleet Tracker Wednesday says 10 h; you were on leave that afternoon."</p>
+  </div>
+  <div class="card pinnable">
+    <table><thead><tr><th>Project</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Total</th><th></th></tr></thead>
+      <tbody>
+        <tr class="pinnable"><td>Fleet Tracker</td><td>8</td><td>8</td><td>10</td><td>8</td><td>8</td><td>42</td><td><button class="btn sm">✦ Fix these hours</button></td></tr>
+        <tr class="pinnable"><td>Contoso Portal</td><td>0</td><td>0</td><td>0</td><td>0</td><td>1.5</td><td>1.5</td><td><button class="btn sm">✦ Fix these hours</button></td></tr>
+      </tbody></table>
+  </div>
+  <div class="card">
+    <div class="card-head"><h2>amax chat</h2><span class="chip">Pinned: Fleet Tracker, 2026-W42</span></div>
+    <p><strong>You:</strong> Wednesday should be 6 h.</p>
+    <p><strong>amax:</strong> Change Fleet Tracker, Wed Oct 14, from 10 h to 6 h? <button class="btn sm primary">Confirm</button> <button class="btn sm">Cancel</button></p>
+  </div>
+  <h2>Amendment: confirm cards, approved weeks, fixes by a PM</h2>
+  <div class="card">
+    <div class="card-head"><h2>Confirm card</h2><span class="chip">Fix hours</span></div>
+    <p><b>Fleet Tracker, Wed Oct 14</b></p>
+    <p>Hours: <s>10 h</s> → <b>6 h</b> · Note: <s>"API work"</s> → <b>"API work, morning only"</b></p>
+    <p><button class="btn sm primary">Confirm</button> <button class="btn sm">Cancel</button></p>
+  </div>
+  <div class="card">
+    <div class="card-head"><h2>amax chat</h2><span class="chip">2026-W41 · Approved</span></div>
+    <p><strong>Ayesha Perera (Admin):</strong> Change Tharushi's Monday on Contoso Portal to 7 h.</p>
+    <p><strong>amax:</strong> 2026-W41 is approved and locked, so nobody can change its entries. To fix it, reopen the week with a reason; it goes back to draft and can be corrected and approved again. <button class="btn sm">✦ Reopen 2026-W41…</button></p>
+  </div>
+  <div class="card">
+    <div class="card-head"><h2>amax chat (PM)</h2><span class="chip">Pinned: Kasun Dias · Fleet Tracker, 2026-W42 · Rejected</span></div>
+    <p><strong>Ayesha Perera (PM):</strong> Wednesday should be 6 h, he was on leave that afternoon.</p>
+    <p><strong>amax:</strong> Change <b>Kasun Dias</b>'s Fleet Tracker, Wed Oct 14: <s>10 h</s> → <b>6 h</b>. Reason: "On leave Wednesday afternoon." Kasun will be notified. <button class="btn sm primary">Confirm</button> <button class="btn sm">Cancel</button></p>
+  </div>
+  <div class="card">
+    <div class="card-head"><h2>Kasun's bell</h2><span class="chip">Approvals</span></div>
+    <p><b>Ayesha Perera changed your Fleet Tracker hours for Wed Oct 14</b><br><small class="muted">On leave Wednesday afternoon. · Open 2026-W42</small></p>
+  </div>
+  <p class="muted">An approved week has no "Fix these hours" button. Removed entries leave the timesheet and totals but stay in the audit trail.</p>
+  <h2 id="070-amendment-2">Amendment 2: confirm cards in plain words, and no card that can only fail</h2>
+  <p class="lede">Chat's confirm cards for Time, in plain words: no ids, no field names. A request that can't go through gets a reply, not a card. Fictional data.</p>
+  <div class="card">
+    <div class="card-head"><h2>Fix Fleet Tracker, Wed Oct 14</h2><span class="chip">Your entry</span></div>
+    <p>Hours <s>2.7 h</s> → <b>2 h</b></p>
+    <p><button class="btn sm primary">Add it</button> <button class="btn sm">Change something</button> <button class="btn sm">Cancel</button></p>
+  </div>
+  <div class="card">
+    <div class="card-head"><h2>Fix Fleet Tracker, Tue Oct 13</h2><span class="chip">Maya Fernando (PM)</span></div>
+    <p>For <b>Tharushi Wijesinghe</b></p>
+    <p>Hours <s>2.7 h</s> → <b>1.5 h</b></p>
+    <p>Reason "Client call was cancelled"</p>
+    <p class="muted">Tharushi will be notified.</p>
+    <p><button class="btn sm primary">Add it</button> <button class="btn sm">Change something</button> <button class="btn sm">Cancel</button></p>
+  </div>
+  <div class="card">
+    <div class="card-head"><h2>Remove Fleet Tracker, Mon Oct 12: 2.4 h</h2><span class="chip">Your entry</span></div>
+    <p><button class="btn sm primary">Add it</button> <button class="btn sm">Change something</button> <button class="btn sm">Cancel</button></p>
+  </div>
+  <div class="card">
+    <div class="card-head"><h2>Approve Nimal Silva's timesheet for 2026-W42 (31.5 h)</h2><span class="chip">Approval</span></div>
+    <p><button class="btn sm primary">Add it</button> <button class="btn sm">Change something</button> <button class="btn sm">Cancel</button></p>
+  </div>
+  <div class="card">
+    <div class="card-head"><h2>amax chat</h2><span class="chip">Kasun Dias · 2026-W42 · Submitted</span></div>
+    <p><strong>Kasun Dias:</strong> Change my Fleet Tracker hours on Wednesday to 6 h.</p>
+    <p><strong>amax:</strong> 2026-W42 is submitted and waiting for approval, so it can't change now. Ask Maya Fernando to send it back; then "Fix these hours" appears on each row. (No card.)</p>
+  </div>
+  <h2 id="070-amendment-3">Amendment 3: change requests for locked weeks</h2>
+  <p class="lede">Kasun's 2026-W42 is submitted. He asks chat for a fix; Maya decides on it. Fictional data.</p>
+  <div class="card">
+    <div class="card-head"><h2>amax chat (Kasun)</h2><span class="chip">2026-W42 · Submitted</span></div>
+    <p><strong>Kasun Dias:</strong> I put 7 h on Fleet Tracker on Wednesday, it should be 5.</p>
+    <p><strong>amax:</strong> Your week is submitted, so I can't change it directly. I can send Maya Fernando a request.</p>
+    <p><b>Request a change to Fleet Tracker, Wed Oct 14</b></p>
+    <p>Hours <s>7 h</s> → <b>5 h</b> · Reason "Left early for the client call" · Week 2026-W42 is submitted; Maya Fernando reviews it</p>
+    <p><button class="btn sm primary">Add it</button> <button class="btn sm">Change something</button> <button class="btn sm">Cancel</button></p>
+  </div>
+  <div class="card pinnable">
+    <div class="card-head"><h2>My timesheet · 2026-W42</h2><span class="chip">Submitted</span></div>
+    <p>Change requested: Fleet Tracker, Wed Oct 14, <s>7 h</s> → <b>5 h</b> · Waiting for review by Maya Fernando</p>
+  </div>
+  <div class="card">
+    <div class="card-head"><h2>Change requests</h2><span class="chip">2 open</span></div>
+    <table><thead><tr><th>Person</th><th>Week</th><th>Entry</th><th>Change</th><th>Reason</th><th>Asked</th><th></th></tr></thead>
+      <tbody>
+        <tr class="pinnable"><td>Kasun Dias</td><td>2026-W42 · Submitted</td><td>Fleet Tracker, Wed Oct 14</td><td>7 h → 5 h</td><td>Left early for the client call</td><td>2 h ago</td><td><button class="btn sm">✦ Review</button></td></tr>
+        <tr class="pinnable"><td>Ayesha Rahman</td><td>2026-W41 · Approved</td><td>Contoso Portal, Fri Oct 9</td><td>Remove 3 h</td><td>Logged on leave day</td><td>1 day ago</td><td><button class="btn sm">✦ Review</button></td></tr>
+      </tbody></table>
+  </div>
+  <div class="card">
+    <div class="card-head"><h2>amax chat (Maya)</h2><span class="chip">Pinned: Kasun Dias · change request</span></div>
+    <p><strong>Maya Fernando:</strong> Apply it.</p>
+    <p><b>Apply Kasun Dias's change: Fleet Tracker, Wed Oct 14</b></p>
+    <p>Hours <s>7 h</s> → <b>5 h</b> · Reason "Left early for the client call" · Week stays submitted · Kasun will be notified</p>
+    <p><button class="btn sm primary">Add it</button> <button class="btn sm">Change something</button> <button class="btn sm">Cancel</button></p>
+    <p class="muted">Other decisions: "Reopen it for Kasun" (sends the week back), "Ask Kasun which client call", "Decline: the call was billed".</p>
+  </div>
+  <div class="card">
+    <div class="card-head"><h2>Kasun's bell</h2><span class="chip">Approvals</span></div>
+    <p><b>Maya Fernando applied your change to Fleet Tracker, Wed Oct 14</b><br><small class="muted">7 h → 5 h · Open 2026-W42</small></p>
+  </div>
+  <h2 id="070-amendment-4">Amendment 4: chat knows the page, suggests what you can do, and does team actions in one card</h2>
+  <div class="card">
+    <div class="card-head"><h2>amax chat</h2><span class="chip">My timesheet · Week of Oct 12</span></div>
+    <p class="muted">Try one of these, or just say what you need:</p>
+    <p><button class="btn sm">Fix an entry</button> <button class="btn sm">Submit my week</button> <button class="btn sm">What did I log this week?</button> <button class="btn sm">What can you help me do here?</button></p>
+  </div>
+  <div class="card pinnable">
+    <div class="card-head"><h2>My timesheet · 2026-W42</h2><span class="chip">Draft</span></div>
+    <table><thead><tr><th>Project</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Total</th><th></th></tr></thead>
+      <tbody><tr class="pinnable"><td>Fleet Tracker</td><td>7</td><td>8</td><td>8</td><td>–</td><td>–</td><td>23</td><td><button class="btn sm" aria-label="Add Fleet Tracker, 2026-W42 to chat">+</button></td></tr></tbody></table>
+    <p class="muted">No "Fix these hours" button: the row keeps its pin; chat's suggestions and plain requests cover the fix.</p>
+  </div>
+  <div class="card">
+    <div class="card-head"><h2>amax chat (Maya)</h2><span class="chip">Team time · Week of Oct 12</span></div>
+    <p><strong>Maya Fernando:</strong> Remind everyone who hasn't submitted.</p>
+    <p><b>Remind 2 people to submit 2026-W42</b></p>
+    <p>Tharushi Wijesinghe · Draft, 25.9 h<br>Dinesh Wickrama · Draft, 25.0 h</p>
+    <p><button class="btn sm primary">Add it</button> <button class="btn sm">Change something</button> <button class="btn sm">Cancel</button></p>
+    <p><b>Done: Reminded 2 · skipped 0 · failed 0</b><br><small class="muted">Tharushi Wijesinghe: sent · Dinesh Wickrama: sent</small></p>
+  </div>
+  <h2 id="070-amendment-5">Amendment 5: one identity per browser, switched on purpose</h2>
+  <p class="lede">What a browser sees when it is already signed in, and what an open tab sees after another tab switches. Fictional data.</p>
+  <div class="card">
+    <div class="card-head"><h2>Sign in to amax</h2></div>
+    <p>You're signed in as <b>Tharushi Wijesinghe</b> (Engineer).</p>
+    <p><button class="btn primary">Continue as Tharushi</button> <button class="btn">Sign out to switch account</button></p>
+    <p class="muted">To use two accounts at once, open the second in another browser profile or a private window.</p>
+  </div>
+  <div class="card">
+    <div class="card-head"><h2>Another tab, after the switch</h2><span class="chip bad">Signed in elsewhere</span></div>
+    <p><b>You're now signed in as Maya Fernando in another tab.</b> Reload to continue as Maya.</p>
+    <p><button class="btn primary">Reload</button></p>
+    <p class="muted">Until then this tab can't send or confirm anything in chat.</p>
+  </div>
+</section>
 <section data-change="069-chat-tool-schema-hotfix" id="069-chat-tool-schema-hotfix" data-roles="all" data-title="Chat answers again" data-nav="no" data-parent="001-amax-foundation">
   <h1>Chat answers again</h1>
   <p class="lede">A fix with no new screen: chat replies instead of showing "AI chat failed". Fictional data.</p>

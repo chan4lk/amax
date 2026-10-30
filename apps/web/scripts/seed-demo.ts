@@ -1,4 +1,5 @@
 import { registerHooks } from "node:module";
+import { pathToFileURL } from "node:url";
 import { sql } from "drizzle-orm";
 import type { SharedFixtures } from "@amax/core";
 import { createDb, withTenant, type Db } from "@amax/db";
@@ -39,7 +40,10 @@ export async function seedInstalledModules(db: Db, tenant: SharedFixtures["tenan
 // CLI: `pnpm --filter @amax/web seed:demo [--tenant <id>]` with DATABASE_URL (the app role).
 // The tenant defaults to AMAX_AUTH_PASSWORD_TENANT, so a deployed demo seeds the tenant people sign in to;
 // without either it is the fixtures' own Lumen Labs tenant.
-if (import.meta.url === `file://${process.argv[1]}`) {
+/** True when this file is the script node was started with; a file URL against a path, so it holds on Windows too (074). */
+export const isMain = (moduleUrl: string, argv1: string | undefined) => !!argv1 && moduleUrl === pathToFileURL(argv1).href;
+
+if (isMain(import.meta.url, process.argv[1])) {
   const url = process.env.DATABASE_URL;
   if (!url) throw new Error("seed:demo needs DATABASE_URL (the app role)");
   const flag = process.argv.indexOf("--tenant");

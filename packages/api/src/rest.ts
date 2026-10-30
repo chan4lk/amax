@@ -2,7 +2,7 @@ import type { Db } from "@amax/db";
 import { ForbiddenError, logError, RateLimitedError, traceStep, ValidationError, withTrace } from "@amax/core/server";
 import { ScopeError } from "@amax/auth";
 import { bearer } from "@amax/auth/tokens";
-import { ToolError, type Registry } from "@amax/mcp";
+import { ToolError, userFacing, type Registry } from "@amax/mcp";
 import { CallerError, resolveCaller } from "./caller";
 import { openApi } from "./openapi";
 
@@ -15,6 +15,8 @@ const json = (status: number, body: unknown, headers: Record<string, string> = {
 function failure(e: unknown): Response {
   if (e instanceof CallerError) return json(e.status, { error: e.status === 401 ? "unauthorized" : "forbidden", message: e.message });
   if (e instanceof RateLimitedError) return json(429, { error: "rate_limited", message: e.message }, { "retry-after": String(e.retryAfter) });
+  // One rule for what a caller may read (shared with bulk results, 070 review round 3); everything else is a 500.
+  if (!userFacing(e)) return json(500, { error: "internal", ref: logError("api.rest", e).slice(0, 8) });
   if (e instanceof ToolError) return json({ not_found: 404, forbidden: 403, invalid_input: 400 }[e.code], { error: e.code, message: e.message });
   if (e instanceof ForbiddenError || e instanceof ScopeError) return json(403, { error: "forbidden", message: e.message });
   if (e instanceof ValidationError) return json(400, { error: "invalid_input", message: e.message });
@@ -22,8 +24,7 @@ function failure(e: unknown): Response {
   if (code === "not_found" || code === "invalid_input") return json(code === "not_found" ? 404 : 400, { error: code, message: (e as Error).message });
   // 060 AC-6: a domain refusal (PrivacyError and the like declare retryable = false) is the caller's to
   // act on, with its message, not a server failure.
-  if ((e as { retryable?: unknown } | null)?.retryable === false) return json(409, { error: "refused", message: (e as Error).message });
-  return json(500, { error: "internal", ref: logError("api.rest", e).slice(0, 8) });
+  return json(409, { error: "refused", message: e.message });
 }
 
 async function body(req: Request) {

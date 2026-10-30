@@ -1,6 +1,6 @@
 import { sql } from "drizzle-orm";
 import type { Tx } from "@amax/db";
-import { can, canEver, viewerForUser, type ResourceAttrs, type Viewer } from "@amax/auth";
+import { can, canEver, canEverIn, viewerForUser, type ResourceAttrs, type Viewer } from "@amax/auth";
 import type { NotificationRecipient, NotificationRule } from "@amax/core";
 
 type Payload = Record<string, unknown>;
@@ -20,18 +20,39 @@ async function candidates(tx: Tx, ownerId: string, permission: string | undefine
   return rows.filter((r) => could(r.roles as string[])).map((r) => r.user_id as string);
 }
 
-async function approvers(tx: Tx, tenantId: string, ownerId: string, permission: string | undefined): Promise<string[]> {
+// 072 AC-3: a payload entity field with no value keeps entity-scoped approvers out (fails closed); unscoped ones stay.
+const NO_ENTITY = "00000000-0000-4000-8000-000000000000";
+type Route = { projectIds: string[] | null; entity: string | null | undefined };
+// 072 review round 1: reach through the assignment that grants the permission (auth's canEverIn, as Time's chainFor
+// does), never through an unrelated unscoped role. With no permission on the rule, any assignment reaching the entity.
+const reaches = (v: Viewer, entity: string | null | undefined, permission: string | undefined) =>
+  entity === undefined || (permission ? canEverIn(v, permission, entity) : v.assignments.some((a) => a.legalEntityIds === null || (entity !== null && a.legalEntityIds.includes(entity))));
+
+async function approvers(tx: Tx, tenantId: string, ownerId: string, permission: string | undefined, route: Route): Promise<string[]> {
   const ids = await candidates(tx, ownerId, permission);
   const viewers = (await Promise.all(ids.map((id) => viewerForUser(tx, tenantId, id)))).filter((v): v is Viewer => v !== null);
-  const managers = viewers.filter((v) => v.reports.includes(ownerId));
-  return managers.length ? managers.map((v) => v.userId) : (await holders(tx, "Admin")).filter((id) => id !== ownerId);
+  const managers = viewers.filter((v) => v.reports.includes(ownerId) && reaches(v, route.entity, permission));
+  const scope = route.entity === undefined ? {} : { legalEntityId: route.entity ?? NO_ENTITY };
+  // Approvers of these projects in particular; anyone who approves every project (an Admin) is the fallback below.
+  const everywhere = (v: Viewer) => can(v, permission!, { projectId: NO_ENTITY, ...scope });
+  const onProjects = permission && route.projectIds?.length
+    ? viewers.filter((v) => !everywhere(v) && route.projectIds!.some((projectId) => can(v, permission, { projectId, ...scope }))) : [];
+  const found = [...new Set([...managers, ...onProjects].map((v) => v.userId))];
+  if (found.length) return found;
+  const admins = (await holders(tx, "Admin")).filter((id) => id !== ownerId);
+  if (route.entity === undefined) return admins;
+  const scoped = await Promise.all(admins.map((id) => viewerForUser(tx, tenantId, id)));
+  return scoped.filter((v): v is Viewer => v !== null && reaches(v, route.entity, permission)).map((v) => v.userId);
 }
 
 async function idsFor(tx: Tx, tenantId: string, to: NotificationRecipient, payload: Payload, rule: NotificationRule): Promise<string[]> {
   if ("role" in to) return holders(tx, to.role);
   const id = idIn(payload, "owner" in to ? to.owner : to.approvers);
   if (!id) return [];
-  return "owner" in to ? [id] : approvers(tx, tenantId, id, rule.permission);
+  if ("owner" in to) return [id];
+  const projects = to.projects ? payload[to.projects] : null;
+  const route: Route = { projectIds: Array.isArray(projects) ? (projects as string[]) : null, entity: to.entity ? ((payload[to.entity] as string | null | undefined) ?? null) : undefined };
+  return approvers(tx, tenantId, id, rule.permission, route);
 }
 
 const acted = (payload: Payload, rule: NotificationRule, userId: string) => {

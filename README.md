@@ -18,6 +18,41 @@ An agent-native ERP for software and professional-services companies, covering d
 
 ## Run locally
 
+### With the demo data (from change 074)
+
+Five commands give a working app with the fictional Lumen Labs demo data. In PowerShell (bash: `export` instead of
+`$env:`):
+
+```powershell
+docker start amax-dev-postgres                       # first time: docker compose -f deploy/dev/compose.yaml up -d
+pnpm install --frozen-lockfile
+$env:DATABASE_MIGRATE_URL = "postgres://amax:amax@127.0.0.1:5440/amax"
+pnpm db:migrate
+pnpm --filter @amax/web build                        # optional: catches type and build errors
+pnpm --filter @amax/web dev                          # http://localhost:3000
+```
+
+They need `apps/web/.env.local` (not committed):
+
+```bash
+DATABASE_URL=postgres://amax_app:amax_app@127.0.0.1:5440/amax
+AUTH_SECRET=<32+ random characters>
+AUDIT_HASH_KEY=<openssl rand -hex 32>
+CRON_SECRET=<openssl rand -hex 16>
+AMAX_AUTH_DEMO=1
+AMAX_AUTH_DEMO_TENANT=11111111-1111-4111-8111-111111111111
+AMAX_AUTH_PASSWORD_TENANT=11111111-1111-4111-8111-111111111111
+ANTHROPIC_API_KEY=<your key>                         # chat with the real model
+```
+
+On its first start against a database, `dev` loads the demo data: every module's Lumen Labs data, then the Time
+walkthrough in [`docs/demo/time-070-073.md`](docs/demo/time-070-073.md). It prints `demo data: seeded …`. Later starts
+print `demo data: already loaded` and change nothing. It only seeds a local database (`127.0.0.1` or `localhost`), and
+`AMAX_SEED_DEMO=0` turns it off. `dev` also runs the jobs tick every 10 seconds (`AMAX_TICK_SECONDS` changes it,
+`AMAX_DEV_TICK=0` turns it off), so bells, email, Finance and Reports update without posting to `/api/jobs/tick`. Sign in at `/signin` with a demo email such as `maya@lumenlabs.test`.
+
+### Without a database
+
 ```bash
 npm install
 npm run dev        # http://localhost:3000, mock at /mock/

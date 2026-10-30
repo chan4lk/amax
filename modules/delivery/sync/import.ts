@@ -26,9 +26,11 @@ export const desired = (projectKey: string, r: SpecRecord, sha: string, stored: 
 
 // The meta fields that matter for "changed?". The commit sha alone doesn't count as a change, neither
 // as `sha` nor inside `source` ("main@<sha>"): only the ref name is compared (review round 2).
+// Task order isn't a change either: change.md may list T26 before T25, and storage returns its own order (079).
 const refOf = (s: unknown) => (typeof s === "string" ? s.replace(/@[0-9a-f]{7,40}$/i, "") : s);
+const byRef = (a: Task, b: Task) => a.ref.length - b.ref.length || (a.ref < b.ref ? -1 : a.ref > b.ref ? 1 : 0);
 export const fingerprint = (d: { title: string; phase: string; tasksDone: number; tasksTotal: number; tasks: Task[]; meta: Record<string, unknown> }) =>
-  canonical([d.title, d.phase, d.tasksDone, d.tasksTotal, d.tasks, { ...d.meta, sha: null, source: refOf(d.meta.source) }]);
+  canonical([d.title, d.phase, d.tasksDone, d.tasksTotal, [...d.tasks].sort(byRef), { ...d.meta, sha: null, source: refOf(d.meta.source) }]);
 
 /** A project's specclaw proposals as stored, with their tasks, for the "changed?" comparison. */
 export const storedSpecRows = (tx: Tx, projectKey: string) =>

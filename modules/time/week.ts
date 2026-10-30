@@ -16,10 +16,28 @@ export function weekStart({ year, week }: IsoWeek): Date {
 }
 
 export const isoDate = (d: Date) => d.toISOString().slice(0, 10);
+/** A real calendar date in YYYY-MM-DD: never one Date would roll over (2026-02-30 → Mar 2). The one rule (073 review round 2). */
+export const isRealDate = (day: string) => { const d = new Date(`${day}T00:00:00Z`); return !Number.isNaN(d.getTime()) && isoDate(d) === day; };
+
+const DAY_LABEL = new Intl.DateTimeFormat("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: "UTC" });
+/** "2026-10-14" → "Wed Oct 14", as confirm cards and the bell name a day (070 amendment 2). */
+export const dayLabel = (day: string) => DAY_LABEL.format(new Date(`${day}T00:00:00Z`)).replace(",", "");
 
 export const workDays = (w: IsoWeek) => [0, 1, 2, 3, 4].map((i) => isoDate(new Date(weekStart(w).getTime() + i * DAY)));
+const allDays = (w: IsoWeek) => [0, 1, 2, 3, 4, 5, 6].map((i) => isoDate(new Date(weekStart(w).getTime() + i * DAY)));
+export const isWeekend = (day: string) => [0, 6].includes(new Date(`${day}T00:00:00Z`).getUTCDay());
+/** 073 AC-1: the days a week shows: Monday to Friday, plus Saturday and Sunday when it has weekend hours. */
+export const shownDays = (w: IsoWeek, logged: string[]) => (logged.some(isWeekend) ? allDays(w) : workDays(w));
 
 export const shiftWeek = (w: IsoWeek, by: number) => isoWeekOf(new Date(weekStart(w).getTime() + by * 7 * DAY));
+
+/** 075 amendment 1: "Week 42 · Last week", against the week holding `today`; the year is added when it isn't this year's. */
+export function weekPill(w: IsoWeek, today: Date) {
+  const now = isoWeekOf(today);
+  const n = Math.round((weekStart(w).getTime() - weekStart(now).getTime()) / (7 * DAY));
+  const when = n === 0 ? "This week" : n === -1 ? "Last week" : n === 1 ? "Next week" : n < 0 ? `${-n} weeks ago` : `In ${n} weeks`;
+  return { name: `Week ${w.week}${w.year === now.year ? "" : `, ${w.year}`}`, when, now: n === 0 };
+}
 
 export const weekKey = ({ year, week }: IsoWeek) => `${year}-W${String(week).padStart(2, "0")}`;
 

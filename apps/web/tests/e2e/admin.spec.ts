@@ -35,9 +35,10 @@ for (const who of ADMINS) test(`047 AC1 the Settings hub lists every admin scree
   await expect(page.locator(".app-card", { hasText: "AI usage" }).locator(".chip")).toHaveText(who.pricing ? /this month$/ : "Hidden for your role");
   await expect(page.getByRole("link", { name: "Audit and trace" })).toHaveAttribute("href", "/settings/audit");
   await expect(page.getByRole("link", { name: "AI usage" })).toHaveAttribute("href", "/settings/ai/usage");
+  // 073: the reminder schedules run per legal entity and wait for an entity with no time zone.
   await expect(page.locator(".lede")).toContainText(who.pricing
-    ? "3 things need you: the Azure DevOps credential expires in 12 days; 1 privacy request needs a second approver; 1 tenant export needs a second Admin"
-    : "2 things need you: the Azure DevOps credential expires in 12 days; 1 privacy request needs a second approver.");
+    ? "4 things need you: the Azure DevOps credential expires in 12 days; 2 schedules wait for an entity's time zone; 1 privacy request needs a second approver; 1 tenant export needs a second Admin"
+    : "3 things need you: the Azure DevOps credential expires in 12 days; 2 schedules wait for an entity's time zone; 1 privacy request needs a second approver.");
   await expect(page.getByRole("navigation").getByRole("link", { name: "Settings" }).first()).toHaveAttribute("href", "/settings");
   await page.getByRole("button", { name: /profile menu/ }).click();
   await expect(page.getByRole("menuitem", { name: "Settings", exact: true })).toHaveAttribute("href", "/settings");

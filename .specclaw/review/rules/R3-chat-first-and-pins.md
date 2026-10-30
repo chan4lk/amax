@@ -10,7 +10,9 @@ Report these as findings:
   Writes go through chat: an MCP write tool in `modules/<m>/mcp.ts` that runs only after chat's
   pending-action confirm (`packages/chat/src/engine.ts` `confirmAction`). In place of the form, the
   page offers an `IntentButton` / "Ask amax" control that opens chat with the record pinned and a
-  prompt filled in.
+  prompt filled in, or chat suggests that write on the page through the module's `chatSuggestions`
+  (amended by the product owner on 2026-10-23, 070 amendment 4); the record keeps its `PinButton`
+  either way.
 - **Missing chat tool.** A write the UI offers (or a removed form used to offer) that has no MCP
   write tool, so chat can't do it.
 - **Missing pin.** A card, tile (`.tcard`, `.ticket`), stat, stage step, list item or table row that
@@ -26,6 +28,8 @@ Report these as findings:
 Not findings:
 
 - Read-only controls: filters, tabs, sorting, search, pagination, navigation, view toggles.
+- A record with a pin and no per-record Ask amax button, when a `chatSuggestions` entry for that page
+  leads to the write (070 amendment 4).
 - Auth screens (sign-in, sign-out) and the chat drawer's own composer and confirm/cancel buttons.
 - Inline forms that predate 2026-10-17 in modules that a change doesn't touch. These are listed as
   a follow-up in `BACKLOG.md`. A change that *edits* such a component must move its writes to chat.

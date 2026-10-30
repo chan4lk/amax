@@ -41,7 +41,9 @@ export async function getReport(v: Viewer, month?: string): Promise<Report> {
     const name = monthName(m);
     const notes = [
       ...(inputs.leaveOn ? [] : ["Leave isn't installed, so available hours don't take leave off."]),
-      ...(team.leftOut ? [`${team.leftOut} ${team.leftOut === 1 ? "person is" : "people are"} left out of the team figure: their leave isn't visible to you.`] : []),
+      // 072 review round 4: each reason a person is left out of the team figure, said apart.
+      ...(team.leaveHidden ? [`${team.leaveHidden} ${team.leaveHidden === 1 ? "person is" : "people are"} left out of the team figure: their leave isn't visible to you.`] : []),
+      ...(team.statusUnknown ? [`${team.statusUnknown} ${team.statusUnknown === 1 ? "person is" : "people are"} left out of the team figure: some of their hours' timesheet status couldn't be read.`] : []),
     ];
     return {
       month: m, monthName: name, range, span: span(range), workingDays, target, notes,

@@ -1,0 +1,10 @@
+{
+  "change": "078-review-covered-by",
+  "phase": "verify",
+  "branch": "",
+  "phases": {
+    "proposal": {"status":"approved","at":"2026-10-30T11:38:19Z"},
+    "tasks": {"status":"done","at":"2026-10-30T11:39:28Z"},
+    "verify": {"status":"done","at":"2026-10-30T12:35:05Z"}
+  }
+}

@@ -305,4 +305,11 @@ describe.skipIf(!hasDb)("008 AC-7 the importer is a caller of sync_proposal", ()
     expect(await sync("2")).toMatchObject({ created: 0, updated: 0, unchanged: 1 });
     expect((await tasks()).map((r) => r.done)).toEqual([true, true]);
   });
+
+  it("079 AC-1 tasks written out of order are not a change on re-sync", async () => {
+    const repo = fakeRepo({ "001-a": { status: "✅ Approved", tasks: "- [x] `T2` — two\n- [ ] `T10` — ten\n- [x] `T1` — one" } });
+    const sync = (sha: string) => syncSpecclaw(app, ctx, { projectKey: "ORD", projectName: "order", client: "x", records: readSpecclaw(repo), sha, committedAt: "2026-10-01T00:00:00Z" });
+    expect(await sync("1")).toMatchObject({ created: 1 });
+    expect(await sync("2")).toMatchObject({ created: 0, updated: 0, unchanged: 1 });
+  });
 });

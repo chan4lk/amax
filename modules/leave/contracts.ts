@@ -3,9 +3,12 @@
 // system code (a context core issued with contextFor.job) sees every row.
 import { sql } from "drizzle-orm";
 import type { Tx } from "@amax/db";
-import { readerOf, visibleTo, type Reader } from "./server/scope";
+import type { Viewer } from "@amax/auth";
+import { readerOf, sees, visibleTo, type Reader } from "./server/scope";
 
 export { LEAVE_SENSITIVE } from "./server/scope";
+/** Whether a viewer may see a person's leave: Leave's own rule, for modules that show leave next to their data (072). */
+export const leaveVisibleTo = (v: Viewer, p: { userId: string | null; legalEntityId: string | null }) => sees(v, { user_id: p.userId, legal_entity_id: p.legalEntityId });
 
 export const LEAVE_TYPES = ["annual", "casual", "medical", "lieu", "personal", "long-service", "unpaid"] as const;
 export type LeaveType = (typeof LEAVE_TYPES)[number];

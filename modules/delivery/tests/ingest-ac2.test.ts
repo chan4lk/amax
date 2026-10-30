@@ -20,6 +20,7 @@ const commit = (id: string, message: string, author: { username: string; email: 
 describe.skipIf(!hasDb)("008 AC-2 pushes attribute commits only through a verified Git identity", () => {
   let t: Awaited<ReturnType<typeof migratedDatabase>>;
   let app: Db;
+  let nimal: string;
   const done = async () => (await withTenant(app, T, (tx) => tx.execute(sql`select ref from delivery.task where done order by ref`))).map((r) => r.ref);
 
   beforeAll(async () => {
@@ -30,7 +31,7 @@ describe.skipIf(!hasDb)("008 AC-2 pushes attribute commits only through a verifi
     installAuthorizer();
     setSuggestionKinds([linkIdentity]);
     await t.owner`insert into core.tenant (id, name) values (${T}, 'amax')`;
-    const nimal = await upsertPasswordUser(app, T, { email: "nimal@amax.test", name: "Nimal Silva", roles: ["Engineer"], password: "dev-password-123" });
+    nimal = await upsertPasswordUser(app, T, { email: "nimal@amax.test", name: "Nimal Silva", roles: ["Engineer"], password: "dev-password-123" });
     await upsertPasswordUser(app, T, { email: "ayesha@amax.test", name: "Ayesha Rahman", roles: ["Engineer"], password: "dev-password-123" });
     await withTenant(app, T, (tx) => linkGitIdentity(tx, T, { provider: "github", login: "nimal-gh", email: "nimal@amax.test", userId: nimal }));
     await syncProposal(contextFor.job(T, "delivery.ingest"), { projectKey: "ING", project: { name: "Ingest", client: "x" }, key: "ING-001", title: "Invoice export", phase: "building",
@@ -71,5 +72,27 @@ describe.skipIf(!hasDb)("008 AC-2 pushes attribute commits only through a verifi
     expect(await drafts()).toEqual([expect.objectContaining({ proposalKey: "ING-001", projectKey: "ING", day: "2026-10-18", hours: 1.5, commit: "b2c0ffee2" })]);
     const [line] = await withTenant(app, T, (tx) => tx.execute(sql`select text from delivery.activity order by at desc limit 1`));
     expect(line.text).toBe("drafted 1.5 h on ING-001 for the timesheet");
+
+    // 071 review round 1: a commit drafts once whichever provider repeats it: the same GitHub commit pushed again
+    // (no distinct flag), and an Azure DevOps push of it on another branch, draft nothing more; a new commit drafts.
+    const lines = async () => (await withTenant(app, T, (tx) => tx.execute(sql`select count(*)::int as n from delivery.activity where text like 'drafted%'`)))[0].n;
+    const linesBefore = await lines();
+    await push([timed("b2c0ffee2")]);
+    await withTenant(app, T, (tx) => linkGitIdentity(tx, T, { provider: "azure-devops", login: "nimal@amax.test", email: "nimal@amax.test", userId: nimal }));
+    await ingestPush({ tenantId: T, provider: "azure-devops", eventId: "ado-1", headers: new Headers(), payload: { eventType: "git.push", resource: { commits: [
+      { commitId: "b2c0ffee2", comment: "ING-001 T2 done\n\nTime: 1.5h", author: { email: "nimal@amax.test", date: "2026-10-18T09:00:00Z" } }] } } });
+    expect((await drafts()).map((d) => (d as { commit: string }).commit)).toEqual(["b2c0ffee2"]);
+    expect(await lines()).toBe(linesBefore);
+    await push([timed("b3c0ffee3")]);
+    expect((await drafts()).map((d) => (d as { commit: string }).commit).sort()).toEqual(["b2c0ffee2", "b3c0ffee3"]);
+
+    // Review round 2: the key is race-safe. The same new commit arrives from GitHub and Azure DevOps at once, each on
+    // its own connection, five times over: exactly one draft and one activity line.
+    const ado = (id: string, n: number) => ingestPush({ tenantId: T, provider: "azure-devops", eventId: `ado-race-${n}`, headers: new Headers(), payload: { eventType: "git.push", resource: { commits: [
+      { commitId: id, comment: "ING-001 T2 done\n\nTime: 1.5h", author: { email: "nimal@amax.test", date: "2026-10-18T09:00:00Z" } }] } } });
+    const racedBefore = Number(await lines());
+    await Promise.all([0, 1, 2, 3, 4].flatMap((n) => [push([timed("b4c0ffee4")]), ado("b4c0ffee4", n)]));
+    expect((await drafts()).filter((d) => (d as { commit: string }).commit === "b4c0ffee4")).toHaveLength(1);
+    expect(await lines()).toBe(racedBefore + 1);
   });
 });

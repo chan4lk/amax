@@ -15,7 +15,7 @@ describe.skipIf(!hasDb)("utilisation (Postgres)", () => {
     const r = await db.call<Report>("maya", "get_utilisation", {});
     expect(pick(r)).toEqual([["Nimal Silva", 96, null, 98.5, 88, 92], ["Kasun Dias", 80, "2 days medical", 78, 70, 88], ["Ayesha Rahman", 88, "1 day casual", 84, 64, 73]]);
     expect(r.team).toMatchObject({ availableHours: 264, loggedHours: 260.5, billableHours: 222, utilisation: 84 });
-    expect(r.lede).toBe("Billable hours ÷ available hours, October to date (Oct 1–16, 12 working days, 96 h per full-time person). Team: 222 ÷ 264 = 84%, against an 80% target.");
+    expect(r.lede).toBe("Billable hours from submitted and approved time ÷ available hours, October to date (Oct 1–16, 12 working days, 96 h per full-time person). Team: 222 ÷ 264 = 84%, against an 80% target.");
     expect(r.trend.map((t) => t.utilisation)).toEqual([72, 68, 74, 77, 79, 81, 78, 83, 82, 80, 84, 84]);
     expect(r.availability.rows.map((x) => [x.name, x.workdays, x.availableHours, x.allocated])).toEqual([["Nimal Silva", 9, 72, 100], ["Kasun Dias", 9, 72, 100], ["Ayesha Rahman", 6, 48, 100]]);
     const finance = await db.call<Report>("sahan", "get_utilisation", {}, "Finance");
@@ -25,7 +25,8 @@ describe.skipIf(!hasDb)("utilisation (Postgres)", () => {
     await db.call("tharushi", "log_time", { projectKey: "FLT", day: "2026-10-16", hours: 4, billable: true });
     await db.tick();
     const after = await db.call<Report>("maya", "get_utilisation", {});
-    expect(after.rows.find((x) => x.name === "Tharushi Wijesinghe")).toMatchObject({ availableHours: 96, billableHours: 4, utilisation: 4 });
+    // 072 AC-6 (D1): her week is still a draft, so its hours don't count yet.
+    expect(after.rows.find((x) => x.name === "Tharushi Wijesinghe")).toBeUndefined();
   }, 120_000);
 
   it("AC2 exports the table as CSV through the same read, with formula cells neutralised", async () => {

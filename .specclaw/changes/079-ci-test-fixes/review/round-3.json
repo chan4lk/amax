@@ -1,0 +1,57 @@
+{
+ "counts": {
+  "blocker": 0,
+  "major": 0,
+  "minor": 0
+ },
+ "escalated": [],
+ "files": [
+  "apps/mock/public/mock/index.html",
+  "apps/web/tests/e2e/admin.spec.ts",
+  "apps/web/tests/e2e/ask.ts",
+  "apps/web/tests/e2e/chat-first.spec.ts",
+  "modules/delivery/sync/import.ts",
+  "modules/delivery/tests/chat.test.ts",
+  "modules/delivery/tests/sync-import.test.ts",
+  "modules/delivery/tests/sync-task-order.test.ts"
+ ],
+ "final": true,
+ "findings": [],
+ "head": "4e4e9444f57f06b5d3aa7e256f9b5d56c6f0f2df",
+ "impact": [
+  "apps/web/app/signin/page.tsx",
+  "apps/web/auth.ts",
+  "apps/web/tests/e2e/ai-usage.spec.ts",
+  "apps/web/tests/e2e/ai.spec.ts",
+  "apps/web/tests/e2e/api.spec.ts",
+  "apps/web/tests/e2e/audit.spec.ts",
+  "apps/web/tests/e2e/backups-visual.spec.ts",
+  "apps/web/tests/e2e/backups.spec.ts",
+  "apps/web/tests/e2e/chat.spec.ts",
+  "apps/web/tests/e2e/delivery-visual.spec.ts",
+  "apps/web/tests/e2e/delivery.spec.ts",
+  "apps/web/tests/e2e/notifications.spec.ts",
+  "apps/web/tests/e2e/pins.spec.ts",
+  "apps/web/tests/e2e/releases.spec.ts",
+  "apps/web/tests/e2e/retention-visual.spec.ts",
+  "apps/web/tests/e2e/retention.spec.ts",
+  "apps/web/tests/e2e/secrets.spec.ts",
+  "apps/web/tests/e2e/sections.spec.ts",
+  "apps/web/tests/e2e/suggestions.spec.ts",
+  "apps/web/tests/e2e/workflows.spec.ts"
+ ],
+ "model": "opus",
+ "passes": [
+  "review",
+  "design"
+ ],
+ "prompt_chars": 58903,
+ "round": 3,
+ "since": null,
+ "status": "clean",
+ "system_chars": 42403,
+ "tier": "review",
+ "tools": "Read,Grep,Glob",
+ "ts_end": 1793379040,
+ "ts_start": 1793378998
+}

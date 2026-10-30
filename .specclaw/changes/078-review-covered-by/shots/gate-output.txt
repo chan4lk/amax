@@ -1,0 +1,10 @@
+fork PR: review evidence required
+070-time-entry-corrections   scope=change     pass — final round 5/5 open, 0 blockers, head 625be24 in PR
+071-time-access-and-integrity scope=change     pass — final round 5/5 open, 0 blockers, head 9fdb80f in PR
+072-time-consumers-sync      scope=change     pass — final round 5/5 open, 0 blockers, head fe4f5b2 in PR
+073-time-workflow-enhancements scope=change     pass — final round 5/5 open, 1 blockers, head 5056a50 in PR
+074-dev-demo-data            scope=covered-by pass — covered by 073-time-workflow-enhancements: final round 5/5 open, 1 blockers, head 5056a50 in PR
+075-team-time-status-band    scope=covered-by pass — covered by 073-time-workflow-enhancements: final round 5/5 open, 1 blockers, head 5056a50 in PR
+076-chat-choice-cards        scope=covered-by pass — covered by 073-time-workflow-enhancements: final round 5/5 open, 1 blockers, head 5056a50 in PR
+077-time-requests-history    scope=covered-by pass — covered by 073-time-workflow-enhancements: final round 5/5 open, 1 blockers, head 5056a50 in PR
+078-review-covered-by        scope=change     pass — final round 4/5 escalate, 0 blockers, head 3df8db9 in PR

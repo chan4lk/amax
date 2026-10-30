@@ -89,7 +89,7 @@ describe.skipIf(!hasDb)("005 chat engine with delivery (Postgres, scripted model
     const out = await chatTurn(app, registry, liam, { text: "list projects" });
     expect(out.reply).toContain("invalid call to list_projects");
     expect(out.reply).not.toContain("Contoso");
-    expect(refused.calls[0].tools?.map((x) => x.name)).toEqual(["whoami", "search"]);
+    expect(refused.calls[0].tools?.map((x) => x.name)).toEqual(["whoami", "search", "offer_choices"]);
   });
 
   it("AC-4 pins are fetched with the user's permissions and sent as quoted data", async () => {

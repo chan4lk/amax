@@ -1,7 +1,7 @@
 import type { Viewer } from "@amax/auth";
 import { personIdsForUser } from "@amax/hr/contracts";
 import { read, ACKNOWLEDGE, iso, day, type Row } from "./context";
-import { bundleVerifies } from "./evidence";
+import { bundleState } from "./evidence";
 import { policyCoverage, policyStatusFor } from "./policy-read";
 import { byId, openRisks, toIncident, toRisk } from "./registers";
 import { platformSuppliers, registerSuppliers, toSupplier } from "./supplier-read";
@@ -21,7 +21,7 @@ export const getPolicy = (v: Viewer, id: string) => read(v, async (tx) => {
 
 export const getEvidenceBundle = (v: Viewer, id: string) => read(v, (tx) => byId(tx, "evidence_bundle", id, (r: Row) => ({
   id: r.id as string, control: r.control as string, title: r.title as string, periodFrom: day(r.period_from), periodTo: day(r.period_to), generatedAt: iso(r.generated_at),
-  generatedBy: r.generated_by as string, digest: r.digest as string, signature: r.signature as string, signatureValid: bundleVerifies(r), contents: r.contents,
+  generatedBy: r.generated_by as string, digest: r.digest as string, signature: r.signature as string, ...bundleState(r), contents: r.contents,
 })));
 
 /** The viewer's own current policies, and which they still have to acknowledge. */

@@ -1,0 +1,109 @@
+{
+ "counts": {
+  "blocker": 1,
+  "major": 1,
+  "minor": 2
+ },
+ "escalated": [],
+ "files": [
+  "AGENTS.md",
+  "apps/mock/public/mock/index.html",
+  "packages/testing/tests/review-gate-covered.test.ts",
+  "packages/testing/tests/review-gate-fixture.ts",
+  "packages/testing/tests/review-gate.test.ts",
+  "scripts/check-review-gate.mjs",
+  "scripts/review-gate/rules.mjs"
+ ],
+ "final": false,
+ "findings": [
+  {
+   "file": "scripts/review-gate/rules.mjs",
+   "fp": "4d2e683b041f",
+   "in_delta": true,
+   "line": 11,
+   "message": "`judgeCovered` lets a fork PR skip review completely. The only check on the named change is that its final round's head is an ancestor of the PR head. That is always true for any change already merged or archived on main, because the fork branches from main. The gate never checks three things. (1) The covering loop's final head comes after this change's commits, so the loop actually saw them. (2) The covering change sits on this PR's branch (touched by the PR, or its reviewed head not already in base). (3) The covering change's `## Verify` names this change, which AGENTS.md requires. It also ignores the covered change's own `review/` rounds, so a change whose own loop left an open blocker can switch to `covered-by` and hide it. AGENTS.md says a fork PR 'must carry a finished loop for every change it touches', and this breaks that. Fix: pass when the cover's reviewed head is not an ancestor of `--base`, and every commit that touches the covered change dir is an ancestor of that reviewed head (`git rev-list base..head -- <dir>`, each checked with `merge-base --is-ancestor <c> <coverHead>`). Also require the covered change's name under the cover's `## Verify`. Fail when the covered change's own rounds show an open blocker.",
+   "original_severity": "blocker",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B6",
+   "scenario": "A fork PR adds `.specclaw/changes/200-anything/change.md` with `**Review:** covered-by 042-release-management` plus arbitrary code under modules/. 042 is archived on main and has a clean final round whose head is in main's history. Result: `200-anything scope=covered-by pass \u2014 covered by 042-release-management: final round \u2026`, and the gate exits 0 with no review of the new code.",
+   "severity": "blocker"
+  },
+  {
+   "file": "packages/testing/tests/review-gate-covered.test.ts",
+   "fp": "4b8196f60b01",
+   "in_delta": true,
+   "line": 22,
+   "message": "Test AC1/AC2 makes the bypass the expected result. It passes `103-stacked` against `101-cover`, which sits in base and was reviewed at a head from before 103's commits. No test covers a cover whose reviewed head comes before the covered change's commits, a cover whose loop finished before the PR's base, or a cover whose `## Verify` doesn't name the covered change. Each of these should fail. Add those cases as a variant table, and change the 'touched or not' case so the cover's loop actually reviews 103's commits.",
+   "original_severity": "major",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B2",
+   "scenario": "Fixture as written: the cover's round-1 head is the base commit, and 103 is committed after it. Expected: fail (loop never saw 103). Actual: the test asserts `pass`.",
+   "severity": "major"
+  },
+  {
+   "file": "scripts/review-gate/rules.mjs",
+   "fp": "08136b0e9602",
+   "in_delta": true,
+   "line": 7,
+   "message": "In the `reviewScope` regex, `(?:\\s+`?(\\d{3}-[\\w-]+)`?)?` uses `\\s+`, which matches across newlines. So `**Review:** covered-by` with no name on its line picks up a slug at the start of the next line, when it should fail with 'covered-by names no change'. Use `[ \\t]+` instead.",
+   "original_severity": "minor",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B6",
+   "scenario": "change.md header `**Review:** covered-by` followed by a line that starts with `073-time-workflow-enhancements is the stack root` \u2192 parsed as covered-by 073-time-workflow-enhancements instead of failing as unnamed.",
+   "severity": "minor"
+  },
+  {
+   "file": "apps/mock/public/mock/index.html",
+   "fp": "a62f69310ce2",
+   "in_delta": true,
+   "line": 894,
+   "message": "Change 078's diff adds mock sections and amendments for 070\u2013077 (074-dev-demo-data, 075, 076, 077, the 073 amendment 1 grid, and 070 amendments 2\u20135) alongside its own 078 section. The module standard says the mock is read-only during a build and each change owns its own section. Keep 078's mock edit to the `078-review-covered-by` section and land the others with their own changes, or name them in 078's Mock Delta.",
+   "original_severity": "minor",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B10",
+   "scenario": "",
+   "severity": "minor"
+  }
+ ],
+ "head": "fa72929f4e48620e48a488d5cbe78787538f9078",
+ "impact": [
+  "apps/web/app/(public)/welcome/welcome.css",
+  "apps/web/components/marketing/copy.ts",
+  "apps/web/components/shell/ThemeScript.tsx",
+  "apps/web/scripts/dev.ts",
+  "apps/web/scripts/seed-demo.ts",
+  "apps/web/tests/admin/it-admin.test.ts",
+  "apps/web/tests/chat-markdown.test.ts",
+  "apps/web/tests/dev-seed.test.ts",
+  "apps/web/tests/tick.test.ts",
+  "modules/allocations/ui/Grid.tsx",
+  "modules/allocations/ui/allocations.css",
+  "modules/delivery/server/repo-sync.ts",
+  "modules/delivery/tests/sync-parse.test.ts",
+  "modules/experience/mcp.ts",
+  "modules/time/tests/requests.test.ts",
+  "packages/auth/src/can.ts",
+  "packages/chat/tests/choices.test.ts",
+  "packages/core/src/privacy/inventory.ts",
+  "packages/workflows/tests/concurrency.test.ts",
+  "scripts/check-module-standard.mjs"
+ ],
+ "model": "opus",
+ "passes": [
+  "review",
+  "design"
+ ],
+ "prompt_chars": 96195,
+ "round": 2,
+ "since": null,
+ "status": "open",
+ "system_chars": 41936,
+ "tier": "review",
+ "tools": "Read,Grep,Glob",
+ "ts_end": 1793361568,
+ "ts_start": 1793361470
+}

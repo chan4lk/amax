@@ -16,7 +16,7 @@ export type Money = {
 };
 export type RunView = {
   id: string; level: Level; payGroup: { id: string; name: string }; legalEntityId: string; entityName: string; currency: string;
-  period: string; periodLabel: string; previousLabel: string; status: RunStatus; steps: StepView[]; headcount: number; sources: Record<string, string>;
+  period: string; periodLabel: string; previousLabel: string; status: RunStatus; steps: StepView[]; headcount: number; sources: Record<string, string> & { timeIncomplete?: boolean };
   pack: Statutory["pack"]; statutory?: Statutory["statutory"]; filings?: Statutory["filings"]; money?: Money;
   changes?: ChangeRow[]; open: number; payslips?: PayslipRow[]; bankFile: { suggestionId: string; status: string; firstApprovedBy: string | null } | null; next: NextStep;
 };
@@ -68,7 +68,7 @@ export async function view(tx: Tx, v: Viewer, r: Record<string, unknown>, full =
   const out: RunView = {
     id: base.id, level, payGroup: { id: r.pay_group_id as string, name: r.group_name as string }, legalEntityId: base.legalEntityId, entityName: r.entity_name as string,
     currency: base.currency, period: month, periodLabel: monthLabel(month), previousLabel: monthLabel(prevMonth(month)), status: r.status as RunStatus, steps: stepsOf(r),
-    headcount: Number(r.headcount), sources: (r.sources as Record<string, string>) ?? {}, pack: packInfo(base.pack), statutory: s?.statutory, filings: s?.filings,
+    headcount: Number(r.headcount), sources: (r.sources as Record<string, string> & { timeIncomplete?: boolean }) ?? {}, pack: packInfo(base.pack), statutory: s?.statutory, filings: s?.filings,
     money: pay && full ? await moneyOf(tx, base.id, r.pay_group_id as string, month, level === "totals") : undefined,
     changes, open: Number(o.n), payslips: level === "pay" && full ? await payslipsOf(tx, base.id, changes ?? []) : undefined,
     bankFile: full ? await bankFileOf(v, base.id) : null, next: null,

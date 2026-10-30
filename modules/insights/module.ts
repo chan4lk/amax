@@ -28,7 +28,7 @@ export default defineModule({
   chatIntents,
   // 032: an insight and its sources (which cascade with it) are kept two years from the day they are as of.
   retention: [
-    { table: "insights.insight", label: "Insights and their sources", subject: ["recorded_by", "dismissed_by"], fields: ["recorded_by", "dismissed_by", "body", "suggestion"], class: "personal", period: "P2Y", start: { at: ["as_of"] }, action: "delete" },
+    { table: "insights.insight", label: "Insights and their sources", subject: ["recorded_by", "dismissed_by"], fields: ["recorded_by", "dismissed_by", "body", "suggestion"], keep: { data: "the screen's figures for its kind; the whole row is deleted when due" }, class: "personal", period: "P2Y", start: { at: ["as_of"] }, action: "delete" },
   ],
   workflows,
   schedules,

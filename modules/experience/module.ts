@@ -38,7 +38,7 @@ export default defineModule({
     { table: "experience.collection", label: "Who switched experience collection", subject: ["set_by"], entity: "legal_entity_id", fields: ["set_by"], class: "personal", period: "P7Y", start: { at: ["set_at"] }, action: "anonymise" },
     { table: "experience.settings", label: "Who switched remediation", subject: ["remediation_set_by"], fields: ["remediation_set_by"], class: "personal", period: "P7Y", start: { at: ["remediation_set_at"] }, action: "anonymise" },
     { table: "experience.remediation", label: "Who approved a remediation", subject: ["approved_by"], fields: ["approved_by"], class: "personal", period: "P7Y", start: { at: ["approved_at"] }, action: "anonymise" },
-    { table: "experience.pulse", label: "Who sent a pulse survey", subject: ["sent_by"], fields: ["sent_by"], class: "personal", period: "P7Y", start: { at: ["sent_on"] }, action: "anonymise" },
+    { table: "experience.pulse", label: "Who sent a pulse survey", subject: ["sent_by"], fields: ["sent_by"], keep: { question: "the survey's question to everyone, organisation text" }, class: "personal", period: "P7Y", start: { at: ["sent_on"] }, action: "anonymise" },
   ],
   chatIntents,
   workflows: [collectWorkflow, remediateWorkflow],

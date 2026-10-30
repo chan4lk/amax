@@ -1,46 +1,13 @@
-import { execFileSync, spawnSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { dirname, join } from "node:path";
 import { beforeAll, describe, expect, it } from "vitest";
+import { gateRepo, round } from "./review-gate-fixture";
 
-const script = join(__dirname, "../../../scripts/check-review-gate.mjs");
-const root = mkdtempSync(join(tmpdir(), "review-gate-"));
-const git = (...args: string[]) => execFileSync("git", args, { cwd: root, encoding: "utf8" }).trim();
+const { init, branch, run } = gateRepo();
 const dir = ".specclaw/changes/101-demo";
 const modDir = ".specclaw/changes/102-module-close";
-
-function commit(files: Record<string, string>) {
-  for (const [path, body] of Object.entries(files)) {
-    mkdirSync(join(root, dirname(path)), { recursive: true });
-    writeFileSync(join(root, path), body);
-  }
-  git("add", "-A");
-  git("commit", "-qm", "fixture");
-  return git("rev-parse", "HEAD");
-}
-
-const round = (n: number, head: string, extra: object = {}) =>
-  JSON.stringify({ round: n, head, final: false, status: "open", since: null, counts: { blocker: 0 }, ...extra });
-
-function branch(name: string, steps: ((head: string) => Record<string, string>)[]) {
-  git("checkout", "-qb", name, "base");
-  return steps.reduce((head, step) => commit(step(head)), git("rev-parse", "HEAD"));
-}
-
-function run(head: string, fork: boolean) {
-  const res = spawnSync("node", [script, "--root", root, "--base", "base", "--head", head, "--fork", String(fork)], { encoding: "utf8" });
-  return { code: res.status, out: res.stdout };
-}
-
 const heads: Record<string, string> = {};
 
 beforeAll(() => {
-  git("init", "-q");
-  git("config", "user.email", "fixture@example.test");
-  git("config", "user.name", "Fixture");
-  commit({ "modules/demo/index.ts": "export {};\n" });
-  git("branch", "base");
+  init(() => ({ "modules/demo/index.ts": "export {};\n" }));
   const code = () => ({ [`${dir}/change.md`]: "**Review:** change\n## Verify\n", "modules/demo/index.ts": "export const a = 1;\n" });
   heads.reviewed = branch("reviewed", [code, (h) => ({ [`${dir}/review/round-1.json`]: round(1, h), [`${dir}/review/round-2.json`]: round(2, h, { final: true, status: "clean" }) })]);
   heads.unreviewed = branch("unreviewed", [code]);

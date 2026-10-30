@@ -1,0 +1,10 @@
+{
+  "change": "075-team-time-status-band",
+  "phase": "verify",
+  "branch": "",
+  "phases": {
+    "proposal": {"status":"approved","at":"2026-10-25T15:26:22Z"},
+    "tasks": {"status":"done","at":"2026-10-25T15:26:23Z"},
+    "verify": {"status":"done","at":"2026-10-25T15:39:42Z"}
+  }
+}

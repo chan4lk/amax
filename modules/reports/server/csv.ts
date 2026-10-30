@@ -11,8 +11,8 @@ const n = (v: number | null) => (v === null ? "" : String(v));
 
 export const utilisationCsv = (r: Report) => csvText([
   ["Person", "Available h", "Leave", "Logged h", "Billable h", "Utilisation %"],
-  ...r.rows.map((x) => [x.name, n(x.availableHours), x.leaveHidden ? "Not visible to you" : (x.leaveLabel ?? ""), n(x.loggedHours), n(x.billableHours), n(x.utilisation)]),
-  ["Team", n(r.team.availableHours), "", n(r.team.loggedHours), n(r.team.billableHours), n(r.team.utilisation)],
+  ...r.rows.map((x) => [x.name, n(x.availableHours), [x.leaveHidden ? "Not visible to you" : (x.leaveLabel ?? ""), x.hoursIncomplete ? "Timesheet status unknown" : ""].filter(Boolean).join("; "), n(x.loggedHours), n(x.billableHours), n(x.utilisation)]),
+  ["Team", n(r.team.availableHours), [r.team.leaveHidden ? `${r.team.leaveHidden} left out: leave not visible` : "", r.team.statusUnknown ? `${r.team.statusUnknown} left out: timesheet status unknown` : ""].filter(Boolean).join("; "), n(r.team.loggedHours), n(r.team.billableHours), n(r.team.utilisation)],
 ]);
 
 export const availabilityCsv = (a: Availability) => csvText([

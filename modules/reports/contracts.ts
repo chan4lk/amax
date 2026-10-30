@@ -19,11 +19,17 @@ export type PersonUtilisation = {
   availableHours: number | null; loggedHours: number; billableHours: number;
   /** Billable ÷ available, a whole percent. */
   utilisation: number | null;
+  /** Some hours' timesheet status couldn't be read (072): no %, and the row stays out of the team figure. */
+  hoursIncomplete?: boolean;
 };
 
-/** The team over a range: sums over the people counted; `leftOut` had leave the viewer can't see. */
+/**
+ * The team over a range: sums over the people counted. `leftOut` is everyone left out; `leaveHidden` of them had leave
+ * the viewer can't see, `statusUnknown` had hours whose timesheet status couldn't be read (072). A person with both
+ * is counted once in `leftOut` and in each reason.
+ */
 export type TeamUtilisation = {
-  from: string; to: string; people: number; leftOut: number;
+  from: string; to: string; people: number; leftOut: number; leaveHidden: number; statusUnknown: number;
   availableHours: number; loggedHours: number; billableHours: number; utilisation: number | null;
 };
 

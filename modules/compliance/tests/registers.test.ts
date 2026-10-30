@@ -4,6 +4,8 @@ import { hasDb } from "@amax/db/testdb";
 import { createRegistry } from "@amax/mcp";
 import { EVENTS } from "../contracts";
 import { contextFor } from "@amax/core/server";
+import { withTenant } from "@amax/db";
+import { applyRule } from "@amax/core/privacy";
 import { remindBreaches } from "../server/reminders";
 import { complianceDb, T } from "./db";
 
@@ -63,5 +65,20 @@ describe.skipIf(!hasDb)("compliance registers (Postgres)", () => {
     expect(bundle).toMatchObject({ signatureValid: true, periodTo: out.period.to, contents: { control: "A.5.24", evidence: { incidents: expect.arrayContaining([expect.objectContaining({ title: "Laptop lost in transit" })]) } } });
     await db.t.owner`update compliance.evidence_bundle set contents = jsonb_set(contents, '{period,to}', '"2099-01-01"') where id = ${out.bundles[2].id}`;
     expect((await call("sahan", "get_evidence_bundle", { bundleId: out.bundles[2].id })).signatureValid).toBe(false);
+  }, 60_000);
+
+  // 070 review round 3: contents names people, so the module's own retention rule anonymises it, through the
+  // privacy engine's applyRule; the bundle then reads as anonymised, not tampered, and the others are untouched.
+  it("an anonymised bundle reads as anonymised, never as valid or tampered; the rest still verify", async () => {
+    const out = await call("sahan", "export_evidence", {});
+    const [gone, kept] = [out.bundles[0].id, out.bundles[3].id];
+    const rule = db.modules.find((m) => m.id === "compliance")!.retention!.find((r) => r.table === "compliance.evidence_bundle")!;
+    expect(rule.fields).toEqual(expect.arrayContaining(["generated_by", "contents"]));
+    await withTenant(db.app, T, (tx) => applyRule(tx, { ...rule, id: "t", module: "compliance" }, sql`id = ${gone}`));
+    expect(await call("sahan", "get_evidence_bundle", { bundleId: gone })).toMatchObject({ anonymised: true, signatureValid: null, contents: {} });
+    expect(await call("sahan", "get_evidence_bundle", { bundleId: kept })).toMatchObject({ anonymised: false, signatureValid: true });
+    // Review round 4: contents emptied without the retention rule (generated_by untouched) is tampering, not anonymised.
+    await db.t.owner`update compliance.evidence_bundle set contents = '{}'::jsonb where id = ${kept}`;
+    expect(await call("sahan", "get_evidence_bundle", { bundleId: kept })).toMatchObject({ anonymised: false, signatureValid: false });
   }, 60_000);
 });

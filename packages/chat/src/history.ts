@@ -20,7 +20,11 @@ const likePattern = (query: string) => `%${query.replace(/[\\%_]/g, (c) => `\\${
 export const openCards = (pending: PendingAction[], decided: Record<string, unknown> | null) =>
   pending.filter((p) => !decided || !(p.id in decided));
 
-const textOf = (m: Message) => m.content.flatMap((b) => (b.type === "text" && b.text.trim() ? [b.text] : [])).join("\n");
+// The gateway puts the pinned records ahead of the person's first message ("Pinned context:" and its <data> blocks) for
+// the model. It stays in the stored conversation, so a reopened one still has its context, but it was never typed: not shown.
+const CONTEXT = "Pinned context:";
+const typed = (m: Message, text: string) => text.trim() && !(m.role === "user" && text.startsWith(CONTEXT));
+const textOf = (m: Message) => m.content.flatMap((b) => (b.type === "text" && typed(m, b.text) ? [b.text] : [])).join("\n");
 
 export const shownMessages = (messages: Message[]): ShownMessage[] =>
   messages.flatMap((m) => {

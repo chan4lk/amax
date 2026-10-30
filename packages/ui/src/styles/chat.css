@@ -41,13 +41,20 @@ mark.x{background:none;color:inherit;outline:2px dashed var(--f,#6A6681);outline
 @keyframes bob{0%,60%,100%{transform:none;opacity:.5}30%{transform:translateY(-4px);opacity:1}}
 .c-ctx{display:flex;flex-wrap:wrap;gap:6px;padding:0 20px}
 .c-ctx:empty{display:none}
+/* 070 amendment 4: this page's suggestions; each fills the message box. */
+.c-suggest{display:flex;flex-wrap:wrap;gap:6px;padding:8px 20px 0;margin:0;list-style:none}
+.c-suggest button{cursor:pointer;border:1px solid var(--line);background:var(--card)}
+.c-suggest button:hover,.c-suggest button:focus-visible{border-color:var(--violet)}
 .pinchip{display:inline-flex;align-items:center;gap:6px;max-width:100%;background:var(--card);border:1.5px solid var(--line-2);border-radius:10px;padding:4px 6px 4px 9px;font-size:12.5px;font-weight:600}
 .pinchip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:240px}
 .pinchip button{border:0;background:none;color:var(--ink-3);cursor:pointer;font-size:15px;line-height:1;padding:0 2px}
-.c-input{display:flex;align-items:center;gap:6px;margin:10px 20px 0;background:var(--card);border-radius:999px;padding:5px 5px 5px 16px;box-shadow:0 0 0 1.5px var(--line-2)}
-.c-input input{flex:1;border:0;background:none;font:500 14px var(--font);color:var(--ink);height:36px;min-width:0}
-.c-input input:focus{outline:none}
+.c-input{display:flex;align-items:flex-end;gap:6px;margin:10px 20px 0;background:var(--card);border-radius:23px;padding:5px 5px 5px 16px;box-shadow:0 0 0 1.5px var(--line-2)}
+.c-input textarea{flex:1;border:0;background:none;font:500 14px/20px var(--font);color:var(--ink);min-height:36px;max-height:140px;padding:8px 0;min-width:0;resize:none;overflow-y:auto;white-space:pre-wrap;overflow-wrap:anywhere}
+.c-input textarea:focus{outline:none}
+.c-input textarea::placeholder{color:var(--ink-3)}
 .c-input:focus-within{box-shadow:0 0 0 2px var(--violet)}
+/* What you sent keeps its line breaks, as typed. */
+.m.me .b{white-space:pre-wrap;overflow-wrap:anywhere}
 .c-send{width:36px;height:36px;border-radius:50%;border:0;background:var(--violet);color:#fff;display:grid;place-items:center;cursor:pointer;flex:none}
 .c-send svg,.c-round svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 .c-dock{display:flex;align-items:center;justify-content:center;gap:22px;padding:16px 0 20px}
@@ -82,3 +89,87 @@ body.picking .pinnable:hover{outline:2px dashed var(--violet);outline-offset:2px
 @media (prefers-reduced-motion:reduce){.chat{transition:none}}
 .m .b p{margin:0}
 .m .err{color:var(--chip-bad)}
+/* 073: tables in amax's replies (a week's entries, a list of people): scroll sideways in the bubble if wide. */
+.m .b .c-table{overflow-x:auto;margin:6px 0 8px;border-radius:12px;box-shadow:0 0 0 1px var(--line)}
+.m .b .c-table:focus-visible{outline:2px solid var(--violet);outline-offset:2px}
+.m .b table{width:100%;border-collapse:collapse;font-size:12.5px;font-variant-numeric:tabular-nums}
+.m .b th,.m .b td{padding:6px 8px;text-align:left;white-space:nowrap;border-bottom:1px solid var(--line)}
+.m .b th{white-space:normal;vertical-align:bottom}
+/* A reply with a table uses the panel's full width, so a week's columns fit without sideways scrolling. */
+.m:has(.c-table){max-width:100%}
+.m .b th{font-weight:600;color:var(--ink-2);background:var(--sunken)}
+.m .b tr:last-child td{border-bottom:0}
+.m .b th.num,.m .b td.num{text-align:right}
+.m .b ol,.m .b ul{line-height:1.5}
+/* The tools-used tag: readable in light and dark (axe color-contrast). */
+.m .tools span{color:var(--chip-agent)}
+/* 073: the confirm card. Eyebrow, the one figure to check, aligned details, one named decision; tokens for both themes. */
+.m:has(.cc){max-width:100%}
+.m .b.cc{padding:16px 18px;display:flex;flex-direction:column;gap:12px;border-radius:18px;box-shadow:0 8px 24px -12px rgba(40,30,110,.25),0 0 0 1px var(--line)}
+.cc-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.cc-eyebrow{font-size:11.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2)}
+.cc-who{font-size:12px;font-weight:600;color:var(--ink-2);background:var(--sunken);border-radius:999px;padding:2px 10px;white-space:nowrap}
+.cc-fig{display:flex;align-items:center;gap:14px;padding-bottom:12px;border-bottom:1px solid var(--line)}
+.cc-num{font-size:26px;line-height:1.1;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink);white-space:nowrap}
+.cc-sub{display:flex;flex-direction:column;min-width:0}
+.cc-sub b{font-size:15px;font-weight:600;color:var(--ink);overflow-wrap:anywhere}
+.cc-sub small{font-size:13px;color:var(--ink-2)}
+.cc-title{margin:0;padding-bottom:12px;border-bottom:1px solid var(--line);font-size:15px;font-weight:600;line-height:1.4;color:var(--ink)}
+.cc-lines{margin:0;display:flex;flex-direction:column;gap:8px}
+.cc-row{display:grid;grid-template-columns:96px 1fr;gap:12px;align-items:baseline}
+.cc-row dt{font-size:12.5px;color:var(--ink-2);margin:0}
+.cc-row dd{margin:0;font-size:14px;line-height:1.45;color:var(--ink);overflow-wrap:anywhere}
+.cc-more summary{cursor:pointer;font-size:12.5px;font-weight:600;color:var(--chip-agent);padding:2px 0;list-style:none}
+.cc-more summary::-webkit-details-marker{display:none}
+.cc-more[open] summary{display:none}
+.cc-more .cc-row{margin-top:8px}
+.cc-acts{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:2px}
+.cc-acts .btn.sm{height:36px;padding:0 16px;font-weight:600}
+.cc-acts .btn.danger{background:var(--chip-bad-bg);border-color:var(--chip-bad);color:var(--chip-bad)}
+.cc-quiet{border:0;background:none;color:var(--ink-2);font:600 13.5px var(--font);padding:8px 10px;border-radius:10px;cursor:pointer}
+.cc-quiet:hover{background:var(--sunken);color:var(--ink)}
+.cc-quiet:focus-visible,.cc-acts .btn:focus-visible{outline:2px solid var(--violet);outline-offset:2px}
+.cc-help{margin:-4px 0 0;font-size:12px;color:var(--ink-2)}
+.m .b.cc.done,.m .b.cc.cancelled{padding:10px 14px;gap:0;box-shadow:0 0 0 1px var(--line);align-self:flex-start}
+.cc-receipt{margin:0;display:flex;align-items:baseline;gap:8px;font-size:13.5px;color:var(--ink)}
+.cc.done .cc-tick{color:var(--chip-good);font-weight:700}
+.cc.cancelled .cc-receipt{color:var(--ink-2)}
+@media (max-width:600px){.cc-acts .btn.sm{flex:1 1 100%;height:44px}.cc-row{grid-template-columns:84px 1fr}}
+/* 076: the choice card: a question, one option per write as a radio row, and one button named for the chosen option */
+.ch-q{margin:0;font-size:15px;font-weight:600;line-height:1.4;color:var(--ink)}
+.ch-q small{display:block;margin-top:4px;font-size:13px;font-weight:500;color:var(--ink-2)}
+.ch-opts{display:flex;flex-direction:column;gap:8px}
+.ch-opt{border-radius:14px;border:1px solid var(--line);background:var(--card)}
+.ch-opt:hover{border-color:var(--line-2);background:var(--sunken)}
+.ch-opt.on{border-color:var(--chip-agent);background:var(--violet-soft);box-shadow:0 0 0 1px var(--chip-agent),0 6px 18px -10px rgba(91,68,214,.45)}
+.ch-row{display:flex;align-items:center;gap:12px;min-height:52px;padding:10px 12px 10px 14px;cursor:pointer}
+.ch-row input{flex:none;width:18px;height:18px;margin:0;accent-color:var(--chip-agent);cursor:pointer}
+.ch-row input:focus-visible{outline:2px solid var(--violet);outline-offset:2px}
+.ch-num{flex:none;min-width:56px;font-size:18px;font-weight:700;line-height:1.2;font-variant-numeric:tabular-nums;color:var(--ink)}
+.ch-opt.on .ch-num{color:var(--chip-agent)}
+.ch-txt{flex:1;display:flex;flex-direction:column;gap:2px;min-width:0}
+.ch-txt b{font-size:14px;font-weight:600;line-height:1.35;color:var(--ink);overflow-wrap:anywhere}
+.ch-txt small{font-size:12.5px;line-height:1.35;color:var(--ink-2)}
+.ch-key{flex:none;display:inline-grid;place-items:center;width:22px;height:22px;border-radius:7px;border:1px solid var(--line-2);font:600 11.5px var(--font);color:var(--ink-2);background:var(--card)}
+.ch-opt.on .ch-key{border-color:var(--chip-agent);color:var(--chip-agent)}
+.ch-more{padding:0 14px 12px 44px}
+.ch-more.num{padding-left:44px}
+.ch-more .cc-lines{padding-top:10px;border-top:1px dashed var(--line-2)}
+.ch-more .cc-row{grid-template-columns:max-content 1fr}
+.ch.busy .ch-opt:not(.run){opacity:.45}
+.ch-spin{flex:none;width:18px;height:18px;border-radius:50%;border:2px solid var(--line-2);border-top-color:var(--chip-agent)}
+.ch-ask{display:flex;flex-direction:column;gap:6px}
+.ch-ask span{font-size:13px;font-weight:600;color:var(--ink)}
+.ch-ask textarea{width:100%;min-height:58px;max-height:140px;resize:none;padding:9px 12px;border-radius:12px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);font:14px/1.45 var(--font)}
+.ch-ask textarea::placeholder{color:var(--ink-3)}
+.ch-ask textarea:focus-visible{outline:2px solid var(--violet);outline-offset:1px;border-color:transparent}
+.ch-else{align-self:flex-start;margin:-2px 0 0 -10px;padding:6px 10px}
+.cc-acts .btn.sm:disabled{opacity:.55;cursor:not-allowed}
+@media (prefers-reduced-motion:no-preference){.ch-opt{transition:border-color .15s,background .15s,box-shadow .2s,opacity .2s}.ch-more{animation:ch-in .18s ease-out}.ch-spin{animation:ch-spin .8s linear infinite}}
+@keyframes ch-in{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+@keyframes ch-spin{to{transform:rotate(360deg)}}
+@media (max-width:600px){.ch-num{min-width:48px;font-size:16px}.ch-key,.ch-hint{display:none}.ch-more,.ch-more.num{padding-left:14px}}
+/* 076 amendment 2: no visible scrollbars in the chat (conversation, history, message box, a card's answer box); they still
+   scroll by wheel, trackpad, touch and keyboard. A wide table in a reply keeps its sideways bar: it's the only sign of more columns. */
+.chat :is(.c-log,.c-history,textarea){scrollbar-width:none;-ms-overflow-style:none}
+.chat :is(.c-log,.c-history,textarea)::-webkit-scrollbar{display:none;width:0;height:0}

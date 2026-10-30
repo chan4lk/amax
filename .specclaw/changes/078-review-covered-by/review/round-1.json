@@ -1,0 +1,27 @@
+{
+ "counts": {
+  "blocker": 0,
+  "major": 0,
+  "minor": 0
+ },
+ "error": "empty diff for a non-skip change",
+ "files": [
+  "AGENTS.md",
+  "apps/mock/public/mock/index.html",
+  "packages/testing/tests/review-gate-covered.test.ts",
+  "packages/testing/tests/review-gate-fixture.ts",
+  "packages/testing/tests/review-gate.test.ts",
+  "scripts/check-review-gate.mjs",
+  "scripts/review-gate/rules.mjs"
+ ],
+ "final": false,
+ "findings": [],
+ "head": "fa72929f4e48620e48a488d5cbe78787538f9078",
+ "model": "opus",
+ "round": 1,
+ "since": null,
+ "status": "not_run",
+ "tier": "review",
+ "ts_end": 1793361452,
+ "ts_start": 1793361452
+}

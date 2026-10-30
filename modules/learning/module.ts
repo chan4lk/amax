@@ -28,7 +28,7 @@ export default defineModule({
   retention: [
     // Training and certification records are evidence for audits (ISO 27001 among them): kept seven
     // years after completion or expiry, then who recorded them is anonymised. People are hr.person ids.
-    { table: "learning.programme", label: "Who added a programme", subject: ["created_by"], fields: ["created_by"], class: "personal", period: "P7Y", start: { at: ["ends_on"] }, action: "anonymise" },
+    { table: "learning.programme", label: "Who added a programme", subject: ["created_by"], fields: ["created_by"], keep: { detail: "the programme's description, organisation text" }, class: "personal", period: "P7Y", start: { at: ["ends_on"] }, action: "anonymise" },
     { table: "learning.enrolment", label: "Learning records", subject: ["person_id", "enrolled_by", "completed_by"], fields: ["enrolled_by", "completed_by"], class: "personal", period: "P7Y", start: { at: ["completed_on"] }, action: "anonymise" },
     { table: "learning.certification", label: "Certifications", subject: ["person_id", "recorded_by"], fields: ["recorded_by"], class: "personal", period: "P7Y", start: { at: ["expires_on"] }, action: "anonymise" },
     { table: "learning.reminder", label: "Certification reminders", subject: ["requested_by"], fields: ["requested_by"], class: "personal", period: "P2Y", start: { at: ["sent_at"] }, action: "delete" },

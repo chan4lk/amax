@@ -35,7 +35,12 @@ export type EventHandlerDef = {
 
 /** Who a notification rule reaches (030 AC-1): everyone holding a role, the person a payload field names
  * (the record's owner), or the approver chain of the person a payload field names (their manager, else Admins). */
-export type NotificationRecipient = { role: string } | { owner: string } | { approvers: string };
+/**
+ * `approvers`: the subject's managers who could approve, else the Admins. 072: `projects` (a payload field holding
+ * project ids) adds everyone who holds the rule's permission on one of them; `entity` (a payload field holding the
+ * subject's legal entity) keeps every approver within it. Both optional; without them the rule is unchanged.
+ */
+export type NotificationRecipient = { role: string } | { owner: string } | { approvers: string; projects?: string; entity?: string };
 
 /**
  * A notification rule (030 AC-1), plain data in the emitting module's manifest. The notifications module
@@ -85,6 +90,19 @@ export type FixtureSeed = (ctx: { tx: Tx; tenantId: string; shared: SharedFixtur
 /** What a write tool names as its service: a defineService result. */
 export type ToolService = { spec: { name: string } };
 
+export type CardLine = { label: string; value: string };
+export type ChatSuggestion = { routes: string[]; label: string; prompt: string; tool: string; when?: (viewer: never, params: Record<string, string>) => Promise<boolean> };
+/** 073: what chat offers for a pinned record, keyed by the pin's read tool: e.g. "Approve this timesheet" for a pinned week. */
+export type PinSuggestion = { tool: string; suggest: (viewer: never, args: Record<string, unknown>) => Promise<{ label: string; prompt: string; tool: string }[]> };
+/**
+ * 073: how a confirm card presents itself, all optional. `kind` names the action ("Log time"), `figure` is the one number
+ * to check ("1.5 h") beside its `subject` and `detail`, `who` says whose record it is, `confirm` labels the button
+ * ("Log 1.5 h") and `tone: "danger"` marks a destructive one. `done` is the receipt once confirmed, in the past tense
+ * ("Logged 1.5 h · Fleet Tracker, Tue Oct 27"). Without them a card keeps the plain layout, "Add it" and "Done: {title}."
+ */
+export type CardLook = { kind?: string; figure?: string; subject?: string; detail?: string; who?: string; confirm?: string; tone?: "danger"; done?: string };
+export type ToolCard = { title: string; lines: CardLine[]; look?: CardLook };
+
 export type McpToolDef = {
   name: string;
   description: string;
@@ -115,6 +133,11 @@ export type McpToolDef = {
    * a ToolError (code invalid_input) to refuse the card; its message is what the model is told.
    */
   propose?: (viewer: never, input: never) => Promise<void>;
+  /**
+   * What a write tool's confirm card says, in the person's words (070 amendment 2): a title and labelled
+   * lines read from the stored record. Without it, the card shows the description and the raw input.
+   */
+  card?: (viewer: never, input: never) => Promise<ToolCard>;
   /** How a pin on this read tool names what it shows (059); the registry checks it at startup. */
   pin?: PinSpec;
 };
@@ -157,6 +180,10 @@ export type RetentionEntry = {
   minimum?: `P${string}`;
   /** The row's legal entity column, so each entity's statutory minimum applies to its own rows. */
   entity?: string;
+  /** Columns that look personal (a name, note, *_by or jsonb column) but are deliberately left as they are, each
+   * with why: a deadline timestamp, figures with no person in them, a signed record (070 review round 2). The
+   * module standard requires every personal or jsonb column in fields, subject, subjectName or here. */
+  keep?: Record<string, string>;
 };
 
 /** Every field of an event payload with its 002 class, or "plain" for a field safe to send outside. */
@@ -236,6 +263,15 @@ export type ModuleManifest = {
   /** Contributes results to the built-in `search` tool. */
   search?: (viewer: never, query: string) => Promise<SearchHit[]>;
   chatIntents?: unknown[];
+  /**
+   * What chat offers on this module's pages (070 amendment 4): shown only when the viewer may use `tool` and
+   * `when` (if any) passes for the page's route params. A suggestion fills the message box; it never sends.
+   */
+  chatSuggestions?: ChatSuggestion[];
+  /** Suggestions for a pinned record (073), shown before the page's own; same rule: only for tools the viewer may use. */
+  pinSuggestions?: PinSuggestion[];
+  /** A short label for a page's params in chat's header, e.g. "Week of Oct 12" for a week. */
+  pageLabel?: (params: Record<string, string>) => string | null;
   jobs?: JobDef[];
   /** Durable workflows (029): defineWorkflow() results from @amax/workflows, opaque to core. */
   workflows?: readonly unknown[];

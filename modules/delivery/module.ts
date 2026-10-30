@@ -62,15 +62,15 @@ export default defineModule({
     // no change, which covers withdrawn and abandoned ones. A project's starts when it's closed: an
     // open project is in use, so its manager stays named.
     { table: "delivery.project", label: "Project managers", subject: ["id", "manager_user_id"], subjectName: ["manager_name"], entity: "legal_entity_id", fields: ["manager_name", "manager_user_id"], class: "personal", period: "P7Y", start: { at: ["closed_at"] }, action: "anonymise" },
-    { table: "delivery.proposal", label: "Proposal owners", subject: ["project_id"], subjectName: ["owner_name"], fields: ["owner_name"], class: "personal", period: "P7Y", start: { at: ["released_at"], idle: "P1Y" }, action: "anonymise" },
-    { table: "delivery.deployment", label: "Who recorded a deployment", subject: ["recorded_by"], fields: ["recorded_by"], class: "personal", period: "P7Y", start: { at: ["at"] }, action: "anonymise" },
+    { table: "delivery.proposal", label: "Proposal owners", subject: ["project_id"], subjectName: ["owner_name"], fields: ["owner_name"], keep: { meta: "sync state the board reads (withdrawn, sha, pr, verdict); emptying it breaks the board and the sync. Personal keys are a 070 follow-up" }, class: "personal", period: "P7Y", start: { at: ["released_at"], idle: "P1Y" }, action: "anonymise" },
+    { table: "delivery.deployment", label: "Who recorded a deployment", subject: ["recorded_by"], fields: ["recorded_by", "note"], keep: { prior_phases: "the release's phase states before it, no person in them" }, class: "personal", period: "P7Y", start: { at: ["at"] }, action: "anonymise" },
     // The voider's clock starts at the void, which can be years after the deployment (final review).
-    { table: "delivery.deployment", label: "Who voided a deployment", subject: ["voided_by"], fields: ["voided_by"], class: "personal", period: "P7Y", start: { at: ["voided_at"] }, action: "anonymise" },
+    { table: "delivery.deployment", label: "Who voided a deployment", subject: ["voided_by"], fields: ["voided_by", "void_reason"], class: "personal", period: "P7Y", start: { at: ["voided_at"] }, action: "anonymise" },
     // 008: who closed a task (a person, or a credential or Git acting for one), kept with the delivery evidence.
     { table: "delivery.task", label: "Who closed a task", subject: ["done_by"], fields: ["done_by"], class: "personal", period: "P7Y", start: { at: ["done_at"] }, action: "anonymise" },
     { table: "delivery.commit_time", label: "Who switched commit time on or off", subject: ["set_by"], entity: "legal_entity_id", fields: ["set_by"], class: "personal", period: "P7Y", start: { at: ["updated_at"] }, action: "anonymise" },
     // 062: who pushed a repo's specclaw state, kept with the delivery evidence it changed.
-    { table: "delivery.sync_push", label: "Who pushed specclaw changes", subject: ["for_user_id", "actor_id"], fields: ["actor_id", "for_user_id"], class: "personal", period: "P7Y", start: { at: ["at"] }, action: "anonymise" },
+    { table: "delivery.sync_push", label: "Who pushed specclaw changes", subject: ["for_user_id", "actor_id"], fields: ["actor_id", "for_user_id"], keep: { skipped: "the change keys a push left out", reason: "the sync's own refusal text, written by amax" }, class: "personal", period: "P7Y", start: { at: ["at"] }, action: "anonymise" },
     // The Overview feed is recent news, not a record: its lines go after two years.
     { table: "delivery.activity", label: "Agent activity feed", subject: ["for_user_id", "actor_id"], fields: ["actor_id", "for_user_id", "text", "detail"], class: "personal", period: "P2Y", start: { at: ["at"] }, action: "delete" },
   ],

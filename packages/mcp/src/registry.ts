@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { McpToolDef, ModuleManifest, SearchHit } from "@amax/core";
-import { enforceRate, ForbiddenError, traceStep } from "@amax/core/server";
+import { enforceRate, ForbiddenError, traceStep, ValidationError } from "@amax/core/server";
 import { canEver, rolesOf, ScopeError, type Viewer } from "@amax/auth";
 import { auditTools } from "./audit-tools";
 
@@ -14,6 +14,17 @@ export class ToolError extends Error {
     super(message);
     this.name = "ToolError";
   }
+}
+
+/**
+ * Whether an error is a refusal written for the caller, so its message may be shown: the REST API's rule, shared
+ * with anything else that reports a failure (070 review round 3). Anything else is logged and shown as a reference.
+ */
+export function userFacing(e: unknown): e is Error {
+  if (!(e instanceof Error)) return false;
+  if (e instanceof ToolError || e instanceof ForbiddenError || e instanceof ScopeError || e instanceof ValidationError) return true;
+  const { code, retryable } = e as { code?: unknown; retryable?: unknown };
+  return code === "not_found" || code === "invalid_input" || retryable === false;
 }
 
 type Registrable = Pick<ModuleManifest, "id" | "mcpTools" | "search">;

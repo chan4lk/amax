@@ -30,7 +30,7 @@ export default defineModule({
   retention: [
     { table: "notifications.notification", label: "Notifications", subject: ["user_id"], fields: ["title", "body"], class: "personal", period: "P1Y", start: { at: ["created_at"] }, action: "delete" },
     { table: "notifications.delivery", label: "Notification deliveries", subject: ["user_id"], fields: ["error"], class: "personal", period: "P1Y", start: { at: ["created_at"] }, action: "delete" },
-    { table: "notifications.preference", label: "Notification preferences", subject: ["user_id"], fields: ["category"], class: "personal", period: "P2Y", start: { at: [], idle: "P2Y" }, action: "delete" },
+    { table: "notifications.preference", label: "Notification preferences", subject: ["user_id"], fields: ["category"], keep: { email: "an on/off flag for the email channel, not an address" }, class: "personal", period: "P2Y", start: { at: [], idle: "P2Y" }, action: "delete" },
     { table: "notifications.quiet_hours", label: "Quiet hours", subject: ["user_id"], fields: ["starts", "ends"], class: "personal", period: "P2Y", start: { at: [], idle: "P2Y" }, action: "delete" },
   ],
   workflows: [deliverNotification, sendDigest],

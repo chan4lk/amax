@@ -33,7 +33,7 @@ export default defineModule({
       fields: ["close_note", "agent_evidence", "moved_by", "hr_confirmed_by"], class: "candidate", period: "P12M", start: { at: ["closed_at", "hired_at"] }, action: "anonymise" },
     { table: "recruitment.interview", label: "Who recorded interviews", subject: ["recorded_by"], fields: ["recorded_by"], class: "personal", period: "P12M", start: { at: ["scheduled_at"] }, action: "anonymise" },
     { table: "recruitment.offer", label: "Who sent offers", subject: ["sent_by"], entity: "legal_entity_id", fields: ["sent_by"], class: "personal", period: "P7Y", start: { at: ["sent_at"] }, action: "anonymise" },
-    { table: "recruitment.role", label: "Who raised roles", subject: ["raised_by"], entity: "legal_entity_id", fields: ["raised_by"], class: "personal", period: "P7Y", start: { at: ["closed_at"] }, action: "anonymise" },
+    { table: "recruitment.role", label: "Who raised roles", subject: ["raised_by"], entity: "legal_entity_id", fields: ["raised_by", "reason"], class: "personal", period: "P7Y", start: { at: ["closed_at"] }, action: "anonymise" },
   ],
   jobs: [],
   // 035: outgoing webhooks send only declared fields; no event carries a candidate's name or CV.

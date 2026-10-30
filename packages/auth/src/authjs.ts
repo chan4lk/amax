@@ -1,10 +1,11 @@
 import type { NextAuthConfig } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
+import { decode } from "next-auth/jwt";
 import MicrosoftEntraID from "next-auth/providers/microsoft-entra-id";
 import { sql } from "drizzle-orm";
 import type { Db } from "@amax/db";
 import { signInPassword } from "./password";
-import { loadViewer, SESSION_HOURS, signInDemo, signInFromDirectory, SignInDenied, signOutSession } from "./session";
+import { endReplacedSession, loadViewer, SESSION_HOURS, signInDemo, signInFromDirectory, SignInDenied, signOutSession } from "./session";
 
 export type AuthDeps = {
   db: Db;
@@ -14,6 +15,8 @@ export type AuthDeps = {
   /** Email + password sign-in for one tenant (deployments without an identity provider). */
   password?: { tenantId: string } | null;
   env?: Record<string, string | undefined>;
+  /** 070 AC-52: the session this browser held before the sign-in that is completing, if any. */
+  replaced?: () => Promise<Partial<Stamp> | null | undefined>;
 };
 
 type Stamp = { tenantId: string; userId: string; sessionId: string };
@@ -125,7 +128,13 @@ export async function authConfig(deps: AuthDeps): Promise<NextAuthConfig> {
       // so deactivation or sign-out elsewhere ends the browser session within a minute.
       async jwt({ token, account, user }) {
         const stamp = ((account as Record<string, unknown> | null)?.amax ?? (user as Record<string, unknown> | undefined)?.amax) as Stamp | undefined;
-        if (stamp) return { ...token, ...stamp, checkedAt: Date.now() };
+        if (stamp) {
+          // 070 AC-52 (review round 4): a new session token is minted here, for every provider, only after the sign-in
+          // succeeded; Entra's stamp reaches this callback on account.amax or no Entra sign-in works. So the session it
+          // replaces ends here, not in an event that would depend on Auth.js passing the same account object on.
+          if (deps.replaced) await endReplacedSession(deps.db, await deps.replaced(), stamp);
+          return { ...token, ...stamp, checkedAt: Date.now() };
+        }
         if (!token.sessionId) return null;
         if (Date.now() - Number(token.checkedAt ?? 0) < REVALIDATE_MS) return token;
         const viewer = await loadViewer(deps.db, String(token.tenantId), String(token.sessionId));
@@ -145,3 +154,28 @@ export async function authConfig(deps: AuthDeps): Promise<NextAuthConfig> {
 }
 
 export const sessionStamp = (session: unknown) => (session as { amax?: Partial<Stamp> } | null)?.amax;
+
+// Auth.js's session cookie: __Secure- on https; a large token is split into name.0, name.1, ...
+const SESSION_COOKIES = ["__Secure-authjs.session-token", "authjs.session-token"];
+const cookieValue = (get: (name: string) => string | undefined, name: string) => {
+  const whole = get(name);
+  if (whole) return whole;
+  const parts: string[] = [];
+  for (let i = 0; get(`${name}.${i}`); i++) parts.push(get(`${name}.${i}`)!);
+  return parts.join("") || undefined;
+};
+
+/**
+ * 070 AC-52 (review round 2): the session the browser held before the sign-in now completing, read from the
+ * request's own session cookie, which Auth.js has not replaced yet. One reader for the app and its tests; a cookie
+ * that doesn't decode with this secret is no earlier session, so nothing is ended.
+ */
+export async function earlierSession(get: (name: string) => string | undefined, secret: string): Promise<Partial<Stamp> | null> {
+  for (const name of SESSION_COOKIES) {
+    const raw = cookieValue(get, name);
+    if (!raw) continue;
+    const t = await decode({ token: raw, secret, salt: name }).catch(() => null);
+    return t?.sessionId && t.tenantId ? { tenantId: String(t.tenantId), userId: String(t.userId ?? ""), sessionId: String(t.sessionId) } : null;
+  }
+  return null;
+}

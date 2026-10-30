@@ -13,6 +13,7 @@ describe("time contracts", () => {
     expect(weekStart({ year: 2026, week: 42 }).toISOString().slice(0, 10)).toBe("2026-10-12");
     expect(workDays({ year: 2026, week: 42 })).toEqual(["2026-10-12", "2026-10-13", "2026-10-14", "2026-10-15", "2026-10-16"]);
     expect(isoWeekOf(new Date("2021-01-03T00:00:00Z"))).toEqual({ year: 2020, week: 53 });
+    expect(weekKey(isoWeekOf(new Date("2025-12-29T00:00:00Z")))).toBe("2026-W01");
     expect(weekKey(shiftWeek({ year: 2026, week: 53 }, 1))).toBe("2027-W01");
     expect(parseWeekKey("2026-W42")).toEqual({ year: 2026, week: 42 });
     expect(parseWeekKey("2025-W53")).toBeNull();
@@ -33,8 +34,8 @@ describe("time contracts", () => {
   it("AC4 and AC5 the manifest declares its events, the log time intent and the MCP tools", () => {
     expect(manifest.events?.emits).toEqual(Object.values(EVENTS));
     expect(Object.values(EVENTS).every((e) => e.startsWith("time."))).toBe(true);
-    expect(chatIntents.map((c) => [c.id, c.tool])).toEqual([["time.log", "log_time"]]);
-    expect(mcpTools.map((t) => t.name)).toEqual(expect.arrayContaining(["log_time", "submit_week", "approve_week"]));
-    expect(manifest).toMatchObject({ id: "time", group: "Work", order: 20, dependsOn: ["delivery"], integratesWith: ["hr", "leave"] });
+    expect(chatIntents.map((c) => [c.id, c.tool])).toEqual([["time.log", "log_time"], ["time.correct", "correct_time_entry"], ["time.request", "request_time_change"], ["time.request-add", "request_time_addition"], ["time.delete", "delete_time_entry"]]);
+    expect(mcpTools.map((t) => t.name)).toEqual(expect.arrayContaining(["log_time", "correct_time_entry", "delete_time_entry", "submit_week", "approve_week", "request_time_change", "decide_change_request", "get_change_requests"]));
+    expect(manifest).toMatchObject({ id: "time", group: "Work", order: 20, dependsOn: ["delivery"], integratesWith: ["hr", "leave", "allocations"] });
   });
 });

@@ -36,24 +36,27 @@ export function personFigures(p: Person, inputs: Inputs, range: Range): PersonUt
   const billableHours = tidy(logged.filter((h) => h.billable).reduce((n, h) => n + h.hours, 0));
   const leaveHidden = inputs.leaveOn && !p.leaveSeen;
   const availableHours = leaveHidden ? null : tidy(contracted - leave.hours);
+  const hoursIncomplete = inputs.hoursUnknown.has(p.userId);
   return {
     userId: p.userId, personId: p.personId, name: p.name, initials: p.initials, legalEntityId: p.legalEntityId,
     contractedHours: tidy(contracted), leaveDays: leaveHidden ? null : leave.days, leaveLabel: leaveHidden ? null : leave.label, leaveHidden,
-    availableHours, loggedHours, billableHours, utilisation: pct(billableHours, availableHours),
+    availableHours, loggedHours, billableHours, utilisation: hoursIncomplete ? null : pct(billableHours, availableHours),
+    ...(hoursIncomplete ? { hoursIncomplete: true } : {}),
   };
 }
 
 /** Per person with logged hours in the range, and the team: sums over the people whose available hours are known. */
 export function utilisationOf(inputs: Inputs, range: Range): { rows: PersonUtilisation[]; team: TeamUtilisation } {
   const rows = inputs.people
-    .filter((p) => (inputs.hours.get(p.userId) ?? []).some((h) => h.day >= range.from && h.day <= range.to))
+    .filter((p) => inputs.hoursUnknown.has(p.userId) || (inputs.hours.get(p.userId) ?? []).some((h) => h.day >= range.from && h.day <= range.to))
     .map((p) => personFigures(p, inputs, range))
     .sort((a, b) => (b.utilisation ?? -1) - (a.utilisation ?? -1) || a.name.localeCompare(b.name));
-  const counted = rows.filter((r) => r.availableHours !== null);
+  const counted = rows.filter((r) => r.availableHours !== null && !r.hoursIncomplete);
   const sum = (f: (r: PersonUtilisation) => number) => tidy(counted.reduce((n, r) => n + f(r), 0));
   const availableHours = sum((r) => r.availableHours ?? 0), billableHours = sum((r) => r.billableHours);
   return {
     rows,
-    team: { from: range.from, to: range.to, people: counted.length, leftOut: rows.length - counted.length, availableHours, loggedHours: sum((r) => r.loggedHours), billableHours, utilisation: pct(billableHours, availableHours) },
+    team: { from: range.from, to: range.to, people: counted.length, leftOut: rows.length - counted.length,
+      leaveHidden: rows.filter((r) => r.availableHours === null).length, statusUnknown: rows.filter((r) => r.hoursIncomplete).length, availableHours, loggedHours: sum((r) => r.loggedHours), billableHours, utilisation: pct(billableHours, availableHours) },
   };
 }

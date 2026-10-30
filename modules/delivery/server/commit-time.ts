@@ -54,9 +54,13 @@ export const draftCommitTime = defineService({
   async run(tx, input, ctx) {
     const [p] = await tx.execute(sql`select p.id, p.key, p.project_id, pr.key as project_key from delivery.proposal p join delivery.project pr on pr.id = p.project_id where p.key = ${input.key}`);
     if (!p) throw new Error(`no proposal ${input.key}`);
-    if (!(await commitTimeOn(tx, input.userId))) return { result: { drafted: false }, resourceId: p.id as string };
+    if (!(await commitTimeOn(tx, input.userId))) return { result: { drafted: false as boolean, repeated: false as boolean }, resourceId: p.id as string };
+    // 071 review round 1: one draft per person and commit, for every provider (a repeated push drafts nothing).
+    const [first] = await tx.execute(sql`insert into delivery.commit_draft (tenant_id, user_id, commit_id) values (${ctx.tenantId}, ${input.userId}, ${input.commit})
+      on conflict do nothing returning commit_id`);
+    if (!first) return { result: { drafted: false as boolean, repeated: true as boolean }, resourceId: p.id as string };
     await recordActivity(tx, ctx, { projectId: p.project_id as string, text: `drafted ${input.hours} h on ${p.key as string} for the timesheet`, detail: `From commit ${input.commit.slice(0, 7)}, waiting to be accepted` });
     const payload: CommitTime = { userId: input.userId, projectId: p.project_id as string, projectKey: p.project_key as string, proposalKey: p.key as string, day: input.day, hours: input.hours, commit: input.commit };
-    return { result: { drafted: true }, resourceId: p.id as string, after: { hours: input.hours, day: input.day, commit: input.commit }, events: [{ name: EVENTS.commitTime, payload }] };
+    return { result: { drafted: true as boolean, repeated: false as boolean }, resourceId: p.id as string, after: { hours: input.hours, day: input.day, commit: input.commit }, events: [{ name: EVENTS.commitTime, payload }] };
   },
 });

@@ -1,16 +1,21 @@
 "use client";
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode, type RefObject } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { announce, Mascot, PinButton, type PinRef } from "@amax/ui";
 import type { Conversation, ConversationSummary, Highlight, PendingAction } from "@amax/chat";
-import { cancelChat, confirmChat, refreshPins, sendChat, type CardOutcome } from "../../app/actions/chat";
+import { cancelChat, confirmChat, pageContext, refreshPins, sendChat, type CardOutcome } from "../../app/actions/chat";
+import type { PageInfo } from "../../lib/page-context";
 import { pinKey, withFresh, type Pin } from "@amax/chat/pins";
+import { ChoiceCard } from "./ChoiceCard";
+import { ConfirmCard } from "./ConfirmCard";
+import { Markdown } from "./Markdown";
 import { followMove } from "../../lib/chat-move";
 import { listChats, openChat } from "../../app/actions/chat-history";
 import { History } from "./History";
 import { SecretConfirm } from "./SecretConfirm";
 import { RevealOnce } from "./RevealOnce";
+import { Suggestions } from "./Suggestions";
 
 type Entry =
   | { kind: "me"; text: string; highlights: Highlight[] }
@@ -38,30 +43,9 @@ function Marked({ text, highlights, fields }: { text: string; highlights: Highli
   return <>{parts}</>;
 }
 
-// The model writes light markdown; render **bold**, `code`, line breaks and "- " lists as React
-// elements (never HTML), so model text can't inject markup.
-function inline(text: string, key: string): ReactNode[] {
-  return text.split(/(\*\*[^*]+\*\*|`[^`]+`)/g).map((part, i) =>
-    part.startsWith("**") && part.endsWith("**") && part.length > 4 ? <b key={`${key}-${i}`}>{part.slice(2, -2)}</b>
-      : part.startsWith("`") && part.endsWith("`") && part.length > 2 ? <code key={`${key}-${i}`}>{part.slice(1, -1)}</code> : part);
-}
-export function Markdown({ text }: { text: string }) {
-  const blocks: ReactNode[] = [];
-  let list: ReactNode[] = [];
-  const flush = () => { if (list.length) { blocks.push(<ul key={`ul${blocks.length}`} style={{ margin: "6px 0", paddingLeft: 18 }}>{list}</ul>); list = []; } };
-  text.split("\n").forEach((line, i) => {
-    const item = line.match(/^\s*[-*•]\s+(.*)$/);
-    if (item) { list.push(<li key={i}>{inline(item[1], `l${i}`)}</li>); return; }
-    flush();
-    if (line.trim()) blocks.push(<p key={i} style={{ margin: "0 0 6px" }}>{inline(line, `p${i}`)}</p>);
-  });
-  flush();
-  return <>{blocks}</>;
-}
-
 type SpeechCtor = new () => { lang: string; interimResults: boolean; onresult: (e: { results: { 0: { transcript: string } }[] }) => void; onend: () => void; start: () => void; stop: () => void };
 
-export function Chat({ open, onClose, returnFocus, signedIn, voice, usage = null }: { open: boolean; onClose: () => void; returnFocus: RefObject<HTMLButtonElement | null>; signedIn: boolean; voice: boolean; usage?: string | null }) {
+export function Chat({ open, fresh = 0, onClose, returnFocus, signedIn, userId, voice, usage = null }: { open: boolean; fresh?: number; onClose: () => void; returnFocus: RefObject<HTMLButtonElement | null>; signedIn: boolean; userId?: string; voice: boolean; usage?: string | null }) {
   const [log, setLog] = useState<Entry[]>([]);
   const [pins, setPins] = useState<Pin[]>([]);
   const router = useRouter();
@@ -72,38 +56,100 @@ export function Chat({ open, onClose, returnFocus, signedIn, voice, usage = null
   const [talking, setTalking] = useState(false);
   const [turnUsage, setTurnUsage] = useState<string | null>(null);
   const [history, setHistory] = useState<{ items: ConversationSummary[]; error?: string } | null>(null);
+  // 070 amendment 4: the page chat is open on, read again after each turn so suggestions follow the record's state.
+  const pathname = usePathname();
+  const [page, setPage] = useState<PageInfo | null>(null);
   const convo = useRef<string | undefined>(undefined);
-  const input = useRef<HTMLInputElement>(null);
+  const input = useRef<HTMLTextAreaElement>(null);
   const logRef = useRef<HTMLDivElement>(null);
   const fields = useRef<string[]>([]);
   // A prompt an Ask amax chip filled, until the person edits it (059 AC-7): what they type finishes it.
   const filled = useRef<string | null>(null);
+  // The pin that came with that prompt, and whether the prompt added it (rather than it being pinned already).
+  const asked = useRef<{ key: string; added: boolean } | null>(null);
+  const textNow = useRef(text);
+  // Opened from Ask amax or the shortcut (not a pin): a new conversation with nothing pinned and no leftover prompt.
+  // What the person typed themselves stays; the last conversation is in History.
+  const freshSeen = useRef(fresh);
+  useEffect(() => {
+    if (fresh === freshSeen.current) return;
+    freshSeen.current = fresh;
+    if (busy) return;
+    convo.current = undefined;
+    setLog([]);
+    setPins([]);
+    setIntent(undefined);
+    setHistory(null);
+    asked.current = null;
+    if (filled.current !== null && filled.current === textNow.current) { filled.current = null; setText(""); }
+  }, [fresh, busy]);
+  textNow.current = text;
+  const pinsNow = useRef(pins);
+  pinsNow.current = pins;
+  const pinsKey = pins.map(pinKey).join("|");
 
-  useEffect(() => { if (open) input.current?.focus(); }, [open]);
+  // Chat is fixed to the screen, so focusing in or out of it never needs to scroll the page under it.
+  useEffect(() => { if (open) input.current?.focus({ preventScroll: true }); }, [open]);
   // The caret goes to the end of a filled prompt in the same commit that shows it, so nothing can see
   // the prompt with the caret elsewhere, and no later frame moves a caret the person already placed.
   useLayoutEffect(() => {
     const el = input.current;
     if (!el || filled.current === null || filled.current !== text) return;
-    el.focus();
+    el.focus({ preventScroll: true });
     el.setSelectionRange(text.length, text.length);
   }, [text]);
   // Focus can leave and come back before the first key (the route focus after chat follows a record,
   // then a programmatic focus that puts the caret at 0): while the prompt is untouched, the first key
   // still lands at its end. A selection (select all, then type) is left alone, so it replaces the prompt.
-  const toEnd = (el: HTMLInputElement) => {
+  const toEnd = (el: HTMLTextAreaElement) => {
     if (filled.current === null || el.value !== filled.current || el.selectionStart !== el.selectionEnd) return;
     el.setSelectionRange(el.value.length, el.value.length);
   };
   useEffect(() => { logRef.current?.scrollTo({ top: logRef.current.scrollHeight }); }, [log, busy]);
+  // The message box grows with what is typed (up to about six lines, then it scrolls), so a long request reads in full.
+  useLayoutEffect(() => {
+    const el = input.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight, 140)}px`;
+  }, [text, open]);
+  useEffect(() => {
+    if (!open || !signedIn) return;
+    let live = true;
+    // 073: what is pinned shapes the suggestions too (a pinned week offers its approve or remind).
+    const pinned = pinsNow.current.filter((x) => !x.unavailable).map(({ tool, args }) => ({ tool, args }));
+    pageContext(pathname, userId, pinned).then((p) => { if (live) setPage(p); }, () => { if (live) setPage(null); });
+    return () => { live = false; };
+  }, [open, signedIn, pathname, log.length, userId, pinsKey]);
 
   // Pins and intents arrive from anywhere on the page.
   useEffect(() => {
     const onEvent = (e: Event) => {
       const d = (e as CustomEvent<{ pin?: PinRef; intent?: string; prompt?: string }>).detail;
-      if (d.pin) { setPins((p) => (p.some((x) => pinKey(x) === pinKey(d.pin!)) ? p : [...p, d.pin!])); announce(`${d.pin.label} added to chat`); }
-      if (d.intent) { setIntent(d.intent); setText(""); setLog((l) => [...l, { kind: "amax", text: `${d.prompt ?? "New record"}: tell me the details and I'll fill it in.`, tools: [] }]); }
+      const key = d.pin ? pinKey(d.pin) : undefined;
+      // An untouched Ask amax prompt belongs to the record it pinned. A pin or prompt for another record
+      // replaces both, so the agent never gets the last row's pin with this row's question.
+      const ask = asked.current;
+      const untouched = ask !== null && filled.current !== null && filled.current === textNow.current;
+      if (ask && untouched && ask.key !== key) {
+        if (ask.added) setPins((p) => p.filter((x) => pinKey(x) !== ask.key));
+        if (!d.prompt && !d.intent) { filled.current = null; setText(""); }
+        asked.current = null;
+      } else if (untouched && !d.prompt && !d.intent) {
+        // A bare pin (the row's +) on the record the prompt came with keeps the pin and drops the prompt.
+        filled.current = null; setText(""); asked.current = null;
+      }
+      const added = ask && ask.key === key ? ask.added : !pinsNow.current.some((x) => pinKey(x) === key);
+      // 073: a pin (a +, an Ask button, a pick) is the record chat is about now: it replaces whatever was pinned, so
+      // the next question never carries an earlier record along.
+      const pin = d.pin;
+      if (pin) {
+        setPins([pin]);
+        announce(`${pin.label} added to chat`);
+      }
+      if (d.intent) { asked.current = null; setIntent(d.intent); setText(""); setLog((l) => [...l, { kind: "amax", text: `${d.prompt ?? "New record"}: tell me the details and I'll fill it in.`, tools: [] }]); }
       else if (d.prompt) {
+        asked.current = key ? { key, added } : null;
         filled.current = d.prompt;
         setText(d.prompt);
       }
@@ -129,13 +175,13 @@ export function Chat({ open, onClose, returnFocus, signedIn, voice, usage = null
     return () => document.removeEventListener("click", onClick, true);
   }, [picking]);
 
-  const close = useCallback(() => { setPicking(false); onClose(); returnFocus.current?.focus(); }, [onClose, returnFocus]);
+  const close = useCallback(() => { setPicking(false); onClose(); returnFocus.current?.focus({ preventScroll: true }); }, [onClose, returnFocus]);
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== "Escape") return;
       e.preventDefault();
-      if (history) { setHistory(null); input.current?.focus(); } else close();
+      if (history) { setHistory(null); input.current?.focus({ preventScroll: true }); } else close();
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
@@ -143,7 +189,7 @@ export function Chat({ open, onClose, returnFocus, signedIn, voice, usage = null
 
   async function showHistory() {
     if (history) { setHistory(null); return; }
-    const r = await listChats("");
+    const r = await listChats("", userId);
     setHistory(r.ok ? { items: r.items } : { items: [], error: r.error });
   }
 
@@ -153,11 +199,11 @@ export function Chat({ open, onClose, returnFocus, signedIn, voice, usage = null
     setPins([]);
     setIntent(undefined);
     setHistory(null);
-    input.current?.focus();
+    input.current?.focus({ preventScroll: true });
   }
 
   async function reopen(id: string) {
-    const r = await openChat(id);
+    const r = await openChat(id, userId);
     if (!r.ok) { setHistory((h) => ({ items: h?.items ?? [], error: r.error })); return; }
     convo.current = r.conversation.id;
     fields.current = r.conversation.pending.flatMap((p) => p.fields);
@@ -165,7 +211,7 @@ export function Chat({ open, onClose, returnFocus, signedIn, voice, usage = null
     setPins(r.conversation.pins);
     setIntent(undefined);
     setHistory(null);
-    input.current?.focus();
+    input.current?.focus({ preventScroll: true });
     announce(`Reopened ${r.conversation.title}`);
   }
 
@@ -176,7 +222,7 @@ export function Chat({ open, onClose, returnFocus, signedIn, voice, usage = null
     setBusy(true);
     setLog((l) => [...l, { kind: "me", text: message, highlights: [] }]);
     const sent = pins;
-    const r = await sendChat({ conversationId: convo.current, text: message, pins: sent, intentId: intent });
+    const r = await sendChat({ conversationId: convo.current, text: message, pins: sent, intentId: intent, path: pathname, as: userId });
     setBusy(false);
     if (!r.ok) { setLog((l) => [...l, { kind: "amax", text: r.error, tools: [], error: true }]); return; }
     convo.current = r.conversationId;
@@ -191,17 +237,21 @@ export function Chat({ open, onClose, returnFocus, signedIn, voice, usage = null
       if (last >= 0) copy[last] = { kind: "me", text: message, highlights: r.highlights };
       return [...copy, ...(r.reply ? [{ kind: "amax" as const, text: r.reply, tools: r.toolsRun }] : []), ...r.pending.map((action) => ({ kind: "confirm" as const, action, state: "open" as const }))];
     });
-    announce(r.pending.length ? "amax prepared a change for you to confirm" : "amax replied");
+    announce(r.pending.some((p) => p.choice) ? "amax offered a choice for you to pick from" : r.pending.length ? "amax prepared a change for you to confirm" : "amax replied");
   }
 
-  async function decide(action: PendingAction, ok: boolean) {
+  async function decide(action: PendingAction, ok: boolean, answer?: string) {
     if (!convo.current) return;
     // One decision per card: the buttons go away while the request is in flight.
     setLog((l) => l.map((x) => (x.kind === "confirm" && x.action.id === action.id ? { ...x, state: "working", note: undefined } : x)));
-    const apply = (o: CardOutcome) => setLog((l) => l.map((x) => (x.kind === "confirm" && x.action.id === action.id ? { ...x, ...o } : x)));
+    // 076: on a choice card, once one option is done or the card is cancelled, every other option is closed too (the
+    // server has recorded them as not chosen or cancelled).
+    const sibling = (x: Entry) => x.kind === "confirm" && !!action.choice && x.action.choice?.id === action.choice.id && x.action.id !== action.id && x.state === "open";
+    const apply = (o: CardOutcome) => setLog((l) => l.map((x) => (x.kind === "confirm" && x.action.id === action.id ? { ...x, ...o }
+      : (o.state === "done" || o.state === "cancelled") && sibling(x) ? { ...x, state: "cancelled" as const, note: undefined } : x)));
     try {
       // The server says what the card is now: done, cancelled, back open to retry, or an error.
-      const o = ok ? await confirmChat(convo.current, action.id) : await cancelChat(convo.current, action.id);
+      const o = ok ? await confirmChat(convo.current, action.id, userId, answer) : await cancelChat(convo.current, action.id, userId);
       apply(o);
       announce(o.note);
       // The record this page shows was renamed (a re-tag): follow it, or the page would read "not found".
@@ -212,7 +262,7 @@ export function Chat({ open, onClose, returnFocus, signedIn, voice, usage = null
       // by id, so nothing is rewritten; a pin added or removed meanwhile stays as it is.
       const sent = pins;
       if (o.state === "done" && sent.length) {
-        const fresh = await refreshPins(sent);
+        const fresh = await refreshPins(sent, userId);
         if (fresh) setPins((ps) => withFresh(ps, sent, fresh));
       }
     } catch {
@@ -224,7 +274,7 @@ export function Chat({ open, onClose, returnFocus, signedIn, voice, usage = null
 
   function talk() {
     const Ctor = (window as unknown as { SpeechRecognition?: SpeechCtor; webkitSpeechRecognition?: SpeechCtor }).SpeechRecognition ?? (window as unknown as { webkitSpeechRecognition?: SpeechCtor }).webkitSpeechRecognition;
-    if (!voice || !Ctor) { input.current?.focus(); return; }
+    if (!voice || !Ctor) { input.current?.focus({ preventScroll: true }); return; }
     const rec = new Ctor();
     rec.lang = navigator.language.startsWith("si") || navigator.language.endsWith("LK") ? "en-LK" : "en-AU";
     rec.interimResults = false;
@@ -238,11 +288,11 @@ export function Chat({ open, onClose, returnFocus, signedIn, voice, usage = null
     <aside className={open ? "chat open" : "chat"} id="chat" aria-label="amax chat" inert={!open}>
       <header className="c-head">
         <span className="c-face"><Mascot /></span>
-        <div><b>amax</b><small>{intent ? "Filling in a new record" : "Ask, add or drop anything here"}</small></div>
+        <div><b>amax</b><small data-testid="chat-page">{intent ? "Filling in a new record" : page?.label ?? "Ask, add or drop anything here"}</small></div>
         {signedIn && <button className="iconbtn h-toggle" type="button" aria-label="Chat history" aria-pressed={history !== null} title="History" onClick={showHistory}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v4h4M12 7v5l3 2" /></svg></button>}
         <button className="iconbtn" type="button" aria-label="Close chat" onClick={close}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg></button>
       </header>
-      {history && <History key={history.error ?? "list"} initial={history.items} error={history.error} onOpen={reopen} onNew={newChat} />}
+      {history && <History key={history.error ?? "list"} initial={history.items} error={history.error} onOpen={reopen} onNew={newChat} as={userId} />}
       <div className="c-log" hidden={history !== null} role="log" aria-live="polite" aria-label="Conversation" ref={logRef}>
         {!signedIn && <div className="m"><div className="b">Sign in to use amax chat.</div></div>}
         {log.map((e, i) => {
@@ -253,38 +303,39 @@ export function Chat({ open, onClose, returnFocus, signedIn, voice, usage = null
               {e.error ? <p className="err">{e.text}</p> : <Markdown text={e.text} />}
             </div></div>
           );
+          const choice = e.action.choice;
+          if (choice) {
+            const options = log.filter((x): x is Extract<Entry, { kind: "confirm" }> => x.kind === "confirm" && x.action.choice?.id === choice.id);
+            if (options[0].action.id !== e.action.id) return null;
+            return (
+              <div key={i} className="m">
+                <ChoiceCard options={options} onConfirm={(a, answer) => decide(a, true, answer)} onCancel={(a) => decide(a, false)} onElse={() => input.current?.focus({ preventScroll: true })} />
+              </div>
+            );
+          }
           return (
-            <div key={i} className="m"><div className="b" role="group" aria-label={`Confirm: ${e.action.title}`}>
-              <p><b>{e.action.title}</b></p>
-              <dl className="rec">{Object.entries(e.action.input).map(([k, v]) => <div key={k} style={{ display: "contents" }}><dt className={fieldClass(e.action.fields, k)}><span className="fd" />{k}</dt><dd>{String(v)}</dd></div>)}</dl>
-              {e.state === "open" ? (<>
-                {e.note && <p className="err">{e.note}</p>}
-                {e.action.secret && convo.current ? (
-                  <SecretConfirm conversationId={convo.current} action={{ ...e.action, secret: e.action.secret }} onCancel={() => decide(e.action, false)}
-                    onState={(o) => setLog((l) => l.map((x) => (x.kind === "confirm" && x.action.id === e.action.id ? { ...x, ...o } : x)))} />
-                ) : (
-                  <div className="acts">
-                  <button className="btn sm primary" type="button" onClick={() => decide(e.action, true)}>Add it</button>
-                  <button className="btn sm" type="button" onClick={() => { setText("Change "); input.current?.focus(); }}>Change something</button>
-                  <button className="btn sm" type="button" onClick={() => decide(e.action, false)}>Cancel</button>
-                  </div>
-                )}
-              </>) : e.state === "expired" ? (
-                <p className="muted" style={{ marginTop: 10 }}><span className="chip">Expired</span> Ask again to make a fresh request.</p>
-              ) : <p className={e.state === "error" ? "err" : "muted"} style={{ marginTop: 10 }}>{e.state === "working" ? "Working on it…" : e.note}</p>}
-              {e.reveal && <RevealOnce reveal={e.reveal} onDone={() => setLog((l) => l.map((x) => (x.kind === "confirm" && x.action.id === e.action.id ? { ...x, reveal: undefined } : x)))} />}
-            </div></div>
+            <div key={i} className="m">
+              <ConfirmCard action={e.action} state={e.state} note={e.note} onConfirm={() => decide(e.action, true)} onCancel={() => decide(e.action, false)}
+                onEdit={() => { setText("Change "); input.current?.focus({ preventScroll: true }); }}
+                secret={e.action.secret && convo.current ? <SecretConfirm conversationId={convo.current} as={userId} action={{ ...e.action, secret: e.action.secret }} onCancel={() => decide(e.action, false)}
+                  onState={(o) => setLog((l) => l.map((x) => (x.kind === "confirm" && x.action.id === e.action.id ? { ...x, ...o } : x)))} /> : undefined}
+                after={e.reveal && <RevealOnce reveal={e.reveal} onDone={() => setLog((l) => l.map((x) => (x.kind === "confirm" && x.action.id === e.action.id ? { ...x, reveal: undefined } : x)))} />} />
+            </div>
           );
         })}
-        {busy && <div className="m"><div className="b"><div className="dots" aria-label="amax is thinking"><i /><i /><i /></div></div></div>}
+        {busy && <div className="m"><div className="b"><div className="dots" role="status" aria-label="amax is thinking"><i /><i /><i /></div></div></div>}
       </div>
       <div className="c-ctx" aria-label="Pinned context">
         {pins.map((p) => (
           <span key={pinKey(p)} className={p.unavailable ? "pinchip muted" : "pinchip"}><span>{p.label}</span><button type="button" aria-label={`Remove ${p.label} from chat`} onClick={() => setPins((x) => x.filter((y) => pinKey(y) !== pinKey(p)))}>×</button></span>
         ))}
       </div>
+      {signedIn && !busy && !text && page && <Suggestions items={page.suggestions} onPick={(prompt) => { filled.current = prompt; setText(prompt); }} />}
       <form className="c-input" onSubmit={(e) => { e.preventDefault(); send(text); }}>
-        <input ref={input} value={text} onChange={(e) => { filled.current = null; setText(e.target.value); }} onKeyDown={(e) => toEnd(e.currentTarget)} onPointerDown={() => { filled.current = null; }} autoComplete="off" aria-label="Message amax" placeholder={signedIn ? "Type, or tap amax and talk" : "Sign in first"} disabled={!signedIn} />
+        {/* Enter sends; Shift+Enter starts a new line. */}
+        <textarea ref={input} rows={1} value={text} onChange={(e) => { filled.current = null; setText(e.target.value); }}
+          onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); e.currentTarget.form?.requestSubmit(); return; } toEnd(e.currentTarget); }}
+          onPointerDown={() => { filled.current = null; }} autoComplete="off" aria-label="Message amax" placeholder={signedIn ? "Type, or tap amax and talk" : "Sign in first"} disabled={!signedIn} />
         <button className="c-send" type="submit" aria-label="Send" disabled={!signedIn || busy}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12 20 4l-6 16-3-7z" /></svg></button>
       </form>
       <div className="c-dock">

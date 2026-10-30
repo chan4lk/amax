@@ -33,15 +33,24 @@ ask the product owner first.
 missing) or `**Review:** module-end` for a module's last change, whose loop runs with `--since` over the
 whole module. CI's `review-gate` job (`scripts/check-review-gate.mjs`) checks the review files under
 `review/`. A PR from a fork must carry a finished loop for every change it touches, whatever the scope.
-A same-repo PR needs one only for a `module-end` change.
+A same-repo PR needs one only for a `module-end` change. On a stacked branch, where one loop reviewed
+several changes, a change can declare `**Review:** covered-by <NNN-slug>` instead, and the gate judges it by
+that change's final round. Use it only when that loop actually reviewed this change's commits. The gate
+checks that the covering change's `## Verify` names this change, that its final pass ran on this PR's branch
+(not in the base) after this change's commits, and that this change has no review rounds of its own. Every
+PR commit after that final pass must touch only `.specclaw/`, be a merge, or name (`specclaw(<NNN-slug>)` or
+`[specclaw] <NNN-slug>` subject) either the covering change or another change in the PR whose own final pass
+came after it. So a covered change is trusted exactly as far as its cover. The named change can't be
+`covered-by` in turn.
 
 ## Core rules
 
 1. **Chat does the writes.** No CRUD forms, write dialogs or inline edit fields in pages. Every
    create, update or delete is an MCP write tool in `modules/<m>/mcp.ts`, and chat runs it only after
    the pending-action confirm. Where a form would go, put an `IntentButton` ("Ask amax") that opens
-   chat with the record pinned and a prompt filled in. Read-only controls (filters, tabs, sort,
-   search, navigation) are fine.
+   chat with the record pinned and a prompt filled in, unless chat already suggests that write on the
+   page (the module's `chatSuggestions`, 070 amendment 4); then the record's pin is enough. Read-only
+   controls (filters, tabs, sort, search, navigation) are fine.
 2. **Everything is pinnable.** Every card, tile, stat, stage step, list item and table row that shows
    a record or a metric has a `PinButton` (`packages/ui/src/components/PinButton.tsx`). Its `PinRef`
    resolves through a read tool to that exact record.

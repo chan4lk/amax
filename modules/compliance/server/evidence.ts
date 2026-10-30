@@ -2,12 +2,25 @@ import { createHash, createHmac, timingSafeEqual } from "node:crypto";
 import { sql } from "drizzle-orm";
 import { z } from "zod";
 import { canonical, defineService, getRuntime } from "@amax/core/server";
+import { ANONYMISED } from "@amax/core/privacy";
 import { CONTROLS, EVENTS, type EvidenceExported } from "../contracts";
 import { by, isoDate, type Row } from "./context";
 import { PARTS } from "./evidence-parts";
 
 const DAY = 86_400_000;
 const sign = (body: string) => createHmac("sha256", getRuntime().auditKey).update(body).digest("hex");
+
+/**
+ * 070 review rounds 3 and 4: retention and erasure anonymise a bundle's contents (it names who generated it and the
+ * people in its evidence) to {}, together with generated_by, which the same rule sets to ANONYMISED. Only both
+ * together read as anonymised, with no signature verdict; contents emptied any other way is a failed signature.
+ */
+export function bundleState(r: Row): { anonymised: boolean; signatureValid: boolean | null } {
+  const c = r.contents;
+  const empty = typeof c === "object" && c !== null && !Array.isArray(c) && Object.keys(c).length === 0;
+  const anonymised = empty && r.generated_by === ANONYMISED;
+  return { anonymised, signatureValid: anonymised ? null : bundleVerifies(r) };
+}
 
 /** Whether a stored bundle's contents still match its digest and signature. */
 export function bundleVerifies(r: Row) {

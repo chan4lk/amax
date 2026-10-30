@@ -8,7 +8,7 @@ test("054 AC5 time: pin the week, ask amax to submit it, confirm, and the week r
   await signIn(page, "tharushi@lumenlabs.test", "/time/my/2026-W42");
   await expect(page.locator("main form, main dialog")).toHaveCount(0);
   await expect(page.locator(".card-head h2")).toContainText("Draft");
-  await askAndConfirm(page, page.getByRole("button", { name: "Ask amax to submit week 42" }), { pin: "My timesheet 2026-W42", prompt: "Submit my timesheet for 2026-W42" });
+  await askAndConfirm(page, page.getByRole("button", { name: "Ask amax to submit week 42" }), { pin: "My timesheet 2026-W42", prompt: "Submit my timesheet for 2026-W42", confirm: "Submit", done: "Submitted 2026-W42" });
   await expect(page.locator(".card-head h2")).toContainText("Submitted");
 });
 

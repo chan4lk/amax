@@ -1,5 +1,6 @@
 import NextAuth, { type NextAuthConfig } from "next-auth";
-import { authConfig } from "@amax/auth/authjs";
+import { cookies } from "next/headers";
+import { authConfig, earlierSession } from "@amax/auth/authjs";
 import { loadEnv } from "@amax/core/env";
 import { getDb } from "./lib/server";
 
@@ -14,7 +15,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth(() => {
     if (!env.AUTH_SECRET) throw new Error("amax: AUTH_SECRET is required once DATABASE_URL is set");
     const demo = env.AMAX_AUTH_DEMO === "1" && env.AMAX_AUTH_DEMO_TENANT ? { tenantId: env.AMAX_AUTH_DEMO_TENANT } : null;
     const password = env.AMAX_AUTH_PASSWORD_TENANT ? { tenantId: env.AMAX_AUTH_PASSWORD_TENANT } : null;
-    cached = { at: Date.now(), config: authConfig({ db, secret: env.AUTH_SECRET, demo, password }) };
+    // 070 AC-52: the request still carries the browser's earlier session cookie while a sign-in completes.
+    const secret = env.AUTH_SECRET;
+    const replaced = async () => { const jar = await cookies(); return earlierSession((name) => jar.get(name)?.value, secret); };
+    cached = { at: Date.now(), config: authConfig({ db, secret: env.AUTH_SECRET, demo, password, replaced }) };
   }
   // @amax/auth resolves its own next-auth copy (different peer set), so the config type is nominally
   // distinct; the runtime objects are identical (one @auth/core).

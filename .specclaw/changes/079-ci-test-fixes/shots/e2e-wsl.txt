@@ -1,0 +1,11 @@
+Preparing pnpm@9.15.9 for immediate activation...
+node v24.22.2, pnpm 9.15.9
+
+===== STEP 22:17:11: [WebServer] ⚠ "next start" does not work with "output: standalone" configuration. Use "node .next/s
+Running 8 tests using 8 worke[WebServer] ⚠ "next start" does not work with "output: standalone" configuration. Use "node .next/standalone/server.js" instead.
+··
+  82 passed (2.2m)
+::notice title=🎭 Playwright Run Summary::  82 passed (2.2m)
+===== EXIT 0: pnpm --filter @amax/web e2e:auth
+===== RESULT e2e=0 e2e:auth=0
+js:951:52341)

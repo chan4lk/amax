@@ -1,0 +1,92 @@
+{
+ "counts": {
+  "blocker": 0,
+  "major": 1,
+  "minor": 1
+ },
+ "escalated": [],
+ "files": [
+  "modules/delivery/sync/import.ts",
+  "modules/delivery/tests/chat.test.ts",
+  "modules/delivery/tests/sync-import.test.ts"
+ ],
+ "final": true,
+ "findings": [
+  {
+   "file": "modules/delivery/sync/import.ts",
+   "fp": "58c4a001cbd9",
+   "in_delta": false,
+   "line": 16,
+   "message": "The fix covers only one way the task list can drift from storage: order. The comment's own class is 'every sync would see a change it can't make', and two variants are still open. (1) A task removed from change.md: `writeTasks` (server/tasks.ts:13) only upserts and never deletes, so the stored list keeps the removed ref while `desired` drops it. (2) A ref listed twice in change.md: `desired` keeps both entries, but storage holds one row per (proposal_id, ref). In both cases the fingerprint never matches again. Every later sync (syncSpecclaw and push.ts `unchanged`) rewrites the row and appends a `delivery.proposal.sync` audit row. `tasksTotal` also changes back and forth between `tasks.length` from desired and the stored count from `countTasks`. Fix: normalise both sides to the same task set in `desired`/`fingerprint`. Merge with the stored refs, or drop or flag missing ones, and dedupe by ref. Alternatively, make `writeTasks` reconcile deletions.",
+   "original_severity": "major",
+   "pass": "review",
+   "pre_existing": true,
+   "rule": "B1",
+   "scenario": "Sync change.md with T1, T2, T3. Then delete the T3 line and sync twice \u2192 the 2nd and later syncs return updated: 1 (never unchanged: 1), and each one writes a new audit row.",
+   "severity": "major"
+  },
+  {
+   "file": "modules/delivery/tests/sync-import.test.ts",
+   "fp": "a517d093fa02",
+   "in_delta": true,
+   "line": 309,
+   "message": "The fix ships one hand-picked case (T2, T10, T1) through `syncSpecclaw` only. It needs a table-driven test over the variants: the named T26-before-T25, a ref-length case (T10 before T9), a reverse-ordered list, and an already-sorted control. The test also never drives the second caller of `desired`, the repo push path (`server/push.ts:87` \u2192 `unchanged`), which has its own fingerprint comparison. A regression there stays green.",
+   "original_severity": "major",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B2",
+   "scenario": "Revert the `.sort(byRef)` and also change push.ts to build tasks some other way \u2192 the push path flags out-of-order change.md files as updated on every push, and no test fails.",
+   "severity": "major"
+  },
+  {
+   "file": "modules/delivery/sync/import.ts",
+   "fp": "f54e3544ec32",
+   "in_delta": true,
+   "line": 14,
+   "message": "The task order is now written twice: `byRef` in JS and `order by length(t.ref), t.ref` in the `storedSpecRows` SQL (line 38). The SQL side uses the database collation. They agree only because refs are limited to /^T\\d+$/. If either copy changes, every sync becomes a change again. Sort both sides with the same function inside `fingerprint`, so storage order no longer matters.",
+   "original_severity": "minor",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B4",
+   "scenario": "",
+   "severity": "minor"
+  }
+ ],
+ "head": "cf4e4882a9838cc267d2a811a70541309b489741",
+ "impact": [
+  "apps/mock/public/mock/index.html",
+  "apps/web/app/(app)/settings/ai/page.tsx",
+  "apps/web/components/marketing/copy.ts",
+  "apps/web/components/workflows/RunsCard.tsx",
+  "modules/delivery/db/migrations/0015_tasks.sql",
+  "modules/delivery/fixtures/index.ts",
+  "modules/delivery/mcp.ts",
+  "modules/delivery/module.ts",
+  "modules/delivery/server/ingest.ts",
+  "modules/delivery/server/overview.ts",
+  "modules/delivery/server/push.ts",
+  "modules/delivery/server/queries.ts",
+  "modules/delivery/server/services.ts",
+  "modules/delivery/server/tasks.ts",
+  "modules/delivery/suggestions.ts",
+  "modules/delivery/sync/specclaw.ts",
+  "modules/delivery/tests/ingest-ac1.test.ts",
+  "modules/delivery/tests/ingest-ac2.test.ts",
+  "modules/delivery/tests/overview.test.ts",
+  "modules/delivery/tests/sync-push.test.ts"
+ ],
+ "model": "opus",
+ "passes": [
+  "review",
+  "design"
+ ],
+ "prompt_chars": 53429,
+ "round": 1,
+ "since": null,
+ "status": "open",
+ "system_chars": 42378,
+ "tier": "review",
+ "tools": "Read,Grep,Glob",
+ "ts_end": 1793365885,
+ "ts_start": 1793365807
+}

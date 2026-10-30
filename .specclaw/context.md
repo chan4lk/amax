@@ -34,6 +34,10 @@ _Not yet documented._
   specclaw-review round (`final: true`, not `not_run`/`skipped`, no open blocker, head inside the PR, at most
   five passes). Same-repo PRs are checked only for changes whose header says `**Review:** module-end`;
   that loop must run with `--since`. A fork PR that changes code with no change dir fails: propose first.
+  A change reviewed by another change's loop on a stacked branch declares `**Review:** covered-by <NNN-slug>`
+  and is judged by that change's final round (078): its `## Verify` must name this change, and its final pass
+  must sit on the PR's branch after this change's commits (later commits: `.specclaw/` only, merges, the cover's
+  own, or owned by another change in the PR whose final pass follows them). No chains, and no rounds of its own.
 
 ## Recent Decisions
 

@@ -1,7 +1,7 @@
 # 🦞 SpecClaw Dashboard
 
 **Project:** amax
-**Last Updated:** 2026-10-29 11:47 UTC
+**Last Updated:** 2026-10-30 16:51 UTC
 
 _1 unnumbered change · run `/specclaw-extras:renumber` to order them_
 
@@ -11,8 +11,18 @@ _1 unnumbered change · run `/specclaw-extras:renumber` to order them_
 - 🔀 **067-glob-security-bump** — pr raised | 2/2 tasks (100%) | 0 failed | PR #96 merged
 - 🔀 **068-overview-dashboard** — pr raised | 6/6 tasks (100%) | 0 failed | PR #97 merged
 - 🔀 **069-chat-tool-schema-hotfix** — pr raised | 3/3 tasks (100%) | 0 failed | PR #98 merged
+- 🔍 **070-time-entry-corrections** — verify done | 29/29 tasks (100%) | 0 failed | PR #102 closed
+- 🔀 **071-time-access-and-integrity** — pr raised | 8/8 tasks (100%) | 0 failed | PR #103 closed
+- 🔀 **072-time-consumers-sync** — pr raised | 6/6 tasks (100%) | 0 failed | PR #104 closed
+- 🔀 **073-time-workflow-enhancements** — pr done | 10/10 tasks (100%) | 0 failed | PR #105 open
+- 📝 **074-dev-demo-data** — tasks done | 7/7 tasks (100%) | 0 failed
 - 🔀 **074-fork-pr-review-gate** — pr raised | PR #108 merged
-- 🔍 **075-amaxerp-url** — verify done | 1/1 tasks (100%) | 0 failed
+- 🔀 **075-amaxerp-url** — pr raised | 1/1 tasks (100%) | 0 failed | PR #109 merged
+- 🔍 **075-team-time-status-band** — verify done | 4/4 tasks (100%) | 0 failed
+- 🔍 **076-chat-choice-cards** — verify done | 5/5 tasks (100%) | 0 failed
+- 🔍 **077-time-requests-history** — verify done | 3/3 tasks (100%) | 0 failed
+- 🔍 **078-review-covered-by** — verify done | 4/4 tasks (100%) | 0 failed
+- 🔍 **079-ci-test-fixes** — verify done | 4/4 tasks (100%) | 0 failed
 
 ## Pending Proposals
 
@@ -91,6 +101,6 @@ _1 unnumbered change · run `/specclaw-extras:renumber` to order them_
 
 ## Stats
 
-- **Total changes:** 69
-- **Active:** 5
+- **Total changes:** 79
+- **Active:** 15
 - **Completed:** 64

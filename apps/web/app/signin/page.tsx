@@ -3,7 +3,11 @@ import { listProviders, providerIdFor } from "@amax/auth/authjs";
 import { loadEnv } from "@amax/core/env";
 import { Card, Logo } from "@amax/ui";
 import { AuthError } from "next-auth";
-import { signIn } from "../../auth";
+import { signIn, signOut } from "../../auth";
+import { SessionPing } from "../../components/shell/SessionWatch";
+import { localPath } from "../../lib/local-path";
+import { profileOf } from "../../lib/profile";
+import { getViewer } from "../../lib/viewer";
 import { authEnabled, getDb } from "../../lib/server";
 
 export const metadata = { title: "Sign in" };
@@ -19,6 +23,7 @@ const ERRORS: Record<string, string> = {
 };
 
 // Credentials failures throw an AuthError; show them on this page instead of a server error.
+// 070 AC-52: the session this replaces ends in Auth.js's signIn event, only once the sign-in succeeded.
 async function credentialsSignIn(provider: string, fields: Record<string, string>, to: string) {
   "use server";
   try {
@@ -32,13 +37,36 @@ async function credentialsSignIn(provider: string, fields: Record<string, string
 export default async function SignInPage({ searchParams }: { searchParams: Promise<{ error?: string; next?: string }> }) {
   if (!authEnabled()) redirect("/");
   const { error, next } = await searchParams;
-  const to = next?.startsWith("/") && !next.startsWith("//") ? next : "/";
+  const to = localPath(next);
   const providers = await listProviders(getDb()!);
   const env = loadEnv();
   const demo = env.AMAX_AUTH_DEMO === "1" && env.NODE_ENV !== "production";
   const password = Boolean(env.AMAX_AUTH_PASSWORD_TENANT);
+  // 070 AC-51: one browser has one session for all its tabs, so a signed-in browser switches only on purpose.
+  const viewer = await getViewer();
+  if (viewer) {
+    const me = profileOf(viewer);
+    return (
+      <main id="main" className="signin">
+        <SessionPing />
+        <Card>
+          <Logo />
+          <h1>Sign in to amax</h1>
+          <p data-testid="signed-in-as">You're signed in as <b>{me.name}</b> ({me.chip}).</p>
+          <div className="signin-switch">
+            <a className="btn primary" href={to}>Continue as {me.name.split(" ")[0]}</a>
+            <form action={async () => { "use server"; await signOut({ redirectTo: `/signin?next=${encodeURIComponent(to)}` }); }}>
+              <button className="btn" type="submit">Sign out to switch account</button>
+            </form>
+          </div>
+          <p className="muted">To use two accounts at once, open the second in another browser profile or a private window.</p>
+        </Card>
+      </main>
+    );
+  }
   return (
     <main id="main" className="signin">
+      <SessionPing />
       <Card>
         <Logo />
         <h1>Sign in to amax</h1>

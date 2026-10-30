@@ -1,0 +1,122 @@
+{
+ "counts": {
+  "blocker": 0,
+  "major": 2,
+  "minor": 3
+ },
+ "escalated": [],
+ "files": [
+  "AGENTS.md",
+  "apps/mock/public/mock/index.html",
+  "packages/testing/tests/review-gate-covered.test.ts",
+  "scripts/check-review-gate.mjs",
+  "scripts/review-gate/covered.mjs",
+  "scripts/review-gate/evidence.mjs",
+  "scripts/review-gate/rules.mjs"
+ ],
+ "final": false,
+ "findings": [
+  {
+   "file": "scripts/review-gate/covered.mjs",
+   "fp": "8966592d0283",
+   "in_delta": true,
+   "line": 15,
+   "message": "Instance fix. Round 1 asked that every commit touching the covered change's dir be an ancestor of the cover's reviewed head. `loopProblem` uses `.some(...)`, so the check passes once any one commit is older than the cover's final pass. Commits made to the covered change after the covering loop finished are never reviewed and still pass. This diff also rewrites AGENTS.md to say \"after at least one of this change's commits\", which lowers the law to match the code instead of fixing the code. Fix: use `.every(...)` over `history(change.dir)`, keep the original AGENTS.md wording, and add a test where the cover's final pass sits between two 103-stacked commits. That case must fail.",
+   "original_severity": "major",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B1",
+   "scenario": "Fork branch: c1 adds 103-stacked/change.md with `covered-by 101-cover`; c2 is 101-cover's final round (head=c1) with Verify naming 103-stacked; c3 rewrites 103-stacked/change.md and tasks. Gate prints `pass \u2014 covered by 101-cover`, although 101's loop never saw c3.",
+   "severity": "major"
+  },
+  {
+   "file": "scripts/check-review-gate.mjs",
+   "fp": "5535558c0db4",
+   "in_delta": true,
+   "line": 43,
+   "message": "`history(change.dir)` only lists commits under the single dir that `touchedChangeDirs` picked. When the PR touches both `.specclaw/changes/103-x/` and `.specclaw/changes/archive/103-x/`, the sorted diff makes the archive dir win. A change archived on the stacked branch then has a history of just the move commit and later ones. Its real commits under the active dir are left out. The gate then fails a correctly covered change with \"final pass ran before any commit\". It also ignores commits made before the move. Fix: run `rev-list` over both the active and archive paths for the change, and add a test where a covered change is archived on the branch after the cover's final pass.",
+   "original_severity": "major",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B1",
+   "scenario": "Fork branch: c1 creates 103-stacked; c2 is 101-cover's final round (head=c1) naming 103-stacked; c3 runs `git mv` to put 103-stacked under archive/. Gate fails with `101-cover's final pass ran before any 103-stacked commit`, although the loop reviewed c1.",
+   "severity": "major"
+  },
+  {
+   "file": "scripts/check-review-gate.mjs",
+   "fp": "79dabab86f3e",
+   "in_delta": true,
+   "line": 39,
+   "message": "`ancestor` treats every non-zero exit of `git merge-base --is-ancestor` as \"not an ancestor\". That includes exit 128 (unknown or missing object, for example a forged or unfetched sha). `inBase` therefore reports \"not in base\", the permissive answer, when it actually couldn't ask git. Today `history` and `isAncestor(sha, head)` happen to fail closed right after, so the verdict comes out fail but the reason given is wrong. Fix: treat status 128 as not run, and fail with a \"could not check\" reason.",
+   "original_severity": "minor",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B3",
+   "scenario": "Cover round with head=deadbeef\u2026 (object not in the repo): inBase returns false, read as \"ran on this PR's branch\", instead of \"could not check\".",
+   "severity": "minor"
+  },
+  {
+   "file": "scripts/review-gate/evidence.mjs",
+   "fp": "4e16995c012b",
+   "in_delta": true,
+   "line": 12,
+   "message": "`verifySection` returns everything from the first `## Verify` to the end of the file, and covered.mjs:9 checks it with a plain `includes(change.name)`. So any later section, or a sentence that rules the change out, counts as naming it. Fix: cut the section at the next `^## ` heading and match the name on a word boundary.",
+   "original_severity": "minor",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B6",
+   "scenario": "101-cover's Verify says \"103-stacked was NOT reviewed by this loop\", or names 103-stacked only under a later `## Follow-ups`: the Verify-names check passes.",
+   "severity": "minor"
+  },
+  {
+   "file": "apps/mock/public/mock/index.html",
+   "fp": "2c53c15cd2d3",
+   "in_delta": true,
+   "line": 894,
+   "message": "This 078 diff adds mock sections that belong to other changes: 077, 076, 075-team-time-status-band, 074-dev-demo-data, and updates for 073, 072, 071 and 070. module-standard.md says the mock is read-only during a build and that screen changes get their own change. The new sections also reuse numbers that are already taken (074-dev-demo-data next to 074-fork-pr-review-gate, and 075-team-time-status-band next to 075-amaxerp-url). Move them to their own changes or out of this branch's diff, and give each a unique change number.",
+   "original_severity": "minor",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B10",
+   "scenario": "",
+   "severity": "minor"
+  }
+ ],
+ "head": "fa72929f4e48620e48a488d5cbe78787538f9078",
+ "impact": [
+  ".gitignore",
+  "apps/web/app/(app)/settings/ai/page.tsx",
+  "apps/web/app/(app)/settings/backups/format.ts",
+  "apps/web/app/(public)/welcome/welcome.css",
+  "apps/web/components/agents/DecideTable.tsx",
+  "apps/web/components/marketing/copy.ts",
+  "apps/web/lib/admin/backups.ts",
+  "apps/web/lib/backup-fixtures.ts",
+  "apps/web/lib/backup-workflows.ts",
+  "apps/web/lib/server.ts",
+  "apps/web/tests/admin/it-admin.test.ts",
+  "modules/allocations/ui/Grid.tsx",
+  "modules/allocations/ui/allocations.css",
+  "modules/delivery/server/repo-sync.ts",
+  "modules/time/tests/requests.test.ts",
+  "packages/auth/src/can.ts",
+  "packages/chat/tests/choices.test.ts",
+  "packages/core/src/privacy/inventory.ts",
+  "packages/workflows/tests/concurrency.test.ts",
+  "scripts/check-module-standard.mjs"
+ ],
+ "model": "opus",
+ "passes": [
+  "review",
+  "design"
+ ],
+ "prompt_chars": 102125,
+ "round": 3,
+ "since": "fa72929f4e48620e48a488d5cbe78787538f9078",
+ "status": "open",
+ "system_chars": 42125,
+ "tier": "review",
+ "tools": "Read,Grep,Glob",
+ "ts_end": 1793361931,
+ "ts_start": 1793361796
+}

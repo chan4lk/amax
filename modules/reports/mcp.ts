@@ -24,7 +24,7 @@ async function utilisationReport(v: Viewer, a: { month?: string; format?: "json"
 export const mcpTools: McpToolDef[] = [
   tool({ ...read, pin: "view", name: "get_utilisation", description: "Utilisation (billable ÷ available hours) for a month, per person and for the team, against the target, with the 12-month trend and the rest of the month's availability (working days left after holidays and approved leave, allocated %, free hours). Counts only people whose timesheets, people record and leave you may see. format: a CSV export of either table.",
     input: z.object({ month, format: z.enum(["json", "utilisation-csv", "availability-csv"]).optional() }), run: (v, a) => utilisationReport(v, a) }),
-  tool({ ...read, pin: { id: "userId", of: personOf as never }, name: "get_person_utilisation", description: "One person's utilisation for a month: available hours after leave and holidays, logged and billable hours, and their availability for the rest of the month.",
+  tool({ ...read, pin: { id: "userId", of: personOf as never }, name: "get_person_utilisation", description: "One person's utilisation for a month: available hours after leave and holidays, logged and billable hours, and their availability for the rest of the month. Null means you may not see that person's hours: say so plainly and offer the asker their own figure instead (071).",
     input: z.object({ userId: z.uuid(), month }), run: (v, a) => getPersonUtilisation(v, a.userId, a.month) }),
   tool({ ...write, name: "set_utilisation_target", description: "Set the team utilisation target, in percent, that Reports compares against.",
     input: setUtilisationTarget.spec.input, service: setUtilisationTarget, run: (v, a, s) => setUtilisationTarget(ctxFor(v, s), a) }),

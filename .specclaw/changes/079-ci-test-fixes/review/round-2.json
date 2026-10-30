@@ -1,0 +1,67 @@
+{
+ "counts": {
+  "blocker": 0,
+  "major": 0,
+  "minor": 1
+ },
+ "escalated": [],
+ "files": [
+  "modules/delivery/sync/import.ts",
+  "modules/delivery/tests/chat.test.ts",
+  "modules/delivery/tests/sync-import.test.ts",
+  "modules/delivery/tests/sync-task-order.test.ts"
+ ],
+ "final": true,
+ "findings": [
+  {
+   "file": "modules/delivery/tests/sync-task-order.test.ts",
+   "fp": "9b65a2cd577b",
+   "in_delta": true,
+   "line": 8,
+   "message": "The variant table calls `fingerprint` directly with hand-built rows. Only one case (T2, T10, T1) runs through a real caller, `syncSpecclaw`. The second caller of the same comparison, `unchanged()` in `modules/delivery/server/push.ts:62` (sync_specclaw push), is never tested with out-of-order tasks against stored rows. Add a `pushSpecclaw` case that pushes tasks out of order twice and expects `unchanged` on the second push, so the push path is checked too.",
+   "original_severity": "minor",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B2",
+   "scenario": "No current wrong output. Both callers share `fingerprint`, so the fix covers push today. A later change to push's `unchanged()` that rebuilt the fingerprint input without sorting would make every push of T26-before-T25 count as `updated`, and no test would fail.",
+   "severity": "minor"
+  }
+ ],
+ "head": "dc678e29c3077bde1c9fcc16a8de20b72665e7ea",
+ "impact": [
+  ".claude-plugin/marketplace.json",
+  ".github/workflows/ci.yml",
+  ".github/workflows/specclaw-sync.yml",
+  "Dockerfile",
+  "apps/mock/app/page.tsx",
+  "apps/mock/public/mock/index.html",
+  "apps/web/tests/e2e/delivery.spec.ts",
+  "modules/career/fixtures/kasun.ts",
+  "modules/delivery/chat.ts",
+  "modules/delivery/db/migrations/0017_repo_sync.sql",
+  "modules/delivery/fixtures/index.ts",
+  "modules/delivery/mcp.ts",
+  "modules/delivery/module.ts",
+  "modules/delivery/pins.ts",
+  "modules/delivery/server/push.ts",
+  "modules/delivery/server/repo-sync.ts",
+  "modules/keyflow/server/sandbox.ts",
+  "modules/presales/server/claim.ts",
+  "modules/time/server/decide-request.ts",
+  "modules/time/server/request.ts"
+ ],
+ "model": "opus",
+ "passes": [
+  "review",
+  "design"
+ ],
+ "prompt_chars": 55197,
+ "round": 2,
+ "since": null,
+ "status": "clean",
+ "system_chars": 42403,
+ "tier": "review",
+ "tools": "Read,Grep,Glob",
+ "ts_end": 1793366119,
+ "ts_start": 1793366074
+}

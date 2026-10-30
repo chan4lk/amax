@@ -1,0 +1,10 @@
+{
+  "change": "076-chat-choice-cards",
+  "phase": "verify",
+  "branch": "",
+  "phases": {
+    "proposal": {"status":"approved","at":"2026-10-25T15:43:32Z"},
+    "tasks": {"status":"done","at":"2026-10-25T15:43:33Z"},
+    "verify": {"status":"done","at":"2026-10-25T15:59:07Z"}
+  }
+}

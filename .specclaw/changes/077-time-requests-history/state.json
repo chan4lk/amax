@@ -1,0 +1,10 @@
+{
+  "change": "077-time-requests-history",
+  "phase": "verify",
+  "branch": "",
+  "phases": {
+    "proposal": {"status":"approved","at":"2026-10-25T17:05:16Z"},
+    "tasks": {"status":"done","at":"2026-10-25T17:05:18Z"},
+    "verify": {"status":"done","at":"2026-10-25T17:24:10Z"}
+  }
+}

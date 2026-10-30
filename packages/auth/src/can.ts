@@ -57,6 +57,14 @@ export function canEver(v: Viewer, action: string): boolean {
   return v.assignments.some((a) => a.role === "Admin" || (grants.get(a.role) ?? []).some((g) => matches(g, action)));
 }
 
+/**
+ * canEver through an assignment that reaches this legal entity (072 review round 1): the role that grants the action
+ * must itself cover the entity, so an unscoped role that doesn't grant it never lends its reach to a scoped one that
+ * does. `null` is "no entity", which only unscoped assignments reach.
+ */
+export const canEverIn = (v: Viewer, action: string, legalEntityId: string | null) =>
+  v.assignments.some((a) => (a.legalEntityIds === null || (legalEntityId !== null && a.legalEntityIds.includes(legalEntityId))) && canEver({ ...v, assignments: [a] }, action));
+
 export class ScopeError extends Error {
   readonly retryable = false;
   constructor(action: string) {

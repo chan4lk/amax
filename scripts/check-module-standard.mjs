@@ -12,6 +12,8 @@ const REQUIRED = ["module.ts", "README.md", "contracts.ts", "fixtures", "tests",
 
 const PERSONAL = /^(initials|[a-z_]*_name|[a-z_]*email[a-z_]*|phone[a-z_]*|[a-z_]+_by|by_actor|[a-z_]*user_id|[a-z_]*person_id|note|[a-z_]+_note|comment|[a-z_]+_comment|base_salary|epf_number|bank_[a-z_]+|acts_for)$/;
 const PSEUDONYMOUS = /(^|_)(user|person)_id$/;
+// Free text a person writes, which can say anything about anyone (070 review round 3).
+const FREE_TEXT = /^([a-z_]+_)?(detail|details|description|summary|body|reason|notes?|comments?|answer|question|message|remarks|feedback|bio|text)$/;
 
 // Review 058 B3: the scan reads SQL the way Postgres does (any case, `if not exists`, one-line
 // tables, `alter table … add` without `column`) and reports a statement it can't read instead of
@@ -51,15 +53,18 @@ export function scanSql(src) {
         continue;
       }
       const table = `${m[1]}.${m[2]}`.toLowerCase();
-      for (const part of topLevel(m[3])) if (!CONSTRAINT.test(part)) columns.push([table, part.match(/^"?([a-z_][a-z0-9_]*)"?/i)?.[1]?.toLowerCase()]);
+      for (const part of topLevel(m[3])) {
+        const col = part.match(/^"?([a-z_][a-z0-9_]*)"?\s+([a-z]+)?/i);
+        if (!CONSTRAINT.test(part)) columns.push([table, col?.[1]?.toLowerCase(), col?.[2]?.toLowerCase()]);
+      }
       continue;
     }
     const alter = stmt.match(new RegExp(String.raw`^alter\s+table\s+(?:if\s+exists\s+)?(?:only\s+)?${qualified}\s+([\s\S]*)$`, "i"));
     if (alter) {
       const table = `${alter[1]}.${alter[2]}`.toLowerCase();
       for (const action of topLevel(alter[3])) {
-        const add = action.match(/^add\s+(?:column\s+)?(?:if\s+not\s+exists\s+)?"?([a-z_][a-z0-9_]*)"?/i);
-        if (add && !CONSTRAINT.test(add[1])) columns.push([table, add[1].toLowerCase()]);
+        const add = action.match(/^add\s+(?:column\s+)?(?:if\s+not\s+exists\s+)?"?([a-z_][a-z0-9_]*)"?\s*([a-z]+)?/i);
+        if (add && !CONSTRAINT.test(add[1])) columns.push([table, add[1].toLowerCase(), add[2]?.toLowerCase()]);
       }
     }
   }
@@ -70,13 +75,20 @@ function scanModule(name) {
   const dir = join(modulesDir, name, "db/migrations");
   if (!existsSync(dir)) return { tables: [], problems: [] };
   const found = new Set();
+  const all = [];
   const problems = [];
   for (const f of readdirSync(dir).filter((x) => x.endsWith(".sql"))) {
     const { columns, unreadable } = scanSql(readFileSync(join(dir, f), "utf8"));
     for (const [table, column] of columns) if (PERSONAL.test(column) && !PSEUDONYMOUS.test(column)) found.add(table);
+    all.push(...columns);
     for (const u of unreadable) problems.push(`modules/${name}: can't read "${u}" in ${f}; the retention check needs every create table (032)`);
   }
-  return { tables: [...found], problems };
+  // 070 review rounds 1 and 3: a table is about people when it has a personal column or a pseudonymous user/person
+  // id. Every personal, free-text or json column of such a table, whichever migration added it, must be named by its
+  // retention entries (fields, subject, subjectName, or keep with why), or it is never erased or anonymised.
+  const aboutPeople = new Set([...found, ...all.filter(([, c]) => PSEUDONYMOUS.test(c)).map(([t]) => t)]);
+  const uncovered = all.filter(([t, c, type]) => aboutPeople.has(t) && ((PERSONAL.test(c) && !PSEUDONYMOUS.test(c)) || FREE_TEXT.test(c) || type === "jsonb" || type === "json"));
+  return { tables: [...found], uncovered, problems };
 }
 
 // The manifest's retention entries, read from code with comments removed, so a mention in a comment
@@ -94,18 +106,21 @@ export function retentionEntries(manifest) {
     const list = (key) => [...(body.match(new RegExp(`\\b${key}:\\s*\\[([^\\]]*)\\]`))?.[1] ?? "").matchAll(/"([^"]+)"/g)].map((m) => m[1]);
     const found = [...list("subject"), ...list("subjectName")];
     const unfound = list("fields").filter((f) => PERSON_COLUMN.test(f) && !found.includes(f));
-    return { table: h[1], findable: /\bsubject(Name)?:\s*\[\s*"/.test(body), unfound };
+    return { table: h[1], findable: /\bsubject(Name)?:\s*\[\s*"/.test(body), unfound, covered: [...found, ...list("fields"), ...[...(body.match(/\bkeep:\s*\{([^}]*)\}/)?.[1] ?? "").matchAll(/([a-z_][a-z0-9_]*)\s*:\s*"/g)].map((m) => m[1])] };
   });
 }
 
 function unretained(name) {
   const manifest = existsSync(join(modulesDir, name, "module.ts")) ? readFileSync(join(modulesDir, name, "module.ts"), "utf8") : "";
   const entries = retentionEntries(manifest);
-  const { tables, problems } = scanModule(name);
+  const { tables, uncovered = [], problems } = scanModule(name);
+  const named = (t, c) => entries.some((e) => e.table === t && e.covered.includes(c));
   return [
     ...problems,
     ...tables.filter((t) => !entries.some((e) => e.table === t)).map((t) => `modules/${name}: personal-data table ${t} has no retention entry (032)`),
     ...entries.filter((e) => e.unfound.length).map((e) => `modules/${name}: retention entry for ${e.table} changes ${e.unfound.join(", ")} but doesn't list ${e.unfound.length === 1 ? "it" : "them"} in subject or subjectName, so that person's rows are never erased, exported or held (060)`),
+    // A personal table with no entry at all is reported once, above; its columns aren't listed again.
+    ...uncovered.filter(([t, c]) => !named(t, c) && !(tables.includes(t) && !entries.some((e) => e.table === t))).map(([t, c]) => `modules/${name}: ${t}.${c} holds personal data but no retention entry for ${t} names it in subject, subjectName or fields, so it is never erased or anonymised; name it in fields, or in keep with why (070)`),
     ...[...new Set(entries.filter((e) => !e.findable).map((e) => e.table))].map((t) => `modules/${name}: retention entry for ${t} names no subject or subjectName column, so access and erasure requests can't find its rows (032)`),
   ];
 }

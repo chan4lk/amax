@@ -1,0 +1,37 @@
+/* 075: Team time's status band: two pinnable parts, each a big figure, a bar and a legend. */
+.time .band{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;margin:0 0 20px}
+.time .band .card{padding:18px 22px 16px;display:flex;flex-direction:column;gap:10px;position:relative}
+.time .band .k{margin:0;font-size:11.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-3)}
+.time .band .fig{margin:0;font-size:30px;font-weight:700;line-height:1.1;font-variant-numeric:tabular-nums;color:var(--ink)}
+.time .band .fig span{font-size:14.5px;font-weight:500;color:var(--ink-2);margin-left:4px}
+.time .band .fig.empty{font-size:16px;font-weight:500;color:var(--ink-2)}
+.time :is(.band,.mband) .bar{display:flex;gap:3px;height:10px;border-radius:999px;overflow:hidden;background:var(--sunken)}
+.time :is(.band,.mband) .bar i{display:block;min-width:6px;border-radius:999px}
+.time :is(.band,.mband) .approved{--c:var(--chip-good)}
+.time :is(.band,.mband) :is(.submitted,.agent){--c:var(--chip-agent)}
+.time :is(.band,.mband) .rejected{--c:var(--chip-bad)}
+.time :is(.band,.mband) .draft{--c:var(--chip-warn)}
+.time :is(.band,.mband) .not_started{--c:var(--line-2)}
+.time :is(.band,.mband) .people{--c:var(--ink-3)}
+.time :is(.band,.mband) .bar i{background:var(--c)}
+.time .band .legend{display:flex;flex-wrap:wrap;gap:6px 8px;margin:2px 0 0;padding:0;list-style:none}
+.time .band .legend a,.time .band .legend span{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 12px 0 10px;border-radius:999px;font-size:13px;line-height:1;white-space:nowrap;color:var(--ink);text-decoration:none;background:var(--sunken)}
+.time .band .legend svg{width:14px;height:14px;flex:none;color:var(--c)}
+.time .band .legend .not_started svg{color:var(--ink-3)}
+.time .band .legend a:hover{box-shadow:inset 0 0 0 1px var(--c)}
+.time .band .legend a:focus-visible{outline:2px solid var(--chip-agent);outline-offset:2px}
+@media (max-width:860px){.time .band{grid-template-columns:minmax(0,1fr)}.time .band .fig{font-size:26px}}
+@media (prefers-reduced-motion:no-preference){.time .band .legend a{transition:box-shadow .15s}}
+/* 075 amendment 2: My timesheet's slim band: two readings side by side in one strip. */
+.time .mband{display:flex;align-items:flex-start;gap:16px 36px;flex-wrap:wrap;padding:16px 56px 16px 22px;margin:0 0 20px;position:relative}
+.time .mband .mb-part{flex:1 1 240px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.time .mband .mb-part+.mb-part{padding-left:36px;border-left:1px solid var(--line)}
+.time .mband .mb-fig{margin:0;font-size:20px;font-weight:700;line-height:1.2;font-variant-numeric:tabular-nums;color:var(--ink)}
+.time .mband .mb-fig span{font-size:13.5px;font-weight:500;color:var(--ink-2);margin-left:2px}
+.time .mband .bar{height:8px}
+.time .mband .bar i[style*="width"]{flex:none}
+.time .mband .mb-legend{display:flex;flex-wrap:wrap;gap:4px 14px;margin:0;font-size:12.5px;color:var(--ink-2)}
+.time .mband .mb-legend span,.time .mband .mb-lock{display:inline-flex;align-items:center;gap:6px;line-height:1}
+.time .mband svg{width:13px;height:13px;flex:none;color:var(--c)}
+.time .mband .mb-lock{margin:0;align-self:center;height:28px;padding:0 12px;border-radius:999px;background:var(--chip-good-bg);color:var(--chip-good);font-size:13px;font-weight:600}
+@media (max-width:600px){.time .mband{padding-right:48px}.time .mband .mb-part+.mb-part{padding-left:0;border-left:0;padding-top:14px;border-top:1px solid var(--line)}}

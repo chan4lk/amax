@@ -5,7 +5,7 @@
   "scripts": {
     "gen": "node scripts/gen-registry.mjs",
     "seed:demo": "node scripts/gen-registry.mjs && tsx scripts/seed-demo.ts",
-    "dev": "node scripts/gen-registry.mjs && next dev",
+    "dev": "node scripts/gen-registry.mjs && (tsx scripts/dev-seed.ts || echo demo data: not loaded) && tsx scripts/dev.ts",
     "build": "node scripts/gen-registry.mjs && next build",
     "start": "next start",
     "lint": "node scripts/gen-registry.mjs && tsc --noEmit",
