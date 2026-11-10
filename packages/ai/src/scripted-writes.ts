@@ -23,7 +23,27 @@ const RULES: Rule[] = [
   [new RegExp(`^log time on ${WEEK}: ([\\d.]+) h(?:ours)? on ${KEY} on (\\d{4}-\\d{2}-\\d{2})`, "i"), (m) => [["log_time", { hours: Number(m[2]), projectKey: m[3], day: m[4] }]]],
   [/^copy (.+?) allocations from .*?\((\d{4}-\d{2})\) to the next month/i, (m) => [["copy_allocations_to_next_month", { team: m[1], from: m[2] }]]],
   [new RegExp(`^record a deployment of ${KEY} (\\S+) to (\\S+)\\s*$`, "i"), (m) => [["record_deployment", { projectKey: m[1], version: m[2], environment: m[3] }]]],
-  [new RegExp(`^move (${KEY.slice(1, -1)}-\\d+) to (proposed|planned|building|verified)\\s*$`, "i"), (m) => [["move_proposal", { key: m[1], to: m[2].toLowerCase() }]]],
+  [new RegExp(`^move (${KEY.slice(1, -1)}-H?\\d+) to (proposed|planned|building|verified)\\s*$`, "i"), (m) => [["move_proposal", { key: m[1], to: m[2].toLowerCase() }]]],
+  // 081 amendment 2: a proposal's pin suggestions, and deciding an agent suggestion from where it is shown.
+  [new RegExp(`^add a task to (${KEY.slice(1, -1)}-H?\\d+): (.+)$`, "i"), (m) => [["add_proposal_task", { key: m[1], title: m[2].trim() }]]],
+  [new RegExp(`^make me \\(user id ${UUID}\\) the owner of (${KEY.slice(1, -1)}-H?\\d+)\\s*$`, "i"), (m) => [["update_proposal", { key: m[2], ownerUserId: m[1] }]]],
+  [new RegExp(`^(accept|dismiss|undo) the suggestion ".+" \\(suggestion id ${UUID}\\)\\s*$`, "i"), (m) => [[`${m[1].toLowerCase()}_agent_suggestion`, { id: m[2] }]]],
+  // 081 amendment 4: the proposal page's Withdraw button, with the reason typed on.
+  [new RegExp(`^withdraw (${KEY.slice(1, -1)}-H?\\d+)\\. reason: (.+)$`, "i"), (m) => [["withdraw_proposal", { key: m[1], reason: m[2].trim() }]]],
+  // 081 amendment 6: a new proposal with an owner picked from the team, and an owner changed to someone else (test-only, by id).
+  [new RegExp(`^add a proposal to .+? \\(${KEY}\\): (.+?), owned by .+? \\(user id ${UUID}\\)\\s*$`, "i"), (m) => [["create_proposal", { projectKey: m[1], title: m[2].trim(), ownerUserId: m[3] }]]],
+  [new RegExp(`^make .+? \\(user id ${UUID}\\) the owner of (${KEY.slice(1, -1)}-H?\\d+)\\s*$`, "i"), (m) => [["update_proposal", { key: m[2], ownerUserId: m[1] }]]],
+  // 084: quick replies, test-only: the scripted model asks which project with two answers to click.
+  [/^ask which project for (.+)$/i, () => [["offer_answers", { question: "Which project is it for?", answers: ["CON · Contoso Portal", "FLT · Fleet Tracker"] }]]],
+  // 081 amendment 3: what the other Delivery pins offer.
+  [new RegExp(`^add a proposal to .+? \\(${KEY}\\): (.+)$`, "i"), (m) => [["create_proposal", { projectKey: m[1], title: m[2].trim() }]]],
+  [new RegExp(`^create release (v?\\d+\\.\\d+\\.\\d+) of ${KEY}\\s*$`, "i"), (m) => [["create_release", { projectKey: m[2], version: m[1] }]]],
+  [new RegExp(`^mark (T\\d+) of (${KEY.slice(1, -1)}-H?\\d+) done\\s*$`, "i"), (m) => [["mark_task_done", { key: m[2], task: m[1].toUpperCase() }]]],
+  // 081 amendment 5: reopen a task closed by mistake.
+  [new RegExp(`^reopen (T\\d+) of (${KEY.slice(1, -1)}-H?\\d+)\\s*$`, "i"), (m) => [["reopen_task", { key: m[2], task: m[1].toUpperCase() }]]],
+  [new RegExp(`^link ${KEY}'s repo to (\\S+)(?: on (\\S+))?\\s*$`, "i"), (m) => [["link_project_repo", { projectKey: m[1], repoUrl: m[2], ...(m[3] ? { defaultBranch: m[3] } : {}) }]]],
+  [new RegExp(`^unlink ${KEY}'s repo\\s*$`, "i"), (m) => [["unlink_project_repo", { projectKey: m[1] }]]],
+  [new RegExp(`^create a project: (.+?) \\(${KEY}\\) for (.+?), (fixed|t&m|retainer|internal)\\s*$`, "i"), (m) => [["create_project", { name: m[1].trim(), key: m[2], client: m[3].trim(), billing: m[4].toLowerCase() }]]],
   [new RegExp(`^tag ${KEY} (\\S+) as (\\S+)\\s*$`, "i"), (m) => [["tag_release", { projectKey: m[1], version: m[2], newVersion: m[3] }]]],
   [new RegExp(`^set the proposals in ${KEY} (\\S+) to: (.*)$`, "i"), (m) => [["set_release_proposals", { projectKey: m[1], version: m[2], proposalKeys: names(m[3]) }]]],
   [new RegExp(`^void the (.+?) deployment of ${KEY} (\\S+) \\(id ([0-9a-f-]{36})\\)\\. reason: (.+)$`, "i"),

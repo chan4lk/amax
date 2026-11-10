@@ -1,3 +1,4 @@
+// 070 AC-57, shared since 081 amendment 4 (AC-52): Time and Delivery show the same live age.
 // 070 AC-57: how long ago something happened, to the minute, so a waiting request shows how long it has waited.
 export function ago(ms: number): string {
   const min = Math.floor(Math.max(0, ms) / 60_000);

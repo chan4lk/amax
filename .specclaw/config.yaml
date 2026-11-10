@@ -486,7 +486,7 @@ review:
   models: { round: opus, final: opus }
   passes: [review, design]
   tools: "Read,Grep,Glob"
-  max_turns: 20  # 064: 12 ran out on a page-sized diff (mock, video, tests), so rounds came back not_run
+  max_turns: 30  # 064: 12 ran out on a page-sized diff (mock, video, tests), so rounds came back not_run; 081: 20 ran out on a 40-file fix round
   max_diff_lines: 8000
   governance:
     - "AGENTS.md"

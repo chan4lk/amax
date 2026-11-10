@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode, type RefObject } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { announce, Mascot, PinButton, type PinRef } from "@amax/ui";
-import type { Conversation, ConversationSummary, Highlight, PendingAction } from "@amax/chat";
+import type { Answers, Conversation, ConversationSummary, Highlight, PendingAction } from "@amax/chat";
 import { cancelChat, confirmChat, pageContext, refreshPins, sendChat, type CardOutcome } from "../../app/actions/chat";
 import type { PageInfo } from "../../lib/page-context";
 import { pinKey, withFresh, type Pin } from "@amax/chat/pins";
@@ -19,7 +19,7 @@ import { Suggestions } from "./Suggestions";
 
 type Entry =
   | { kind: "me"; text: string; highlights: Highlight[] }
-  | { kind: "amax"; text: string; tools: string[]; error?: boolean }
+  | { kind: "amax"; text: string; tools: string[]; error?: boolean; answers?: Answers }
   | { kind: "confirm"; action: PendingAction; state: CardOutcome["state"] | "working" | "expired"; note?: string; reveal?: CardOutcome["reveal"] };
 
 const restoredLog = (c: Conversation): Entry[] => [
@@ -235,9 +235,10 @@ export function Chat({ open, fresh = 0, onClose, returnFocus, signedIn, userId, 
       const copy = [...l];
       const last = copy.findLastIndex((x) => x.kind === "me");
       if (last >= 0) copy[last] = { kind: "me", text: message, highlights: r.highlights };
-      return [...copy, ...(r.reply ? [{ kind: "amax" as const, text: r.reply, tools: r.toolsRun }] : []), ...r.pending.map((action) => ({ kind: "confirm" as const, action, state: "open" as const }))];
+      const said = r.reply || r.answers ? [{ kind: "amax" as const, text: r.reply || (r.answers?.question ?? ""), tools: r.toolsRun, answers: r.answers }] : [];
+      return [...copy, ...said, ...r.pending.map((action) => ({ kind: "confirm" as const, action, state: "open" as const }))];
     });
-    announce(r.pending.some((p) => p.choice) ? "amax offered a choice for you to pick from" : r.pending.length ? "amax prepared a change for you to confirm" : "amax replied");
+    announce(r.pending.some((p) => p.choice) ? "amax offered a choice for you to pick from" : r.pending.length ? "amax prepared a change for you to confirm" : r.answers ? "amax asked a question with answers to pick from" : "amax replied");
   }
 
   async function decide(action: PendingAction, ok: boolean, answer?: string) {
@@ -301,6 +302,12 @@ export function Chat({ open, fresh = 0, onClose, returnFocus, signedIn, userId, 
             <div key={i} className="m"><div className="b">
               {e.tools.length > 0 && <div className="tools" aria-label="Tools used">{e.tools.map((t, j) => <span key={j}>{t}</span>)}</div>}
               {e.error ? <p className="err">{e.text}</p> : <Markdown text={e.text} />}
+              {e.answers && !log.slice(i + 1).some((x) => x.kind === "me") && (
+                // 084 AC-2: quick replies; a click sends the answer as if typed, and they go once anything is sent.
+                <div className="c-answers" role="group" aria-label={e.answers.question}>
+                  {e.answers.options.map((o) => <button key={o} type="button" className="chip" disabled={busy} onClick={() => send(o)}>{o}</button>)}
+                </div>
+              )}
             </div></div>
           );
           const choice = e.action.choice;

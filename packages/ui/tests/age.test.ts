@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ago } from "../ui/age";
+import { ago } from "../src/age";
 
 const min = 60_000;
 describe("070 AC-57 a change request's age, to the minute", () => {

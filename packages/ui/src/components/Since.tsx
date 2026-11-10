@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ago } from "./age";
+import { ago } from "../age";
 
 // 070 AC-57: the age keeps counting while the page is open; the exact time is in the tooltip.
 export function Since({ at }: { at: string }) {

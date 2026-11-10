@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition, type FocusEvent } from "react";
 import { applyTheme, readTheme, type ThemeChoice } from "./theme";
 
 const THEMES: ThemeChoice[] = ["system", "light", "dark"];
@@ -34,18 +34,27 @@ export function ProfileMenu({ profile, onViewAs, onSignOut, links = [] }: Props)
   const [theme, setTheme] = useState<ThemeChoice>("system");
   const [, start] = useTransition();
   const button = useRef<HTMLButtonElement>(null);
+  const wrap = useRef<HTMLDivElement>(null);
   useEffect(() => setTheme(readTheme()), []);
+  // 083 (AC-1, AC-4): Escape closes and returns focus; a press anywhere outside the menu and its button closes it.
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && (setOpen(false), button.current?.focus());
+    const onPress = (e: PointerEvent) => !wrap.current?.contains(e.target as Node) && setOpen(false);
     document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
+    document.addEventListener("pointerdown", onPress);
+    return () => (document.removeEventListener("keydown", onKey), document.removeEventListener("pointerdown", onPress));
   }, [open]);
-  const choose = (t: ThemeChoice) => (applyTheme(t), setTheme(t));
+  // 083 (AC-3): Tab out closes it. Only when focus lands outside: a click on an item that doesn't take focus (Safari)
+  // gives no relatedTarget and must still reach the item; a click on blank space is the pointerdown above.
+  const onBlur = (e: FocusEvent) => e.relatedTarget && !wrap.current?.contains(e.relatedTarget as Node) && setOpen(false);
+  // 083 (AC-2): a choice closes the menu and puts focus back on the button, as in 001's mock.
+  const done = () => (setOpen(false), button.current?.focus());
+  const choose = (t: ThemeChoice) => (applyTheme(t), setTheme(t), done());
   const viewing = profile?.viewAs ?? "Admin";
   const label = profile ? `${profile.name}, ${profile.chip}, profile menu` : "Guest, profile and theme";
   return (
-    <div className="mewrap">
+    <div className="mewrap" ref={wrap} onBlur={onBlur}>
       <button ref={button} className="me" type="button" aria-label={label} aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen(!open)}>
         <span className="av" aria-hidden="true">{profile?.initials ?? "G"}</span>
         {profile ? (
@@ -62,7 +71,7 @@ export function ProfileMenu({ profile, onViewAs, onSignOut, links = [] }: Props)
               <div role="group" aria-labelledby="ml-view">
                 {VIEW_ROLES.map((r) => (
                   <button key={r} type="button" role="menuitemradio" aria-checked={viewing === r}
-                    onClick={() => (setOpen(false), start(() => onViewAs(r === "Admin" ? null : r)))}>{r === "ITAdmin" ? "IT Admin" : r}</button>
+                    onClick={() => (done(), start(() => onViewAs(r === "Admin" ? null : r)))}>{r === "ITAdmin" ? "IT Admin" : r}</button>
                 ))}
               </div>
               <div className="menu-sep" role="separator" />
@@ -77,24 +86,24 @@ export function ProfileMenu({ profile, onViewAs, onSignOut, links = [] }: Props)
           {profile && links.length > 0 && (
             <>
               <div className="menu-sep" role="separator" />
-              {links.map((l) => <a key={l.href} role="menuitem" href={l.href} style={{ display: "block", padding: "8px 12px", borderRadius: 10, fontSize: 14, color: "inherit", textDecoration: "none" }}>{l.label}</a>)}
+              {links.map((l) => <a key={l.href} role="menuitem" href={l.href} onClick={() => setOpen(false)} style={{ display: "block", padding: "8px 12px", borderRadius: 10, fontSize: 14, color: "inherit", textDecoration: "none" }}>{l.label}</a>)}
             </>
           )}
           {profile?.isAdmin && (
             <>
               <div className="menu-sep" role="separator" />
-              <a role="menuitem" href="/settings" style={{ display: "block", padding: "8px 12px", borderRadius: 10, fontSize: 14, color: "inherit", textDecoration: "none", fontWeight: 600 }}>Settings</a>
-              <a role="menuitem" href="/settings/ai" style={{ display: "block", padding: "8px 12px", borderRadius: 10, fontSize: 14, color: "inherit", textDecoration: "none" }}>AI and data settings</a>
-              <a role="menuitem" href="/settings/integrations" style={{ display: "block", padding: "8px 12px", borderRadius: 10, fontSize: 14, color: "inherit", textDecoration: "none" }}>Integrations</a>
-              <a role="menuitem" href="/settings/keys" style={{ display: "block", padding: "8px 12px", borderRadius: 10, fontSize: 14, color: "inherit", textDecoration: "none" }}>Connections and keys</a>
-              <a role="menuitem" href="/settings/workflows" style={{ display: "block", padding: "8px 12px", borderRadius: 10, fontSize: 14, color: "inherit", textDecoration: "none" }}>Scheduler and runs</a>
-              <a role="menuitem" href="/settings/audit" style={{ display: "block", padding: "8px 12px", borderRadius: 10, fontSize: 14, color: "inherit", textDecoration: "none" }}>Audit and trace</a>
+              <a role="menuitem" onClick={() => setOpen(false)} href="/settings" style={{ display: "block", padding: "8px 12px", borderRadius: 10, fontSize: 14, color: "inherit", textDecoration: "none", fontWeight: 600 }}>Settings</a>
+              <a role="menuitem" onClick={() => setOpen(false)} href="/settings/ai" style={{ display: "block", padding: "8px 12px", borderRadius: 10, fontSize: 14, color: "inherit", textDecoration: "none" }}>AI and data settings</a>
+              <a role="menuitem" onClick={() => setOpen(false)} href="/settings/integrations" style={{ display: "block", padding: "8px 12px", borderRadius: 10, fontSize: 14, color: "inherit", textDecoration: "none" }}>Integrations</a>
+              <a role="menuitem" onClick={() => setOpen(false)} href="/settings/keys" style={{ display: "block", padding: "8px 12px", borderRadius: 10, fontSize: 14, color: "inherit", textDecoration: "none" }}>Connections and keys</a>
+              <a role="menuitem" onClick={() => setOpen(false)} href="/settings/workflows" style={{ display: "block", padding: "8px 12px", borderRadius: 10, fontSize: 14, color: "inherit", textDecoration: "none" }}>Scheduler and runs</a>
+              <a role="menuitem" onClick={() => setOpen(false)} href="/settings/audit" style={{ display: "block", padding: "8px 12px", borderRadius: 10, fontSize: 14, color: "inherit", textDecoration: "none" }}>Audit and trace</a>
             </>
           )}
           {profile && onSignOut && (
             <>
               <div className="menu-sep" role="separator" />
-              <button type="button" role="menuitem" onClick={() => start(() => onSignOut())}>Sign out</button>
+              <button type="button" role="menuitem" onClick={() => (setOpen(false), start(() => onSignOut()))}>Sign out</button>
             </>
           )}
         </div>

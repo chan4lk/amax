@@ -1,7 +1,7 @@
 # 🦞 SpecClaw Dashboard
 
 **Project:** amax
-**Last Updated:** 2026-11-02 06:36 UTC
+**Last Updated:** 2026-11-10 15:01 UTC
 
 _1 unnumbered change · run `/specclaw-extras:renumber` to order them_
 
@@ -14,7 +14,7 @@ _1 unnumbered change · run `/specclaw-extras:renumber` to order them_
 - 🔍 **070-time-entry-corrections** — verify done | 29/29 tasks (100%) | 0 failed | PR #102 closed
 - 🔀 **071-time-access-and-integrity** — pr raised | 8/8 tasks (100%) | 0 failed | PR #103 closed
 - 🔀 **072-time-consumers-sync** — pr raised | 6/6 tasks (100%) | 0 failed | PR #104 closed
-- 🔀 **073-time-workflow-enhancements** — pr done | 10/10 tasks (100%) | 0 failed | PR #105 open
+- 🔀 **073-time-workflow-enhancements** — pr done | 10/10 tasks (100%) | 0 failed | PR #105 merged
 - 📝 **074-dev-demo-data** — tasks done | 7/7 tasks (100%) | 0 failed
 - 🔀 **074-fork-pr-review-gate** — pr raised | PR #108 merged
 - 🔀 **075-amaxerp-url** — pr raised | 1/1 tasks (100%) | 0 failed | PR #109 merged
@@ -24,6 +24,23 @@ _1 unnumbered change · run `/specclaw-extras:renumber` to order them_
 - 🔍 **078-review-covered-by** — verify done | 4/4 tasks (100%) | 0 failed
 - 🔍 **079-ci-test-fixes** — verify done | 7/7 tasks (100%) | 0 failed
 - 🔍 **080-e2e-month-window** — verify done | 2/2 tasks (100%) | 0 failed
+- 🔀 **081-proposals-end-to-end** — pr raised | 38/40 tasks (95%) | 0 failed | PR #113 open
+- 🔍 **082-dev-fresh-cache** — verify done | 1/1 tasks (100%) | 0 failed
+- 🔍 **083-profile-menu-closes** — verify done | 1/1 tasks (100%) | 0 failed
+- 🔍 **084-chat-quick-replies** — verify done | 4/5 tasks (80%) | 0 failed
+- 🔍 **085-time-my-week-first** — verify done | 1/1 tasks (100%) | 0 failed
+- 🔍 **086-rail-logo-aligned** — verify done | 2/2 tasks (100%) | 0 failed
+- 🔍 **087-proposal-review-follow-ups** — verify done | 7/7 tasks (100%) | 0 failed
+- 🔍 **088-notifications-tests-quiet-hours** — verify done | 1/1 tasks (100%) | 0 failed
+- 🔍 **089-specclaw-sync-over-mcp** — verify done | 7/7 tasks (100%) | 0 failed
+- 🔍 **090-e2e-amx-duplicate-numbers** — verify done | 2/2 tasks (100%) | 0 failed
+- 🔍 **091-ci-sync-demo-fixes** — verify done | 7/7 tasks (100%) | 0 failed
+- 🔍 **092-ci-sync-owner-and-merge-fixes** — verify done | 5/5 tasks (100%) | 0 failed
+- 🔍 **093-agent-first-proposals** — verify done | 3/3 tasks (100%) | 0 failed
+- 🔍 **094-sync-repo-dates-and-owner-parser** — verify done | 5/5 tasks (100%) | 0 failed
+- 🔍 **095-pr-113-ci-green** — verify done | 5/5 tasks (100%) | 0 failed
+- 🔍 **096-repo-sync-follow-ups** — verify done | 3/3 tasks (100%) | 0 failed
+- 🔍 **097-e2e-released-row** — verify done | 1/1 tasks (100%) | 0 failed
 
 ## Pending Proposals
 
@@ -102,6 +119,6 @@ _1 unnumbered change · run `/specclaw-extras:renumber` to order them_
 
 ## Stats
 
-- **Total changes:** 80
-- **Active:** 16
+- **Total changes:** 97
+- **Active:** 33
 - **Completed:** 64

@@ -29,7 +29,8 @@ test("048 AC-2 AC-6 AI usage: tickets, cost per day, people and conversations, a
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("AI usage");
   await expect(page.locator(".tickets .ticket")).toHaveCount(4);
   await expect(page.locator(".tickets > .pinnable > .pin")).toHaveCount(4);
-  await expect(page.locator(".ticket", { hasText: "Unknown cost" })).not.toContainText("0 calls");
+  // Some calls have no price: the count isn't zero. (A plain "0 calls" check also matched "20 calls" once the suite made 20.)
+  await expect(page.locator(".ticket", { hasText: "Unknown cost" })).toContainText(/(^|\D)[1-9]\d* calls/);
   const maya = page.getByRole("table", { name: "AI usage by person" }).locator("tr", { hasText: "Maya" });
   await expect(maya).toContainText("Unknown");
   await expect(maya.locator(".pin")).toHaveCount(1);

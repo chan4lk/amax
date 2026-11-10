@@ -1,0 +1,49 @@
+{
+ "counts": {
+  "blocker": 0,
+  "major": 0,
+  "minor": 0
+ },
+ "escalated": [],
+ "files": [
+  "apps/mock/public/mock/index.html",
+  "apps/web/tests/e2e/delivery.spec.ts"
+ ],
+ "final": true,
+ "findings": [],
+ "head": "35467abf8ae2089076f48c33169e6d9fbeea531d",
+ "impact": [
+  "apps/web/lib/registry.ts",
+  "apps/web/tests/e2e/delivery-visual.spec.ts",
+  "apps/web/tests/marketing-queue.test.ts",
+  "modules/delivery/db/migrations/0009_weekly_stats.sql",
+  "modules/delivery/db/migrations/0010_clock_pin_shipped_source.sql",
+  "modules/delivery/mcp.ts",
+  "modules/delivery/server/lifecycle.ts",
+  "modules/delivery/server/overview.ts",
+  "modules/delivery/server/queries.ts",
+  "modules/delivery/server/services.ts",
+  "modules/delivery/tests/attention-a11.test.ts",
+  "modules/delivery/tests/board-092.test.ts",
+  "modules/delivery/tests/delivery.test.ts",
+  "modules/delivery/tests/proposal-metrics.test.ts",
+  "modules/delivery/tests/releases.test.ts",
+  "modules/delivery/tests/repo-dates-094.test.ts",
+  "modules/delivery/tests/sync-import.test.ts",
+  "modules/delivery/ui/ProposalsPage.tsx"
+ ],
+ "model": "opus",
+ "passes": [
+  "review",
+  "design"
+ ],
+ "prompt_chars": 53472,
+ "round": 2,
+ "since": null,
+ "status": "clean",
+ "system_chars": 43098,
+ "tier": "review",
+ "tools": "Read,Grep,Glob",
+ "ts_end": 1794322812,
+ "ts_start": 1794322750
+}

@@ -28,6 +28,12 @@ export function gate({ fork, files, changes, load, repo }) {
   let ok = true;
   const owners = new Map(changes.filter((c) => reviewScope(c.changeMd).scope !== "covered-by" && finalRound(c.rounds)?.head)
     .map((c) => [c.name, finalRound(c.rounds).head]));
+  // 095 AC-4: a covered-by change's commits were reviewed by its cover's loop, so a commit naming it is credited to the
+  // cover's final pass (and still only when that pass came after it).
+  for (const c of changes) {
+    const { scope, by } = reviewScope(c.changeMd);
+    if (scope === "covered-by" && by && owners.has(by) && !owners.has(c.name)) owners.set(c.name, owners.get(by));
+  }
   for (const change of changes) {
     const { scope, ...result } = judge(change, { fork, load, repo, owners });
     if (result.verdict === "fail") ok = false;

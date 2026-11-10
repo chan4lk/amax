@@ -24,7 +24,8 @@ export function userFacing(e: unknown): e is Error {
   if (!(e instanceof Error)) return false;
   if (e instanceof ToolError || e instanceof ForbiddenError || e instanceof ScopeError || e instanceof ValidationError) return true;
   const { code, retryable } = e as { code?: unknown; retryable?: unknown };
-  return code === "not_found" || code === "invalid_input" || retryable === false;
+  // 087 AC-7: "unavailable" is a refusal too (a part of amax is switched off), worth retrying later.
+  return code === "not_found" || code === "invalid_input" || code === "unavailable" || retryable === false;
 }
 
 type Registrable = Pick<ModuleManifest, "id" | "mcpTools" | "search">;

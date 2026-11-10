@@ -1,0 +1,66 @@
+{
+ "counts": {
+  "blocker": 0,
+  "major": 0,
+  "minor": 0
+ },
+ "escalated": [],
+ "files": [
+  "AGENTS.md",
+  "apps/mock/public/mock/index.html",
+  "modules/delivery/tests/ci-095.test.ts"
+ ],
+ "final": false,
+ "findings": [
+  {
+   "file": "modules/delivery/server/services.ts",
+   "fp": "1d578d624eb6",
+   "in_delta": false,
+   "line": 240,
+   "message": "The previous finding is fixed properly: the new table in ci-095.test.ts goes through the real syncProposal \u2192 upsertSpecProposal/writeTasks path, and it fails if knownTime is removed from either write. But the fix covers only some of the class. Its claim is that future repo dates are bounded where they're written, so the sync_proposal path stays safe without desired(). sync_proposal also writes `committedAt`, and that is never bounded on this path. push.ts:47 refuses a future committedAt (`.refine(notFuture)`), but the sync_proposal input (services.ts:240) and mark_synced (services.ts:281) accept any datetime. markSyncedRows (services.ts:272) then stores it with `greatest(...)`, so a future mark can never be lowered again. After that, push.ts:76 refuses every real push to that proposal as stale until the wall clock passes the skewed time. `releasedAt` (services.ts:233, a bare `z.string()`, not even a datetime) is also written to released_at with no future bound, and it sticks there through `coalesce(stored, excluded)`. Fix: apply the same bound at the shared write for every repo-supplied time. Either refuse a future committedAt in syncProposal's and mark_synced's schemas (a refine converts to JSON Schema), or check it in markSyncedRows itself. Type releasedAt as `repoTime` and pass it through knownTime. Add committedAt and releasedAt rows to the new sync_proposal table.",
+   "original_severity": "major",
+   "pass": "design",
+   "pre_existing": true,
+   "rule": "B1",
+   "scenario": "A sync_proposal arrives from a CI runner with a skewed clock: committedAt 2030-01-01T00:00Z for FLT-951. The row's synced_commit_at becomes 2030-01-01. The next real push for FLT-951 has committedAt 2026-11-10 and is refused as 'stale: last synced from a newer commit (2030-01-01\u2026)'. Every later push is refused the same way until 2030.",
+   "severity": "major"
+  }
+ ],
+ "head": "191af3453399af85c4c622bb5922295f8357c547",
+ "impact": [
+  ".github/workflows/specclaw-sync.yml",
+  "apps/web/tests/e2e/delivery-visual.spec.ts",
+  "apps/web/tests/e2e/delivery.spec.ts",
+  "apps/web/tests/e2e/diff.ts",
+  "apps/web/tests/e2e/global-auth.ts",
+  "apps/web/tests/e2e/secrets-seed.ts",
+  "modules/compliance/tests/e2e/diff.ts",
+  "modules/delivery/chat.ts",
+  "modules/delivery/contracts.ts",
+  "modules/delivery/db/migrations/0001_delivery.sql",
+  "modules/delivery/db/migrations/0003_default_environments.sql",
+  "modules/delivery/db/migrations/0015_tasks.sql",
+  "modules/delivery/db/migrations/0017_repo_sync.sql",
+  "modules/delivery/db/migrations/0019_proposal_lifecycle.sql",
+  "modules/delivery/db/migrations/0020_sync_push_withdrawn.sql",
+  "modules/delivery/db/migrations/0021_owner_set_by_person.sql",
+  "modules/delivery/fixtures/index.ts",
+  "modules/delivery/mcp.ts",
+  "modules/delivery/module.ts",
+  "modules/delivery/package.json"
+ ],
+ "model": "opus",
+ "passes": [
+  "review",
+  "design"
+ ],
+ "prompt_chars": 57698,
+ "round": 2,
+ "since": "7d87d939",
+ "status": "clean",
+ "system_chars": 43197,
+ "tier": "review",
+ "tools": "Read,Grep,Glob",
+ "ts_end": 1794316831,
+ "ts_start": 1794316766
+}

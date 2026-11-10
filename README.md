@@ -49,7 +49,8 @@ On its first start against a database, `dev` loads the demo data: every module's
 walkthrough in [`docs/demo/time-070-073.md`](docs/demo/time-070-073.md). It prints `demo data: seeded …`. Later starts
 print `demo data: already loaded` and change nothing. It only seeds a local database (`127.0.0.1` or `localhost`), and
 `AMAX_SEED_DEMO=0` turns it off. `dev` also runs the jobs tick every 10 seconds (`AMAX_TICK_SECONDS` changes it,
-`AMAX_DEV_TICK=0` turns it off), so bells, email, Finance and Reports update without posting to `/api/jobs/tick`. Sign in at `/signin` with a demo email such as `maya@lumenlabs.test`.
+`AMAX_DEV_TICK=0` turns it off), so bells, email, Finance and Reports update without posting to `/api/jobs/tick`.
+`dev` compiles fresh on each start (no Turbopack cache is kept, from change 082), so `apps/web/.next` never needs deleting. Sign in at `/signin` with a demo email such as `maya@lumenlabs.test`.
 
 ### Without a database
 
