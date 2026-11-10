@@ -33,7 +33,7 @@ preview is clean (step 4). `--project KEY` overrides `amax.project` in `.speccla
 
    ```
    amax sync: <repoUrl> @ <ref> <sha 7>  →  <projectKey>
-   preview: <created> created · <updated> updated · <unchanged> unchanged · <skipped> skipped · <ignored> not this branch's
+   preview: <created> created · <updated> updated · <withdrawn> withdrawn · <unchanged> unchanged · <skipped> skipped · <ignored> not this branch's
      skipped <each skipped line>
    ```
 

@@ -1,0 +1,64 @@
+{
+ "counts": {
+  "blocker": 0,
+  "major": 1,
+  "minor": 0
+ },
+ "escalated": [],
+ "files": [
+  "apps/web/tests/e2e/delivery.spec.ts"
+ ],
+ "final": true,
+ "findings": [
+  {
+   "file": "apps/web/tests/e2e/delivery.spec.ts",
+   "fp": "dd9b3b7111dd",
+   "in_delta": true,
+   "line": 27,
+   "message": "`amx()` builds the expected AMX board from a second, partial copy of the sync's skip rule. `syncSpecclaw` (modules/delivery/sync/import.ts:55-62) leaves out two kinds of record: records whose number is shared (`duplicateNumbers`) and records whose `state.json` is corrupt (`r.unreadable`). The new filter only drops `r.duplicate`. global-auth.ts:66 seeds the tenant with that same sync, so any unreadable record still counts toward the expected lane totals here (line 82 and line 115), even though the sync never put it on the board. Fix: base the expectation on the sync's own rule. Either use the `skipped` keys from the `syncSpecclaw` result, or filter with `duplicateNumbers(records)` together with `!r.unreadable`, so the test and the sync can't drift apart.",
+   "original_severity": "major",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B4",
+   "scenario": "A change folder on main has a truncated `state.json`, so readSpecclaw returns `unreadable: true` and `phase: 'proposed'`. The sync skips it and the board's Proposed lane shows N, but `amx()` keeps the record and the test expects N+1. The AC 039 test fails even though the board is right. The in-flight count at line 82 is off by one in the same way.",
+   "severity": "major"
+  }
+ ],
+ "head": "f78831e3cd34727173c041bc679168ac48ab9e5d",
+ "impact": [
+  "apps/mock/app/page.tsx",
+  "apps/mock/public/mock/index.html",
+  "apps/web/app/(app)/page.tsx",
+  "apps/web/app/(public)/welcome/page.tsx",
+  "apps/web/app/actions/chat-history.ts",
+  "apps/web/app/actions/chat.ts",
+  "apps/web/app/oauth/authorize/page.tsx",
+  "apps/web/components/chat/Chat.tsx",
+  "apps/web/components/marketing/Footer.tsx",
+  "apps/web/components/marketing/Hero.tsx",
+  "modules/career/layout/tree.ts",
+  "modules/career/tests/layout.test.ts",
+  "modules/career/ui/Board.tsx",
+  "modules/delivery/tests/proposal-board-081.test.ts",
+  "modules/delivery/ui/BoardBand.tsx",
+  "modules/delivery/ui/band.ts",
+  "modules/recruitment/server/queries.ts",
+  "modules/recruitment/tests/pipeline.test.ts",
+  "modules/recruitment/ui/Board.tsx",
+  "scripts/queue.mjs"
+ ],
+ "model": "opus",
+ "passes": [
+  "review",
+  "design"
+ ],
+ "prompt_chars": 50124,
+ "round": 1,
+ "since": null,
+ "status": "open",
+ "system_chars": 43021,
+ "tier": "review",
+ "tools": "Read,Grep,Glob",
+ "ts_end": 1794278053,
+ "ts_start": 1794278008
+}

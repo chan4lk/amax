@@ -25,6 +25,10 @@ beforeAll(() => {
   heads.owned = branch("owned", [stacked, reviewed, later("[specclaw] 105-other: code"), (h) => ({ ...changeMd("105-other", "change"), ...finalAt("105-other")(h) })]);
   heads.ownedEarly = branch("owned-early", [stacked, (h) => ({ ...reviewed(h), ...changeMd("105-other", "change"), ...finalAt("105-other")(h) }), later("[specclaw] 105-other: code")]);
   heads.between = branch("between", [stacked, reviewed, later("specclaw(103-stacked): more code")]);
+  // 095 AC-4: a later commit names another covered-by change, whose cover's final pass came after (or before) it.
+  const inner: Step = (h) => ({ ...changeMd("106-inner", "covered-by 105-other"), ...changeMd("105-other", "change", "loop covered 106-inner"), ...finalAt("105-other")(h) });
+  heads.coveredOwner = branch("covered-owner", [stacked, reviewed, later("specclaw(106-inner): code"), inner]);
+  heads.coveredOwnerEarly = branch("covered-owner-early", [stacked, reviewed, inner, later("specclaw(106-inner): code")]);
   heads.coverOwn = branch("cover-own", [stacked, reviewed, later("specclaw(101-cover): review fixes")]);
   heads.early = branch("early", [cover("loop covered 103-stacked"), finalAt("archive/101-cover"), stacked]);
   heads.unnamedInVerify = branch("unnamed-in-verify", [stacked, (h) => ({ ...cover("loop covered the stack")(h), ...finalAt("archive/101-cover")(h) })]);
@@ -37,13 +41,14 @@ beforeAll(() => {
 });
 
 describe("078 covered-by review scope", () => {
-  it.each(["covered", "archived", "owned", "mention", "coverOwn"])("AC1 AC2 a fork PR passes a covered-by change whose named loop saw its commits: %s", (key) => {
+  it.each(["covered", "archived", "owned", "mention", "coverOwn", "coveredOwner"])("AC1 AC2 a fork PR passes a covered-by change whose named loop saw its commits: %s", (key) => {
     expect(run(heads[key], true).out).toMatch(/103-stacked\s+scope=covered-by pass — covered by 101-cover: final round 1\/5 clean/);
   });
 
   it.each([
     ["between", /fail — covered by 101-cover: [0-9a-f]{7} came after 101-cover's final pass and no other loop in the PR reviewed it/],
     ["ownedEarly", /103-stacked .*fail — covered by 101-cover: [0-9a-f]{7} came after 101-cover's final pass/],
+    ["coveredOwnerEarly", /103-stacked .*fail — covered by 101-cover: [0-9a-f]{7} came after 101-cover's final pass/],
     ["early", /103-stacked .*fail — covered by 101-cover: 101-cover's final pass ran before any 103-stacked commit/],
     ["unnamedInVerify", /fail — covered by 101-cover: 101-cover's ## Verify doesn't name 103-stacked/],
     ["old", /fail — covered by 090-old: 090-old's final pass is already in the PR's base/],

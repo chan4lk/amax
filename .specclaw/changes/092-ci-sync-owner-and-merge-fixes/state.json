@@ -1,0 +1,10 @@
+{
+  "change": "092-ci-sync-owner-and-merge-fixes",
+  "phase": "verify",
+  "branch": "",
+  "phases": {
+    "proposal": {"status":"approved","at":"2026-11-10T05:13:40Z"},
+    "tasks": {"status":"done","at":"2026-11-10T05:13:41Z"},
+    "verify": {"status":"done","at":"2026-11-10T08:42:32Z"}
+  }
+}

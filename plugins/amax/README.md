@@ -46,7 +46,8 @@ What amax accepts:
 - **Where:** only the project's linked repo. An unknown project is refused: amax never creates one from a push.
 - **What:** a push from the default branch stored with the link covers every change. A push from any other branch covers
   only its own change (`specclaw/<NNN-slug>`), since it may have been cut from an older main. Never
-  Released, which comes from Prod deployments. Never a step back to an earlier phase. Never a proposal
+  moves a proposal to Released, which comes from Prod deployments; a finished change amax has never seen comes in
+  from the default branch as Released history. Never a step back to an earlier phase. Never a proposal
   made by hand or from another source.
 - **When:** never a proposal from a commit older than the one it was last pushed from. A commit time in
   the future is refused. Pushes to one project run one at a time, and each push applies all of its
@@ -54,8 +55,30 @@ What amax accepts:
 - **How much:** at most 200 changes per call, inside amax's per-caller rate limit. A push with nothing
   new returns `unchanged`. It adds no row to the Repo sync card, and one audit entry records the commit
   it was read at.
+- **Owner:** a proposal's owner is the person the repo names: an `**Owner:** <email>` line in the change's header, else
+  whoever added its `change.md`, matched to someone on the project in amax. Never just whoever pushed.
+- **Duplicates:** two change folders with the same number are both skipped ("two changes numbered 074: …") and
+  the push is flagged for a person. Renumber one of them; CI refuses a PR that adds a reused number.
 
 Each project's page in amax shows a **Repo sync** card: the linked repo, the last sync, and refused pushes with their reasons.
+
+## Sync on every merge (CI)
+
+`.github/workflows/specclaw-sync.yml` pushes after every merge to `main` that touches `.specclaw/`, through the same
+`sync_specclaw` tool, so merged changes reach the board without anyone running the skill. It pushes `main` first,
+then each open `specclaw/*` branch (merged or archived ones are left out). When the whole of `main` fits in one push (200 changes or fewer), it also withdraws a
+proposal whose folder was deleted from `main`. To set it up:
+
+1. In amax chat, as an Admin, create a credential for it: "create an API credential named amax CI with scope
+   delivery:write and tools sync_specclaw, acting for <the PM's email>, for 365 days". The key is shown once.
+2. Add three repository secrets: `AMAX_URL` (for example `https://amaxerp.com`), `AMAX_SYNC_API_KEY` (the key) and
+   `AMAX_SYNC_ACT_FOR` (the PM's user id).
+
+Every CI push shows on the Repo sync card as "amax CI for <PM>". With none of the secrets set, the job passes with a
+notice that nothing was synced. It fails when only some are set, when it reads no changes on `main`, or when amax
+refuses a push (with amax's reason). A push that would withdraw more than half of the project's proposals withdraws
+none and is flagged for a person. If those folders really were deleted, run the workflow by hand (Actions → specclaw
+sync → Run workflow) with `confirm_withdraw` set to the number the hold named.
 
 ## Sync automatically with a Claude Desktop routine
 

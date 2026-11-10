@@ -1,0 +1,13 @@
+{
+  "change": "101-marketing-site",
+  "phase": "archived",
+  "branch": "specclaw/062-marketing-site",
+  "phases": {
+    "proposal": {"status":"approved","at":"2026-10-18T10:40:18Z"},
+    "tasks": {"status":"done","at":"2026-10-18T10:41:31Z"},
+    "build": {"status":"in-progress","at":"2026-10-18T10:45:51Z"},
+    "verify": {"status":"done","at":"2026-10-18T12:20:28Z"},
+    "pr": {"status":"raised","at":"2026-10-18T12:21:36Z","url":"https://github.com/chan4lk/amax/pull/74"},
+    "archived": {"status":"done","at":"2026-10-18T22:08:06Z"}
+  }
+}

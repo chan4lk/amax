@@ -7,8 +7,9 @@ import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { normaliseRepo } from "../../../../modules/delivery/sync/repo-name";
 import { readSpecclaw } from "../../../../modules/delivery/sync/specclaw";
+import { authorsOf, isShallow } from "../../../../modules/delivery/sync/authors";
 
-export { normaliseRepo, readSpecclaw };
+export { authorsOf, isShallow, normaliseRepo, readSpecclaw };
 
 const git = (cwd: string, ...args: string[]) => execFileSync("git", args, { cwd, encoding: "utf8" }).trim();
 
@@ -32,7 +33,7 @@ export function payload(cwd: string, flag?: string) {
     // Only the repo's normalised name is sent: a remote URL can carry a token, and amax never needs it.
     projectKey, repoUrl: normaliseRepo(git(root, "remote", "get-url", "origin")), ref, sha,
     committedAt: git(root, "show", "-s", "--format=%cI", "HEAD"),
-    records: readSpecclaw({ dir: root, ref: `${ref}@${sha}` }),
+    records: authorsOf(root, sha, readSpecclaw({ dir: root, ref: `${ref}@${sha}` })),
   };
 }
 

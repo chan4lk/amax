@@ -1,0 +1,9 @@
+{
+  "change": "082-dev-fresh-cache",
+  "phase": "verify",
+  "branch": "",
+  "phases": {
+    "proposal": {"status":"approved","at":"2026-11-03T09:44:45Z"},
+    "verify": {"status":"done","at":"2026-11-07T12:42:50Z"}
+  }
+}

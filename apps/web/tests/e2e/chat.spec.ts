@@ -125,3 +125,20 @@ test("059 AC7 a filled prompt is finished by typing, even after focus left the i
   await input.fill("Copy Delivery team allocations from December (2026-12) to the next month");
   await expect(input).toHaveValue("Copy Delivery team allocations from December (2026-12) to the next month");
 });
+
+// 084 (AC-2, AC-5): quick replies. The scripted model asks which project with two answers; a click sends one as the
+// next message, exactly as typed, and the buttons go. Nothing is written by the click.
+test("084 quick replies: answers show as buttons under the reply, a click sends one, and they go", async ({ page }) => {
+  await signIn(page, "maya@lumenlabs.test", "/delivery");
+  await page.getByRole("button", { name: "Ask amax" }).click();
+  await page.getByLabel("Message amax").fill("Ask which project for Export invoices");
+  await page.keyboard.press("Enter");
+  const answers = page.getByRole("group", { name: "Which project is it for?" });
+  await expect(answers.getByRole("button")).toHaveText(["CON · Contoso Portal", "FLT · Fleet Tracker"]);
+  await expect(page.getByRole("group", { name: /^Confirm:/ })).toHaveCount(0);
+  const { violations } = await new AxeBuilder({ page }).include("#chat").withTags(["wcag2a", "wcag2aa", "wcag21aa"]).analyze();
+  expect(violations.map((v) => `${v.id}: ${v.nodes[0]?.target}`)).toEqual([]);
+  await answers.getByRole("button", { name: "CON · Contoso Portal" }).click();
+  await expect(page.locator(".m.me .b").last()).toHaveText("CON · Contoso Portal");
+  await expect(answers).toHaveCount(0);
+});

@@ -12,3 +12,22 @@ let ids: ReadonlySet<string> | null = null;
 export const setInstalledModules = (moduleIds: readonly string[]) => { ids = new Set(moduleIds); };
 
 export const hasModule = (id: string, tables: boolean) => tables && (ids === null || ids.has(id));
+
+/**
+ * 081 review round 1: what installed modules put in other modules' slots (the manifest's `provides`). The app sets it
+ * once at boot beside setInstalledModules, from the same list, so a switched-off module provides nothing. Before it is
+ * set (a test that doesn't), every slot is empty.
+ */
+let slots: ReadonlyMap<string, readonly unknown[]> | null = null;
+
+export const setProvided = (modules: readonly { id: string; provides?: Record<string, unknown> }[]) => {
+  const next = new Map<string, unknown[]>();
+  for (const m of modules) for (const [slot, value] of Object.entries(m.provides ?? {})) next.set(slot, [...(next.get(slot) ?? []), value]);
+  slots = next;
+};
+
+/** Everything installed modules put in `slot`, in module order; empty when none does (or before setProvided). */
+export const provided = <T>(slot: string): readonly T[] => (slots?.get(slot) ?? []) as readonly T[];
+
+/** 087 AC-8: whether setProvided ran in this process, so "nobody fills this slot" and "never asked" read differently. */
+export const slotsSet = () => slots !== null;

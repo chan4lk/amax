@@ -21,7 +21,7 @@ const T = lumen.tenant.id;
 describe("AC-5 contract shape", () => {
   it("exports phases and event names", () => {
     expect(PHASES).toEqual(["proposed", "planned", "building", "verified", "released"]);
-    expect(EVENTS).toEqual({ releaseDeployed: "delivery.release.deployed", proposalPhaseChanged: "delivery.proposal.phase_changed", proposalRekeyed: "delivery.proposal.rekeyed", taskDone: "delivery.task.done", commitTime: "delivery.commit.time" });
+    expect(EVENTS).toEqual({ releaseDeployed: "delivery.release.deployed", proposalPhaseChanged: "delivery.proposal.phase_changed", proposalRekeyed: "delivery.proposal.rekeyed", proposalWithdrawn: "delivery.proposal.withdrawn", taskDone: "delivery.task.done", taskReopened: "delivery.task.reopened", commitTime: "delivery.commit.time", ownerChanged: "delivery.proposal.owner_changed" });
     expect(manifest.events?.emits).toEqual(Object.values(EVENTS));
   });
   it("AC-4 declares the five MCP tools and three chat intents", () => {
@@ -88,7 +88,7 @@ describe.skipIf(!hasDb)("delivery against Postgres", () => {
     expect(projects.map((p) => [p.key, p.client, p.sprintDone, p.sprintTotal])).toEqual([["CON", "Contoso", 9, 16], ["FLT", "Wide World Importers", 5, 16], ["HRI", "Northwind HR", 14, 17]]);
     expect(projects.reduce((n, p) => n + (p.contractValue ?? 0), 0)).toBe(774000);
     const counts = await phaseCounts(maya, new Date("2026-10-16T15:00:00Z"));
-    expect(counts).toEqual({ proposed: 6, planned: 4, building: 18, verified: 9, inFlight: 37, releasedThisMonth: 5 });
+    expect(counts).toEqual({ proposed: 6, planned: 4, building: 18, verified: 9, inFlight: 37, releasedThisMonth: 5, month: "October" });
     const board = (await getProject(maya, "CON"))!.proposals;
     const lane = (ph: string) => board.filter((p) => p.phase === ph).map((p) => p.key).sort();
     expect([lane("proposed"), lane("planned"), lane("building"), lane("verified"), lane("released")]).toEqual([["CON-016", "CON-017"], ["CON-013"], ["CON-011", "CON-014"], ["CON-010", "CON-012"], ["CON-009"]]);

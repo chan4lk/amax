@@ -1,0 +1,97 @@
+{
+ "counts": {
+  "blocker": 0,
+  "major": 2,
+  "minor": 1
+ },
+ "escalated": [],
+ "files": [
+  "apps/mock/public/mock/index.html",
+  "modules/delivery/README.md",
+  "modules/delivery/mcp.ts",
+  "modules/delivery/server/push.ts",
+  "modules/delivery/server/repo-time.ts",
+  "modules/delivery/server/services.ts",
+  "modules/delivery/tests/repo-dates-094.test.ts",
+  "modules/delivery/tests/repo-sync-096.test.ts"
+ ],
+ "final": false,
+ "findings": [
+  {
+   "file": "modules/delivery/server/services.ts",
+   "fp": "cc9c9a8a3d49",
+   "in_delta": true,
+   "line": 234,
+   "message": "096 AC-4 now checks `releasedAt` in two different ways depending on the path. In `SyncInput` it must be a datetime with an offset, but the push's `SpecRecordInput` (push.ts:36) still accepts any `text(40)`, and the reader (sync/specclaw.ts:96) passes `phases.archived.at` through without normalising it. The push never parses `SyncInput`, so it accepts anything and `knownTime` turns it into a stored value or null. The self-sync goes through `syncProposal`'s service input, so the same record throws a ZodError. `syncSpecclaw` (sync/import.ts:121) rethrows anything that isn't a `KeyTakenError`, so the whole run stops partway. Records already written stay committed, and `markSynced` and withdrawals never run. Fix: use one rule. Normalise `releasedAt` once where the write is built (`desired()`), for example to ISO when `Date.parse` succeeds and to null otherwise, the same way `phaseTimesOf` handles phase times. Then give the push's `SpecRecordInput` and `SyncInput` the same schema. Add a table test that drives both push and self-sync with a date-only value, a value with no offset, and a future value.",
+   "original_severity": "major",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B4",
+   "scenario": "An archived change's state.json has `phases.archived.at: \"2026-10-18\"` (date only) or `\"2026-10-18T10:00:00\"` (no offset). `sync_specclaw` stores it, but `pnpm --filter @amax/delivery sync:specclaw` throws a ZodError on that record and stops. Proposals after it aren't synced, unchanged ones keep their old stale mark, and gone folders aren't withdrawn.",
+   "severity": "major"
+  },
+  {
+   "file": "modules/delivery/server/repo-time.ts",
+   "fp": "71b90f76e939",
+   "in_delta": true,
+   "line": 56,
+   "message": "`READ` is a third copy of the `<ref>@<sha>` rule, and it disagrees with the others. `sync/withdraw.ts:6` and `sync/authors.ts:14` accept any prefix before `@<sha>`, while `READ` (`^[^@\\s]+@SHA$`) rejects a ref that itself contains `@`, which git allows. `entries()` also applies `readOf` to stored entries, and since `out` starts from `before`, every later write saves those sources as null for good. Fix: export one read matcher from `sync/sha.ts` and use it in all three places. Keep a stored source as it is rather than rewriting it to null.",
+   "original_severity": "major",
+   "pass": "design",
+   "pre_existing": false,
+   "rule": "B4",
+   "scenario": "A push from branch `team@x/096-y` with sha `abc1234` has meta.source `team@x/096-y@abc1234`. Withdrawal treats it as a ref@sha, but `readOf` returns null, so the verify phase's history line names no read. On the next write, the stored entry's source is saved as null.",
+   "severity": "major"
+  },
+  {
+   "file": "modules/delivery/tests/repo-sync-096.test.ts",
+   "fp": "f509ccc818e9",
+   "in_delta": true,
+   "line": 85,
+   "message": "The AC-4 `releasedAt` bound is tested only through `syncProposal`, and with two variants. The push (`sync_specclaw` \u2192 `upsertSpecProposal`) is the main writer and has no test for a future or malformed `releasedAt`, so 'every writer' isn't shown. Add push-path rows for a future time, a time with no offset, and a past time.",
+   "original_severity": "minor",
+   "pass": "design",
+   "pre_existing": false,
+   "rule": "B2",
+   "scenario": "",
+   "severity": "minor"
+  }
+ ],
+ "head": "b07c849c6b4bf02df0f54664b43b01e1a1dbde24",
+ "impact": [
+  ".github/CODEOWNERS",
+  ".github/workflows/specclaw-sync.yml",
+  "apps/mock/app/page.tsx",
+  "apps/web/app/(app)/settings/ai/page.tsx",
+  "apps/web/app/(app)/settings/audit/EventTable.tsx",
+  "apps/web/app/(app)/settings/audit/TraceTimeline.tsx",
+  "modules/delivery/contracts.ts",
+  "modules/delivery/module.ts",
+  "modules/delivery/server/commit-time.ts",
+  "modules/delivery/server/tasks.ts",
+  "modules/delivery/sync/import.ts",
+  "modules/delivery/tests/ci-095.test.ts",
+  "modules/delivery/tests/delivery.test.ts",
+  "modules/time/suggestions.ts",
+  "modules/time/tests/commit-dedup.test.ts",
+  "modules/time/tests/commit-draft-008.test.ts",
+  "modules/time/tests/corrections-flow.test.ts",
+  "modules/time/tests/proposal-time.test.ts",
+  "modules/time/tests/weekend.test.ts",
+  "scripts/specclaw-sync-ci.mjs"
+ ],
+ "model": "opus",
+ "passes": [
+  "review",
+  "design"
+ ],
+ "prompt_chars": 83816,
+ "round": 1,
+ "since": null,
+ "status": "open",
+ "system_chars": 43115,
+ "tier": "review",
+ "tools": "Read,Grep,Glob",
+ "ts_end": 1794319753,
+ "ts_start": 1794319606
+}

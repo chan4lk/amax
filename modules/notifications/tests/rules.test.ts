@@ -11,8 +11,6 @@ describe.skipIf(!hasDb)("030 rules and delivery (Postgres)", () => {
   beforeAll(async () => {
     db = await notificationsDb();
     registry = createRegistry(await installedModules());
-    // Maya's fixture quiet hours (21:00 to 07:00 Colombo) would hold her deliveries asleep on the real clock; channels.test covers them.
-    await db.t.owner`delete from notifications.quiet_hours`;
   }, 120_000);
   afterAll(() => db?.t.drop());
 

@@ -40,6 +40,9 @@ for (const width of [1440, 390] as const) {
     await mock.setViewportSize({ width, height: 900 });
     const misses: string[] = [];
     for (const s of SECTIONS) {
+      // 081 amendment 4: Repo sync and the band sit above the board, so it starts below a 900 px window. A screenshot that
+      // has to scroll first renders differently from the mock's, which needs none; a tall window keeps both unscrolled.
+      await page.setViewportSize({ width, height: s.path === "/delivery/p/CON" ? 4000 : 900 });
       await page.goto(s.path);
       await mock.goto("about:blank");
       await mock.goto(mockUrl(s.id));

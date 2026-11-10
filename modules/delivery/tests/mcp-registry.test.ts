@@ -48,7 +48,7 @@ describe.skipIf(!hasDb)("AC-2/AC-3 registry with delivery (Postgres)", () => {
 
   it("AC-3 lists only tools the roles allow; whoami and search are always there", () => {
     expect(registry.toolsFor(liam).map((x) => x.name)).toEqual(["whoami", "search"]);
-    expect(registry.toolsFor(maya).map((x) => x.name)).toEqual(expect.arrayContaining(["list_projects", "create_proposal", "move_proposal", "record_deployment"]));
+    expect(registry.toolsFor(maya).map((x) => x.name)).toEqual(expect.arrayContaining(["list_projects", "create_proposal", "update_proposal", "withdraw_proposal", "add_proposal_task", "move_proposal", "record_deployment"]));
   });
 
   it("AC-3 a token without the write scope can't list or call write tools", async () => {

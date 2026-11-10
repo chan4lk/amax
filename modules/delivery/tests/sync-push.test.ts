@@ -95,17 +95,18 @@ describe.skipIf(!hasDb)("062 sync_specclaw guard rails", () => {
       source: "specclaw", sourceRef: "901-x", committedAt: "2026-10-01T00:00:00Z", releasedAt: null, meta: {} })).rejects.toThrow(/forbidden/);
   });
 
-  it("AC-2/AC-6/AC-7 a dry run writes nothing; an apply never releases; re-pushing the same state writes and audits nothing", async () => {
+  it("AC-2/AC-6/AC-7 a dry run writes nothing; an apply never releases what amax has; re-pushing the same state writes and audits nothing", async () => {
     const before = await audits();
     const preview = await push();
-    expect(preview).toMatchObject({ outcome: "preview", created: 2, updated: 0, skipped: ["FLT-103: released comes from Prod deployments"], needsReview: false });
+    // 091 AC-4: the default branch brings a finished change amax has never stored in as Released history.
+    expect(preview).toMatchObject({ outcome: "preview", created: 3, updated: 0, skipped: [], needsReview: false });
     expect(await audits()).toBe(before);
-    expect(await push({ dryRun: false })).toMatchObject({ outcome: "applied", created: 2, skipped: preview.skipped });
-    expect(await count(sql`select count(*)::int as n from delivery.proposal where key = 'FLT-103'`)).toBe(0);
-    expect((await getRepoSync(nimal, { projectKey: "FLT" }))!.lastApplied).toMatchObject({ by: "Nimal Silva", created: 2 });
+    expect(await push({ dryRun: false })).toMatchObject({ outcome: "applied", created: 3, skipped: [] });
+    expect(await count(sql`select count(*)::int as n from delivery.proposal where key = 'FLT-103' and phase = 'released'`)).toBe(1);
+    expect((await getRepoSync(nimal, { projectKey: "FLT" }))!.lastApplied).toMatchObject({ by: "Nimal Silva", created: 3 });
     const settled = await audits(), rows = await pushRows();
     // Nothing new: no Repo sync row, and one audit for moving the marks (review round 4, chosen by the product owner).
-    expect(await push({ sha: "b2c3d4e", committedAt: "2026-10-08T10:00:00Z", dryRun: false })).toMatchObject({ outcome: "unchanged", created: 0, updated: 0, unchanged: 2, skipped: preview.skipped });
+    expect(await push({ sha: "b2c3d4e", committedAt: "2026-10-08T10:00:00Z", dryRun: false })).toMatchObject({ outcome: "unchanged", created: 0, updated: 0, unchanged: 3, skipped: [] });
     expect([await audits(), await pushRows()]).toEqual([settled + 1, rows]);
     expect(new Date((await proposal("FLT-102")).synced_commit_at as string).toISOString()).toBe("2026-10-08T10:00:00.000Z");
     // So a commit between the applied one and the unchanged one, with other content, is stale.
@@ -153,12 +154,14 @@ describe.skipIf(!hasDb)("062 sync_specclaw guard rails", () => {
 
   it("AC-8 a self-sync from a newer main commit moves the mark, changed or not, so an older push is stale", async () => {
     const maya = (await loadViewer(app, T, (await signInDemo(app, T, "maya@lumenlabs.test")).sessionId))!;
-    const main = readSpecclaw(fakeRepo({ "101-export": { tasks: "- [x] `T1` — one\n- [ ] `T2` — two" }, "102-import": { title: "Import, renamed on the branch" } }));
+    // 089: the self-sync withdraws only what the refs it read last synced, so its records carry main's ref, as bin.ts's do.
+    const onMain = (dir: string, sha: string) => readSpecclaw({ dir, ref: `main@${sha}` });
+    const main = onMain(fakeRepo({ "101-export": { tasks: "- [x] `T1` — one\n- [ ] `T2` — two" }, "102-import": { title: "Import, renamed on the branch" } }), "5e1f5e1");
     await syncSpecclaw(app, ctxFor(maya), { projectKey: "FLT", projectName: "Fleet", client: "x", records: main, sha: "5e1f5e1", committedAt: "2026-10-08T12:30:00Z" });
     const r = await push({ sha: "01d0001", committedAt: "2026-10-08T12:25:00Z", records: readSpecclaw(fakeRepo({ "101-export": { title: "Older title" }, "102-import": { title: "Older title" } })) });
     expect(r.skipped).toEqual([expect.stringMatching(/^FLT-101: stale/), expect.stringMatching(/^FLT-102: stale/)]);
     // A change the self-sync withdraws is read at that commit too.
-    await syncSpecclaw(app, ctxFor(maya), { projectKey: "FLT", projectName: "Fleet", client: "x", records: readSpecclaw(fakeRepo({ "101-export": { tasks: "- [x] `T1` — one\n- [ ] `T2` — two" } })), sha: "5e1f5e2", committedAt: "2026-10-08T12:40:00Z" });
+    await syncSpecclaw(app, ctxFor(maya), { projectKey: "FLT", projectName: "Fleet", client: "x", records: onMain(fakeRepo({ "101-export": { tasks: "- [x] `T1` — one\n- [ ] `T2` — two" } }), "5e1f5e2"), sha: "5e1f5e2", committedAt: "2026-10-08T12:40:00Z" });
     const after = await push({ sha: "01d0002", committedAt: "2026-10-08T12:35:00Z", records: readSpecclaw(fakeRepo({ "102-import": { title: "Older title" } })) });
     expect(after.skipped).toEqual([expect.stringMatching(/^FLT-102: stale: last synced from a newer commit \(2026-10-08T12:40/)]);
   });

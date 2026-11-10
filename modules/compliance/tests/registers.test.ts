@@ -45,7 +45,10 @@ describe.skipIf(!hasDb)("compliance registers (Postgres)", () => {
     const au = (await call("sahan", "get_compliance_overview", {})).incidents.find((i: Any) => i.title === "Payslip emailed to the wrong person");
     expect(au).toMatchObject({ notifyBy: "2026-11-15T02:00:00.000Z", regulator: "OAIC" });
     const remind = (now: string) => remindBreaches(contextFor.job(T, "test"), { now });
-    expect((await remind("2026-11-01T08:00:00Z")).reminded).toEqual([lk.ref]);
+    // The new breach is due 72 h from the real now, so its last week is checked from its own deadline, not a fixed date
+    // (a fixed Nov 1 fell outside that week from 2026-11-05 on; fixed in 081). The Payslip breach keeps its fixed dates.
+    const lkWeek = new Date(new Date(lk.notifyBy).getTime() - 6 * 86_400_000).toISOString();
+    expect((await remind(lkWeek)).reminded).toContain(lk.ref);
     expect((await remind("2026-11-10T08:00:00Z")).reminded).toContain(au.ref);
     expect((await remind("2026-11-10T09:00:00Z")).reminded).toEqual([]);
     expect((await db.events(EVENTS.breachDeadline)).find((e) => e.incidentId === au.id)).toMatchObject({ daysLeft: 5 });
