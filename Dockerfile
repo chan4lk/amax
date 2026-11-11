@@ -1,4 +1,4 @@
-FROM node:24-alpine AS build
+FROM node:26-alpine AS build
 WORKDIR /repo
 RUN corepack enable
 COPY . .
@@ -8,7 +8,7 @@ RUN pnpm --filter @amax/web build
 # 029: the Temporal worker (AMAX_WORKFLOWS_ENGINE=temporal). Temporal's native bridge needs glibc,
 # and the worker loads module manifests from source, so it ships the workspace rather than the
 # standalone bundle. Build with --target temporal-worker; the default target is the web image below.
-FROM node:24-bookworm-slim AS temporal-worker
+FROM node:26-bookworm-slim AS temporal-worker
 WORKDIR /repo
 RUN corepack enable
 COPY . .
@@ -23,7 +23,7 @@ CMD ["node", "--import", "tsx", "--import", "./scripts/ignore-css.mjs", "scripts
 FROM temporal-worker AS ops
 CMD ["node", "--import", "tsx", "--import", "./scripts/ignore-css.mjs", "scripts/backups.ts", "drill"]
 
-FROM node:24-alpine
+FROM node:26-alpine
 WORKDIR /app
 ENV NODE_ENV=production PORT=3000 HOSTNAME=0.0.0.0
 COPY --from=build --chown=node:node /repo/apps/web/.next/standalone ./
