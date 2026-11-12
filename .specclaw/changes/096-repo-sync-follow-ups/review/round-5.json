@@ -1,0 +1,79 @@
+{
+ "counts": {
+  "blocker": 0,
+  "major": 1,
+  "minor": 0
+ },
+ "escalated": [],
+ "files": [
+  "apps/mock/public/mock/index.html",
+  "modules/delivery/README.md",
+  "modules/delivery/mcp.ts",
+  "modules/delivery/server/proposal-detail.ts",
+  "modules/delivery/server/push.ts",
+  "modules/delivery/server/repo-time.ts",
+  "modules/delivery/server/services.ts",
+  "modules/delivery/sync/authors.ts",
+  "modules/delivery/sync/import.ts",
+  "modules/delivery/sync/instant.ts",
+  "modules/delivery/sync/sha.ts",
+  "modules/delivery/sync/specclaw.ts",
+  "modules/delivery/sync/withdraw.ts",
+  "modules/delivery/tests/repo-dates-094.test.ts",
+  "modules/delivery/tests/repo-sync-096.test.ts",
+  "plugins/amax/scripts/read-specclaw.mjs"
+ ],
+ "final": true,
+ "findings": [
+  {
+   "file": "modules/delivery/server/repo-time.ts",
+   "fp": "3ce707e1f447",
+   "in_delta": true,
+   "line": 49,
+   "message": "`storedPhasesFor` uses `isWithdrawn(row)` to mean \"its folder is gone, so the key may be reused\". But `isWithdrawn` is also true for a proposal a person withdrew by hand. `withdrawProposal` (server/lifecycle.ts:82) sets `withdrawn_at`, and that change's folder is still in the repo. Neither the push nor the self-sync skips withdrawn rows, and the upsert never clears `withdrawn_at`, so every later sync of a hand-withdrawn spec proposal treats it as a fresh key. Three things break. (1) AC-1: a phase the read leaves out is dropped. (2) A sender that didn't read phase times (an older plugin) gets `resolveRepoPhases(undefined, \u2026, undefined)` = null, so `meta.repoPhases` is removed outright, and desired()/fingerprint see that as a change and write it. (3) The \"same time keeps its first read\" rule is lost, so each sync replaces every phase's recorded read with its own (B5: the history line stops naming the read that first recorded the phase). Fix: key the fresh start on the folder going, not on `withdrawn_at`. Only `meta.withdrawn` set by planWithdrawals means the folder is gone, or else compare the read folder with `source_ref` on withdrawn rows. Update the README sentence and the doc comment (\"A key is reused only once its proposal is withdrawn (its folder gone)\"), which now say something the code doesn't do. The 096 tests 943/944 plant `withdrawn_at` by hand. That is the hand-withdrawal state, not the real folder-gone path. Add variants that drive a real `withdrawMissing` push, plus a hand-withdrawn proposal whose folder stays, and check its phases are kept.",
+   "original_severity": "major",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B1",
+   "scenario": "FLT-301 has stored repoPhases {proposal, verify} and its folder 301-x is still on main. A PM runs withdraw_proposal (withdrawn_at set, meta.withdrawn unset). The next main push from an older plugin with no phaseTimes sends read undefined. storedPhasesFor returns undefined, resolveRepoPhases returns null, meta.repoPhases is deleted, and the proposal's 'Approved/Verified in the repo' history lines disappear. Or a newer push with phaseTimes {proposal} only (verify re-run and reset) stores {proposal} alone, re-sourced to the new read.",
+   "severity": "major"
+  }
+ ],
+ "head": "7a3b3f0d448a5800734e7d7bfefc6a0bd6e68a3b",
+ "impact": [
+  ".github/workflows/ci.yml",
+  ".github/workflows/codeql.yml",
+  ".github/workflows/dependency-review.yml",
+  ".github/workflows/pages.yml",
+  ".github/workflows/specclaw-sync.yml",
+  "apps/web/app/(app)/[module]/[[...path]]/page.tsx",
+  "apps/web/app/(app)/operations/[screen]/page.tsx",
+  "apps/web/app/(app)/page.tsx",
+  "apps/web/app/(app)/settings/api/ApiTickets.tsx",
+  "apps/web/app/(app)/settings/api/CredentialTable.tsx",
+  "apps/web/app/(app)/settings/api/format.ts",
+  "apps/web/app/(app)/settings/api/page.tsx",
+  "apps/web/app/(app)/settings/backups/page.tsx",
+  "apps/web/app/(app)/settings/integrations/page.tsx",
+  "apps/web/app/actions/chat-history.ts",
+  "apps/web/app/actions/chat.ts",
+  "apps/web/app/oauth/authorize/page.tsx",
+  "apps/web/components/agents/RunCard.tsx",
+  "apps/web/components/chat/Chat.tsx",
+  "apps/web/components/chat/ConfirmCard.tsx"
+ ],
+ "model": "opus",
+ "passes": [
+  "review",
+  "design"
+ ],
+ "prompt_chars": 115468,
+ "round": 5,
+ "since": null,
+ "status": "open",
+ "system_chars": 43255,
+ "tier": "review",
+ "tools": "Read,Grep,Glob",
+ "ts_end": 1794321298,
+ "ts_start": 1794321153
+}

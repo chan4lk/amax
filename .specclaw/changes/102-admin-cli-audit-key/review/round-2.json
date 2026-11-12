@@ -1,0 +1,79 @@
+{
+ "counts": {
+  "blocker": 0,
+  "major": 0,
+  "minor": 0
+ },
+ "escalated": [],
+ "files": [
+  "apps/mock/public/mock/index.html",
+  "packages/auth/bin/admin.ts",
+  "packages/auth/tests/admin-cli-102.test.ts"
+ ],
+ "final": false,
+ "findings": [
+  {
+   "file": "apps/web/scripts/dev-seed.ts",
+   "fp": "3a6f67f3d81e",
+   "in_delta": false,
+   "line": 48,
+   "message": "The admin CLI now gets the audit key through core's loadEnv (a class fix for that CLI). dev-seed's CLI entry still reads the key straight from the environment with `process.env.AUDIT_HASH_KEY!`. That skips the `min(32)` schema in packages/core/src/env.ts:15. An unset key also gets through as `undefined`, and `seedDevDemo` hands it to `configureRuntime`. Fix: read the key with `loadEnv().AUDIT_HASH_KEY` and stop when it is missing, as admin.ts now does. This entry is dev-only, so it can wait.",
+   "original_severity": "minor",
+   "pass": "review",
+   "pre_existing": true,
+   "rule": "B1",
+   "scenario": "AUDIT_HASH_KEY=short-key in .env.local, then run dev-seed \u2192 it signs the fixture audit rows with a 9-character key that the app refuses at boot. With no key set, the seed fails deep inside with the configureRuntime error instead of a clear message.",
+   "severity": "minor"
+  },
+  {
+   "file": "modules/delivery/sync/bin.ts",
+   "fp": "e5c902c61b88",
+   "in_delta": false,
+   "line": 20,
+   "message": "Instance fix. Only the admin CLI now validates the audit key through core's loadEnv. The key rule still isn't enforced where the key is accepted: `configureRuntime` (packages/core/src/service.ts:38) and `setChainKey` (packages/core/src/chain-key.ts:15) take any non-empty string. Two other entry points that write to the audit chain still read the raw environment and skip the `min(32)` rule. (1) modules/delivery/sync/bin.ts:19-34 checks only that AUDIT_HASH_KEY is set, then calls `configureRuntime({ db, auditKey: env.AUDIT_HASH_KEY! })`. This is the production specclaw sync, and it writes audited proposal rows. (2) apps/web/scripts/dev-seed.ts:24/48 checks only that the key is truthy before it seeds audited fixtures. That makes the rule a second, looser copy again (B4). Fix the class: enforce the key rule once, in `configureRuntime`/`setChainKey`. Reuse core's env schema for AUDIT_HASH_KEY (export it) so the rule isn't written a third time, and throw on a key the app would refuse. Alternatively, route sync/bin.ts and dev-seed.ts through loadEnv() as well. Then add rows to a table-driven test for sync/bin.ts with an unset key, an empty key and a short key, each asserting a non-zero exit and no audit rows.",
+   "original_severity": "major",
+   "pass": "design",
+   "pre_existing": true,
+   "rule": "B1",
+   "scenario": "Run `sync:specclaw` with AUDIT_HASH_KEY=short-key: it passes the set check, configureRuntime accepts the key, and syncSpecclaw writes proposal audit rows hashed with 'short-key'. The app refuses that key at boot, and with the deployment's real key verifyAuditChain fails on those rows. Running dev-seed with AUDIT_HASH_KEY=abc in .env.local has the same effect: the local chain is seeded with a key the app won't start with.",
+   "severity": "major"
+  }
+ ],
+ "head": "9faae1438a34d23e75e326a54cdbddfcc3fe54f4",
+ "impact": [
+  "apps/web/lib/rate-wiring.ts",
+  "apps/web/lib/server.ts",
+  "apps/web/scripts/backups.ts",
+  "apps/web/scripts/dev-seed.ts",
+  "apps/web/tests/admin/fixture.ts",
+  "apps/web/tests/e2e/api-seed.ts",
+  "apps/web/tests/e2e/global-auth.ts",
+  "apps/web/tests/e2e/proposal-agent.ts",
+  "apps/web/tests/e2e/secrets-seed.ts",
+  "modules/allocations/tests/setup.ts",
+  "modules/career/tests/db.ts",
+  "modules/compliance/server/evidence.ts",
+  "modules/compliance/tests/db.ts",
+  "modules/delivery/sync/bin.ts",
+  "modules/delivery/tests/chat-043.test.ts",
+  "modules/delivery/tests/chat-first.test.ts",
+  "modules/delivery/tests/chat.test.ts",
+  "modules/delivery/tests/create-project-contract.test.ts",
+  "modules/delivery/tests/create-project-surfaces.test.ts",
+  "modules/delivery/tests/delivery.test.ts"
+ ],
+ "model": "opus",
+ "passes": [
+  "review",
+  "design"
+ ],
+ "prompt_chars": 55558,
+ "round": 2,
+ "since": "d3f6b3fc",
+ "status": "clean",
+ "system_chars": 43074,
+ "tier": "review",
+ "tools": "Read,Grep,Glob",
+ "ts_end": 1794490684,
+ "ts_start": 1794490585
+}

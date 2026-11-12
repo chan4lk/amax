@@ -1,0 +1,66 @@
+{
+ "counts": {
+  "blocker": 0,
+  "major": 0,
+  "minor": 0
+ },
+ "escalated": [],
+ "files": [
+  "packages/testing/tests/review-gate-moves.test.ts",
+  "scripts/check-review-gate.mjs",
+  "scripts/review-gate/rules.mjs"
+ ],
+ "final": false,
+ "findings": [
+  {
+   "file": "scripts/review-gate/moves.mjs",
+   "fp": "b2ea60f6d082",
+   "in_delta": false,
+   "line": 7,
+   "message": "[design] The round-1 fix is a class fix for its own finding. A moved folder no longer counts toward the no-change-dir guard, it no longer owns commits, and the test table covers a move beside a code change. One gap is left in how a move is matched. `movedFrom` looks for an old folder by slug alone and never checks that each old folder is claimed only once. The gate now trusts any folder that `movedFrom` accepts and never judges it. So two new folders can both claim the same deleted folder, and both are skipped as 'moved'. One of them is a copy: a brand-new change folder that no review loop ever saw. Fix: pair moves one-to-one. Map each base folder that the PR removed to at most one new head folder. If several head folders share that slug, return null for all of them so that each one is judged. Add a fixture row with one folder moved to two new numbers, which must exit 1.",
+   "original_severity": "major",
+   "pass": "design",
+   "pre_existing": true,
+   "rule": "B1",
+   "scenario": "A fork PR deletes `.specclaw/changes/074-demo/` and adds `099-demo/` and `100-demo/`, each with the same files as 074-demo apart from the folder name. For both names `movedFrom` returns '074-demo', both are skipped, and the gate exits 0. A new change `100-demo` lands on main without its own review, and the sync now sees two proposals for one change.",
+   "severity": "major"
+  }
+ ],
+ "head": "f14218060c62c0a347e4e911f39f107dbabb2408",
+ "impact": [
+  "apps/mock/public/mock/index.html",
+  "modules/delivery/contracts.ts",
+  "modules/delivery/db/migrations/0020_sync_push_withdrawn.sql",
+  "modules/delivery/mcp.ts",
+  "modules/delivery/server/push.ts",
+  "modules/delivery/server/readiness.ts",
+  "modules/delivery/server/repo-time.ts",
+  "modules/delivery/server/services.ts",
+  "modules/delivery/server/tasks.ts",
+  "modules/delivery/sync/authors.ts",
+  "modules/delivery/sync/duplicates.ts",
+  "modules/delivery/sync/specclaw.ts",
+  "modules/delivery/sync/withdraw.ts",
+  "modules/delivery/tests/authors-091.test.ts",
+  "modules/delivery/tests/repo-sync-096.test.ts",
+  "modules/delivery/tests/sync-import.test.ts",
+  "modules/delivery/tests/sync-parse.test.ts",
+  "modules/delivery/tests/sync-push-089.test.ts",
+  "modules/delivery/tests/sync-push-091.test.ts",
+  "modules/delivery/tests/withdraw-089.test.ts"
+ ],
+ "model": "opus",
+ "passes": [
+  "review",
+  "design"
+ ],
+ "prompt_chars": 61255,
+ "round": 2,
+ "since": "25f9d7e22b",
+ "status": "clean",
+ "system_chars": 43039,
+ "tier": "review",
+ "tools": "Read,Grep,Glob",
+ "ts_end": 1794328113,
+ "ts_start": 1794328049
+}

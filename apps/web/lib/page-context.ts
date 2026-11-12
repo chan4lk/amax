@@ -36,6 +36,10 @@ async function forPins(mods: ModuleManifest[], viewer: Viewer, pins: PinnedArgs[
 
 export type PinnedArgs = { tool: string; args: Record<string, unknown> };
 
+// 081: a pin's offer and the page's own suggestion can be the same step ("New proposal" on the Proposals page with its
+// view pinned). Chat shows each label once, the first one, which is the pin's: more specific, and listed first anyway.
+const unique = (all: PageSuggestion[]) => all.filter((s, i) => all.findIndex((x) => x.label === s.label) === i);
+
 export async function pageInfo(mods: ModuleManifest[], registry: Registry, viewer: Viewer, path: string, pins: PinnedArgs[] = []): Promise<PageInfo | null> {
   const parts = segments(path);
   if (!parts?.length) return null;
@@ -48,5 +52,5 @@ export async function pageInfo(mods: ModuleManifest[], registry: Registry, viewe
   const pinned = await forPins(mods, viewer, pins, tools);
   const label = [found.route.title, owner.pageLabel?.(found.params)].filter(Boolean).join(" · ");
   return { module: owner.id, page: found.route.title, label, params: found.params,
-    suggestions: [...pinned, ...offered.filter((_, i) => checks[i]).map(({ label: l, prompt }) => ({ label: l, prompt }))].slice(0, MAX_SUGGESTIONS) };
+    suggestions: unique([...pinned, ...offered.filter((_, i) => checks[i]).map(({ label: l, prompt }) => ({ label: l, prompt }))]).slice(0, MAX_SUGGESTIONS) };
 }

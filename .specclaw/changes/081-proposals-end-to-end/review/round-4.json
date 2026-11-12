@@ -1,0 +1,110 @@
+{
+ "counts": {
+  "blocker": 0,
+  "major": 1,
+  "minor": 3
+ },
+ "escalated": [],
+ "files": [
+  "modules/delivery/contracts.ts",
+  "modules/delivery/server/proposal-detail.ts",
+  "modules/delivery/server/proposal-hours.ts",
+  "modules/delivery/tests/proposal-detail.test.ts",
+  "modules/time/server/proposal-hours.ts",
+  "modules/time/server/proposal-lines.ts",
+  "modules/time/tests/proposal-hours.test.ts",
+  "modules/time/tests/proposal-time.test.ts"
+ ],
+ "final": false,
+ "findings": [
+  {
+   "file": "modules/delivery/server/proposal-detail.ts",
+   "fp": "55dc02379aac",
+   "in_delta": true,
+   "line": 81,
+   "message": "A time line's pin is now read only through Time's slot. When no module fills PROPOSAL_TIME_SLOT (Time is switched off or not installed), `provided()` returns no sources and `timeRows` returns []. `proposalEvent` then returns null, which is its documented answer for 'the line is gone'. So 'could not ask' and 'nothing there' still share one answer for the one kind of line this fix sends to another module. This is the same B3 class the round-2 fix set out to close. Fix: when `only.kind === \"time\"` and the slot has no source, refuse with a distinct error (for example ForbiddenError or a 'time lines unavailable' refusal), so the line reads as unreadable rather than gone. Add that case to the review-2 table.",
+   "original_severity": "major",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B3",
+   "scenario": "AMAX_MODULES_DISABLED=time. A chat pin on get_proposal_event {proposalId, line: \"time:42\"}, where audit row 42 still exists, returns null. That is exactly what a deleted or unknown line returns, and chat keeps the pin's old label as if nothing were wrong.",
+   "severity": "major"
+  },
+  {
+   "file": "modules/time/tests/proposal-time.test.ts",
+   "fp": "f3be8f3a6cbc",
+   "in_delta": true,
+   "line": 160,
+   "message": "The review-2 test plants MAX_LINES + 50 = 150 rows. That is fewer than BATCH (200), so `proposalTimeLines` always stops after its first page. The keyset continuation `(occurred_at, seq) < (...)` and the repeated fetch are never run. A bug there (a wrong comparison, a skipped or repeated boundary row) would leave the test green. Plant more than BATCH rows from others, with the owner's line older than all of them, so the loop has to fetch a second page.",
+   "original_severity": "minor",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B2",
+   "scenario": "",
+   "severity": "minor"
+  },
+  {
+   "file": "modules/delivery/server/proposal-hours.ts",
+   "fp": "59a32eb47cca",
+   "in_delta": true,
+   "line": 21,
+   "message": "A caller that is not Time's job is refused with `invalid(...)`, which is a validation error, although this is an authorization refusal. It should be a ForbiddenError, so it is reported and audited as a denial. The test regex `/only Time's job|forbidden/` accepts either error, so it can't tell the two apart.",
+   "original_severity": "minor",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B6",
+   "scenario": "",
+   "severity": "minor"
+  },
+  {
+   "file": "modules/time/server/proposal-lines.ts",
+   "fp": "6d2788e523a7",
+   "in_delta": true,
+   "line": 52,
+   "message": "Applying the visibility rule before the cap made the page read unbounded: for a viewer who may see few or none of a proposal's time lines, every page load reads all of the proposal's time audit rows, 200 at a time, inside the request transaction. Bound it, for example with a maximum number of batches that reports the history as partial, or by pushing the owner/approver condition into SQL.",
+   "original_severity": "minor",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B3",
+   "scenario": "",
+   "severity": "minor"
+  }
+ ],
+ "head": "c48088de4ae409cfbb057aa49cc9a7b3e0f0591e",
+ "impact": [
+  "apps/mock/public/mock/index.html",
+  "apps/web/app/(app)/settings/ai/usage/UsageFilters.tsx",
+  "apps/web/lib/privacy-fixtures.ts",
+  "apps/web/lib/server.ts",
+  "apps/web/scripts/seed-demo.ts",
+  "apps/web/tests/admin/privacy.test.ts",
+  "apps/web/tests/pin-refs.test.ts",
+  "modules/delivery/db/migrations/0001_delivery.sql",
+  "modules/inbox-agent/fixtures/index.ts",
+  "modules/inbox-agent/server/graph.ts",
+  "modules/inbox-agent/server/reader.ts",
+  "modules/inbox-agent/server/record.ts",
+  "modules/inbox-agent/server/sandbox.ts",
+  "modules/inbox-agent/server/scan.ts",
+  "modules/time/db/migrations/0009_entry_proposal.sql",
+  "modules/time/fixtures/index.ts",
+  "modules/time/server/entry-card.ts",
+  "modules/time/server/proposal-ref.ts",
+  "modules/time/server/replay.ts",
+  "modules/time/suggestions.ts"
+ ],
+ "model": "opus",
+ "passes": [
+  "review",
+  "design"
+ ],
+ "prompt_chars": 78522,
+ "round": 4,
+ "since": "5b2b86b7",
+ "status": "open",
+ "system_chars": 43072,
+ "tier": "review",
+ "tools": "Read,Grep,Glob",
+ "ts_end": 1794054134,
+ "ts_start": 1794053989
+}

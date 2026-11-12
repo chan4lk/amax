@@ -1,0 +1,11 @@
+{
+  "change": "083-profile-menu-closes",
+  "phase": "verify",
+  "branch": "",
+  "phases": {
+    "proposal": {"status":"approved","at":"2026-11-05T12:01:27Z"},
+    "tasks": {"status":"done","at":"2026-11-05T12:01:29Z"},
+    "build": {"status":"complete","at":"2026-11-05T12:22:40Z"},
+    "verify": {"status":"done","at":"2026-11-07T12:44:42Z"}
+  }
+}

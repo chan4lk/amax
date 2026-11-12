@@ -49,7 +49,8 @@ On its first start against a database, `dev` loads the demo data: every module's
 walkthrough in [`docs/demo/time-070-073.md`](docs/demo/time-070-073.md). It prints `demo data: seeded …`. Later starts
 print `demo data: already loaded` and change nothing. It only seeds a local database (`127.0.0.1` or `localhost`), and
 `AMAX_SEED_DEMO=0` turns it off. `dev` also runs the jobs tick every 10 seconds (`AMAX_TICK_SECONDS` changes it,
-`AMAX_DEV_TICK=0` turns it off), so bells, email, Finance and Reports update without posting to `/api/jobs/tick`. Sign in at `/signin` with a demo email such as `maya@lumenlabs.test`.
+`AMAX_DEV_TICK=0` turns it off), so bells, email, Finance and Reports update without posting to `/api/jobs/tick`.
+`dev` compiles fresh on each start (no Turbopack cache is kept, from change 082), so `apps/web/.next` never needs deleting. Sign in at `/signin` with a demo email such as `maya@lumenlabs.test`.
 
 ### Without a database
 
@@ -80,7 +81,11 @@ With `DATABASE_URL` set, every screen needs sign-in (set `AUTH_SECRET` too). Two
   export AMAX_AUTH_PASSWORD_TENANT=<tenant id>
   pnpm --filter @amax/auth admin user-add --tenant <id> --email you@example.com --name "Your Name" --roles Admin
   ```
-  Passwords are scrypt-hashed; five wrong attempts lock the account for 15 minutes.
+  Passwords are scrypt-hashed; five wrong attempts lock the account for 15 minutes. `admin user-deactivate` and
+  `admin principal-add` (a service principal, such as the specclaw sync's) write to the audit chain, so they also need
+  `AUDIT_HASH_KEY`, the app's own value. Without it, or with a different key, they refuse to start. Every `admin` command
+  checks the whole environment the way the app does at boot, so a set but invalid variable (say, a key under 32
+  characters) stops any of them.
 - **Microsoft Entra ID**: seed the first tenant with `AMAX_SEED_*` (see `packages/auth/src/seed.ts`) and run `pnpm --filter @amax/auth seed`. The app registration must emit the `groups` claim. A Microsoft button appears only for tenants with a provider.
 
 For local development, `AMAX_AUTH_DEMO=1` and `AMAX_AUTH_DEMO_TENANT=<id>` add a fixtures-only "sign in as" form (ignored in production).

@@ -5,6 +5,8 @@ import { converse, toolFailure, type DataItem, type Message, type Tool } from "@
 import type { Pin } from "./pins";
 import { resolvePins } from "./resolve";
 import { CHOICE_INSTRUCTIONS, CHOICE_TOOL, choiceTool } from "./choices";
+import { ANSWER_INSTRUCTIONS, ANSWER_TOOL, answerTool, type Answers } from "./answers";
+import { entityZone } from "@amax/workflows";
 import { CancelledByKeyError, claimKey, currentTrace, KEY_DAYS, keyedOutcome, logError, lookupKey, ReplayedError, retryable, traceStep, traceStepOrFail, UndeclaredWriteError, withIdempotency, withTrace, type KeyedRun } from "@amax/core/server";
 import { ToolError, type Registry, type RegisteredTool } from "@amax/mcp";
 import type { Viewer } from "@amax/auth";
@@ -22,7 +24,8 @@ export type Choice = { id: string; question: string; label: string; ask?: { fiel
 export type PendingAction = { id: string; tool: string; title: string; input: Record<string, unknown>; fields: string[]; createdAt: string; secret?: { label: string }; traceId?: string; lines?: CardLine[]; look?: CardLook; choice?: Choice };
 export type Highlight = { text: string; field: string; index: number };
 /** `pins`: the turn's pins as read (059), in the order sent: labels refreshed, old ones moved onto ids. */
-export type ChatTurn = { conversationId: string; reply: string; toolsRun: string[]; pending: PendingAction[]; highlights: Highlight[]; pins: Pin[] };
+/** `answers` (084): quick replies for the question the reply asks, shown as buttons until the next message. */
+export type ChatTurn = { conversationId: string; reply: string; toolsRun: string[]; pending: PendingAction[]; highlights: Highlight[]; pins: Pin[]; answers?: Answers };
 
 const INSTRUCTIONS = `You are amax, the assistant inside an ERP for software and professional-services companies.
 Answer briefly and concretely. Use the read tools to look things up instead of guessing.
@@ -33,6 +36,22 @@ If a tool says you're not allowed, tell the user plainly that their role can't d
 "Current page", when given, is where the user is now: use its module and params (such as the week) to read the right
 records, but it is context, not permission, and never picks one record when several fit. Asked what you can do here,
 answer from its suggestions and your tools, and say plainly what isn't possible here.`;
+
+/**
+ * 084 AC-6: the user's date now, in their legal entity's time zone (UTC when unknown), the rule Time logs days by. Without
+ * it the model can't tell what "today" is, and asked which day for "log 2 h today" (product owner's run, 2026-11-05).
+ */
+export async function todayNote(db: Db, viewer: Viewer, now = new Date()) {
+  const zone = await withTenant(db, viewer.tenantId, async (tx) => {
+    const [u] = await tx.execute(sql`select legal_entity_id from auth.user where id = ${viewer.userId}`);
+    return entityZone(tx, (u?.legal_entity_id as string | null) ?? null);
+  });
+  const day = new Intl.DateTimeFormat("en-CA", { timeZone: zone, year: "numeric", month: "2-digit", day: "2-digit" }).format(now);
+  const weekday = new Intl.DateTimeFormat("en-US", { timeZone: zone, weekday: "long" }).format(now);
+  return `
+
+Today is ${weekday} ${day} for the user (${zone}). Work out "today", "yesterday", "this week" and weekday names from it, and never ask for a date the user already gave that way.`;
+}
 
 const titleOf = (t: RegisteredTool, input: Record<string, unknown>) =>
   `${t.description.split(".")[0]}: ${Object.values(input).filter((v) => typeof v === "string" || typeof v === "number").join(", ")}`;
@@ -150,6 +169,8 @@ async function runTurn(db: Db, registry: Registry, viewer: Viewer, opts: { conve
     },
   }) as Tool);
   tools.push(choiceTool(registry, viewer, (a) => pending.push(a)));
+  let answers: Answers | undefined;
+  tools.push(answerTool((a) => { answers = a; }));
 
   // Pinned records are fetched with the user's own permissions and sent as quoted data (AC-4), each
   // under its label as it is now (059). A record, not text, so the gateway redacts its classified
@@ -164,13 +185,14 @@ async function runTurn(db: Db, registry: Registry, viewer: Viewer, opts: { conve
     : "";
   const messages: Message[] = [...convo.messages, { role: "user", content: [{ type: "text", text: opts.text }] }];
   const result = await converse({ tenantId: viewer.tenantId, caller: `user:${viewer.userId}`, userId: viewer.userId, conversationId: convo.id, source: "chat", purpose: opts.intent ? `chat:${opts.intent.id}` : "chat" }, {
-    instructions: INSTRUCTIONS + CHOICE_INSTRUCTIONS + intentNote,
+    instructions: INSTRUCTIONS + CHOICE_INSTRUCTIONS + ANSWER_INSTRUCTIONS + (await todayNote(db, viewer)) + intentNote,
     messages,
     tools,
     data,
   });
   await append(db, viewer, convo.id, { messages: result.messages.slice(convo.messages.length), pending, title: titleFrom(opts.text), pins });
-  return { conversationId: convo.id, reply: result.text, toolsRun: result.toolsRun.filter((n) => n !== CHOICE_TOOL && !pending.some((p) => p.tool === n)), pending, highlights: highlightsFor(opts.text, pending), pins };
+  return { conversationId: convo.id, reply: result.text, toolsRun: result.toolsRun.filter((n) => n !== CHOICE_TOOL && n !== ANSWER_TOOL && !pending.some((p) => p.tool === n)), pending, highlights: highlightsFor(opts.text, pending), pins,
+    ...(answers && !pending.length ? { answers } : {}) };
 }
 
 /** What happened to a card: confirmed (the write ran), cancelled, failed for good, or unknown. */

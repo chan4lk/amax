@@ -1,0 +1,102 @@
+{
+ "counts": {
+  "blocker": 0,
+  "major": 3,
+  "minor": 0
+ },
+ "escalated": [],
+ "files": [
+  ".github/workflows/ci.yml",
+  "apps/mock/public/mock/index.html",
+  "modules/delivery/README.md",
+  "modules/delivery/server/push.ts",
+  "modules/delivery/sync/import.ts",
+  "modules/delivery/sync/withdraw.ts",
+  "modules/delivery/tests/sync-push-089.test.ts",
+  "modules/delivery/tests/withdraw-089.test.ts",
+  "packages/testing/tests/change-numbers.test.ts",
+  "packages/testing/tests/specclaw-sync-ci.test.ts",
+  "plugins/amax/README.md",
+  "scripts/check-change-numbers.mjs",
+  "scripts/specclaw-sync-ci.mjs"
+ ],
+ "final": false,
+ "findings": [
+  {
+   "file": "modules/delivery/sync/withdraw.ts",
+   "fp": "b43ec19742a0",
+   "in_delta": true,
+   "line": 16,
+   "message": "This is an instance fix for the mass-withdrawal guard. The cap is measured against `live`, which counts every proposal that isn't withdrawn. That includes Released proposals and, on a push, proposals last synced from another branch, and `keys` can never contain either kind. A project with a large release history therefore raises the cap well above the number of proposals that could actually be withdrawn, so the 'read looks like everything was deleted' case still goes through. Fix: measure the cap against the eligible set only (not withdrawn, not Released, synced from a ref in `refs`). Add table rows that include Released and branch-synced proposals.",
+   "original_severity": "major",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B6",
+   "scenario": "FLT has 40 Released proposals and 12 in flight on main. A default-branch push with withdrawMissing:true comes from a sparse or wrong checkout and reads the 40 archived changes plus 1 active folder. Then keys = 11 and live = 52, so the cap is max(2, 26) = 26. 11 > 26 is false, so 11 of the 12 in-flight proposals are withdrawn and nothing is held.",
+   "severity": "major"
+  },
+  {
+   "file": "scripts/check-change-numbers.mjs",
+   "fp": "3a883579911c",
+   "in_delta": true,
+   "line": 23,
+   "message": "Grouping by number over the union of base and head now also keeps base folders that the PR itself deleted or renamed. The check cannot tell 'main gained this folder after the branch was cut' apart from 'this PR removed it', so it fails PRs that don't reuse any number. Fix: find the folders the PR removed with the merge base (folders in merge-base minus head), leave them out of the union, and add a rename row to the table test.",
+   "original_severity": "major",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B1",
+   "scenario": "Base has 075-quiet-hours. The PR renames it to 075-quiet-hours-v2 (slug change) or moves it under a new slug. Then added = [075-quiet-hours-v2] and the union holds both 075 folders, so the check prints 'fail 075-quiet-hours-v2: number 075 is already used by 075-quiet-hours' and the PR is blocked, even though the merged tree has one 075 folder.",
+   "severity": "major"
+  },
+  {
+   "file": "modules/delivery/sync/withdraw.ts",
+   "fp": "96a663a842fd",
+   "in_delta": true,
+   "line": 21,
+   "message": "The mass-withdrawal hold says 'a person decides', but nobody has a way to decide. `withdraw_proposal` handles only proposals made by hand (mcp.ts:82: 'A spec proposal is withdrawn by removing it from its repo'), and no input lets a push confirm the withdrawal. So when someone really does delete more than half of the folders, the same withdrawal is held on every sync, forever: the proposals stay live and every CI run adds a Needs you row. Fix: give the person a way to confirm. Options: a chat write tool that withdraws the held specclaw keys behind the confirm card, or a `withdrawMissing` acknowledgement such as `confirmWithdraw: <count>` that the hold message tells the person to send. Add a test that a held plan can be confirmed and then applied.",
+   "original_severity": "major",
+   "pass": "design",
+   "pre_existing": false,
+   "rule": "B6",
+   "scenario": "Project FLT has 6 live specclaw proposals and main deletes 4 abandoned change folders. Every CI push gets held with 'would withdraw 4 of 6 live proposals' and needsReview set. The 4 proposals stay live on the board for good, and no tool can withdraw them.",
+   "severity": "major"
+  }
+ ],
+ "head": "2d741c2947384d3f5bad8c4d5f5d6af4861a4105",
+ "impact": [
+  "apps/web/tests/e2e/chat.spec.ts",
+  "modules/delivery/module.ts",
+  "modules/delivery/server/commit-time.ts",
+  "modules/delivery/server/lifecycle.ts",
+  "modules/delivery/server/owner.ts",
+  "modules/delivery/server/proposal-detail.ts",
+  "modules/delivery/server/queries.ts",
+  "modules/delivery/server/refusal.ts",
+  "modules/delivery/server/repo-sync.ts",
+  "modules/delivery/server/services.ts",
+  "modules/delivery/server/tasks.ts",
+  "modules/delivery/tests/chat-043.test.ts",
+  "modules/delivery/tests/chat.test.ts",
+  "modules/delivery/tests/proposal-lifecycle.test.ts",
+  "modules/delivery/tests/release-ref.test.ts",
+  "modules/delivery/tests/sync-push.test.ts",
+  "modules/presales/server/claim.ts",
+  "modules/presales/server/promote.ts",
+  "modules/time/mcp.ts",
+  "modules/time/server/bulk.ts"
+ ],
+ "model": "opus",
+ "passes": [
+  "review",
+  "design"
+ ],
+ "prompt_chars": 85751,
+ "round": 2,
+ "since": "249b7e21",
+ "status": "open",
+ "system_chars": 43042,
+ "tier": "review",
+ "tools": "Read,Grep,Glob",
+ "ts_end": 1794236284,
+ "ts_start": 1794236017
+}

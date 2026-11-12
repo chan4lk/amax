@@ -6,6 +6,7 @@ import { defineService, ForbiddenError, getRuntime, type ServiceContext } from "
 import { withTenant } from "@amax/db";
 import { EVENTS, type CommitTime } from "../contracts";
 import { recordActivity } from "./activity";
+import { invalid, notFound } from "./refusal";
 
 export const COMMIT_TIME_MANAGE = "delivery:commit-time:manage";
 const actorOf = (ctx: ServiceContext) => (ctx.onBehalfOf ? `${ctx.actor.id} for ${ctx.onBehalfOf}` : ctx.actor.id);
@@ -17,7 +18,7 @@ export const setCommitTimeLogging = defineService({
   resource: "delivery.commit_time",
   input: z.object({ legalEntityId: z.uuid(), enabled: z.boolean(), peopleNotified: z.boolean().default(false) }),
   async run(tx, input, ctx) {
-    if (input.enabled && !input.peopleNotified) throw Object.assign(new Error("tell the entity's people first that commits will draft their timesheets, then switch it on"), { retryable: false, code: "invalid_input" });
+    if (input.enabled && !input.peopleNotified) throw invalid("tell the entity's people first that commits will draft their timesheets, then switch it on");
     const [before] = await tx.execute(sql`select enabled from delivery.commit_time where legal_entity_id = ${input.legalEntityId}`);
     await tx.execute(sql`insert into delivery.commit_time (tenant_id, legal_entity_id, enabled, notified_at, set_by) values (${ctx.tenantId}, ${input.legalEntityId}, ${input.enabled}, ${input.enabled ? sql`now()` : null}, ${actorOf(ctx)})
       on conflict (tenant_id, legal_entity_id) do update set enabled = excluded.enabled, notified_at = coalesce(excluded.notified_at, delivery.commit_time.notified_at), set_by = excluded.set_by, updated_at = now()`);
@@ -53,7 +54,7 @@ export const draftCommitTime = defineService({
   input: z.object({ userId: z.uuid(), key: z.string(), day: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), hours: z.number().positive().max(12), commit: z.string().min(4).max(64) }),
   async run(tx, input, ctx) {
     const [p] = await tx.execute(sql`select p.id, p.key, p.project_id, pr.key as project_key from delivery.proposal p join delivery.project pr on pr.id = p.project_id where p.key = ${input.key}`);
-    if (!p) throw new Error(`no proposal ${input.key}`);
+    if (!p) throw notFound(`no proposal ${input.key}`);
     if (!(await commitTimeOn(tx, input.userId))) return { result: { drafted: false as boolean, repeated: false as boolean }, resourceId: p.id as string };
     // 071 review round 1: one draft per person and commit, for every provider (a repeated push drafts nothing).
     const [first] = await tx.execute(sql`insert into delivery.commit_draft (tenant_id, user_id, commit_id) values (${ctx.tenantId}, ${input.userId}, ${input.commit})

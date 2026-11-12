@@ -23,11 +23,22 @@ function judge(change, { fork, load, repo, owners }) {
   return { scope, verdict: "skip", reason: "single change, review runs at module end" };
 }
 
-export function gate({ fork, files, changes, load, repo }) {
+export function gate({ fork, files, changes: touched, load, repo }) {
   const lines = [fork ? "fork PR: review evidence required" : "same-repo PR: module cadence"];
   let ok = true;
+  const moves = touched.map((c) => [c, repo.movedFrom?.(c.name) ?? null]);
+  for (const [c, from] of moves.filter(([, from]) => from)) {
+    lines.push(`${c.name.padEnd(28)} scope=${"move".padEnd(10)} skip — moved from ${from}, nothing else changed`);
+  }
+  const changes = moves.filter(([, from]) => !from).map(([c]) => c);
   const owners = new Map(changes.filter((c) => reviewScope(c.changeMd).scope !== "covered-by" && finalRound(c.rounds)?.head)
     .map((c) => [c.name, finalRound(c.rounds).head]));
+  // 095 AC-4: a covered-by change's commits were reviewed by its cover's loop, so a commit naming it is credited to the
+  // cover's final pass (and still only when that pass came after it).
+  for (const c of changes) {
+    const { scope, by } = reviewScope(c.changeMd);
+    if (scope === "covered-by" && by && owners.has(by) && !owners.has(c.name)) owners.set(c.name, owners.get(by));
+  }
   for (const change of changes) {
     const { scope, ...result } = judge(change, { fork, load, repo, owners });
     if (result.verdict === "fail") ok = false;

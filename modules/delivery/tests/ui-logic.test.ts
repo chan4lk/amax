@@ -25,7 +25,7 @@ describe("pluralise on the same count", () => {
   it.each([[0, "0 clients"], [1, "1 client"], [2, "2 clients"]])("%i", (n, want) => expect(count(n as number, "client")).toBe(want));
 });
 
-const st = (environment: string, position: number, isProd: boolean, status: string | null, at: string | null = null) => ({ environment, position, isProd, status, at, note: null, run: null });
+const st = (environment: string, position: number, isProd: boolean, status: string | null, at: string | null = null) => ({ environment, environmentId: `env-${environment}`, deploymentId: status ? `dep-${environment}` : null, position, isProd, status, at, note: null, run: null });
 const rel = (over: Partial<ReleaseRow>, ...stages: ReturnType<typeof st>[]): ReleaseRow =>
   ({ id: over.version ?? "r", projectId: "p1", version: "v1", projectKey: "CON", projectName: "Contoso", projectColor: "violet", proposals: 1, ...over, stages });
 
@@ -44,8 +44,7 @@ describe("one standing for the table, the map and the pill", () => {
     expect(mapPill(r)?.text ?? null).toBe(pill);
     expect(mapRow(r, r.stages.map((x) => x.environment)).stations.find((x) => x.last)?.environment ?? null).toBe(lastEnv);
     expect(nextStep(r) === null).toBe(action === "Live");
-    const a = actionFor(r, true);
-    expect(a.kind === "button" ? a.label : a.text).toBe(action === "Deploy to Dev" ? "Building" : action);
+    expect(actionFor(r, true).text).toBe(action === "Deploy to Dev" ? "Building" : action.replace(/^(Promote|Deploy) to /, "Next: "));
   });
 });
 
@@ -55,8 +54,9 @@ describe("the action cell keeps the first deployment reachable", () => {
   it.each([
     ["nothing reached, may record: a link to the release page", fresh, true, { kind: "link", text: "Building", href: "/delivery/releases/CON/v2.5.0" }],
     ["nothing reached, may not record: text", fresh, false, { kind: "text", text: "Building" }],
-    ["moving, may record: the button", moving, true, { kind: "button", label: "Promote to Prod", environment: "Prod" }],
-    ["moving, may not record: what's next", moving, false, { kind: "text", text: "Next: to Prod" }],
+    // 081 amendment 5 (AC-61): no button in the row; what's next as text, the deployment from the row's pin.
+    ["moving, may record: what's next", moving, true, { kind: "text", text: "Next: Prod" }],
+    ["moving, may not record: what's next", moving, false, { kind: "text", text: "Next: Prod" }],
   ])("%s", (_, r, allowed, want) => expect(actionFor(r, allowed)).toMatchObject(want));
 });
 

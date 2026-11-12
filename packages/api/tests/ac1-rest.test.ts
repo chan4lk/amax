@@ -81,6 +81,8 @@ describe.skipIf(!hasDb)("035 AC-1 AC-2 REST API from the tool registry (Postgres
   it.each([
     ["a domain refusal", "refuse", 409, { error: "refused", message: "notes about this are refused (fictional rule)" }],
     ["an unexpected error", "crash", 500, { error: "internal" }],
+    // 087 review round 1: switched off, try later; not a conflict, and its message shows.
+    ["a part of amax that is switched off", "unavailable", 503, { error: "unavailable", message: "the module that answers this is switched off (fictional)" }],
   ] as const)("060 AC6 REST answers %s with its status and only a refusal's message", async (_, text, status, want) => {
     const kasun = await person(db.app, T, `kasun-ac6-${text}`, ["Engineer"]);
     const res = await call(rest("/tools/add_note", { token: kasun.token, body: { text } }));

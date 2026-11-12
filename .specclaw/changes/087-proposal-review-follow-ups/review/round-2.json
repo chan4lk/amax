@@ -1,0 +1,109 @@
+{
+ "counts": {
+  "blocker": 0,
+  "major": 0,
+  "minor": 1
+ },
+ "escalated": [],
+ "files": [
+  "modules/delivery/tests/navigation-081.test.ts",
+  "modules/delivery/ui/ProposalPage.tsx",
+  "modules/time/server/proposal-lines.ts",
+  "modules/time/tests/proposal-time.test.ts",
+  "packages/api/src/rest.ts",
+  "packages/api/tests/ac1-rest.test.ts",
+  "packages/api/tests/people.ts"
+ ],
+ "final": false,
+ "findings": [
+  {
+   "file": "modules/delivery/ui/ProposalPage.tsx",
+   "fp": "4c0e3578445e",
+   "in_delta": false,
+   "line": 31,
+   "message": "Not fixed (the earlier finding was claimed fixed). The screens still use their own 'no owner' rule (`ownerName` is null) instead of `hasNoOwner`. The places are `ProposalPage.tsx:31` (the warn chip), `ProposalsPage.tsx:145`, `ProjectPage.tsx:55,57`, and `proposal-card.ts:90,96` (the From and Owner lines show 'Unassigned'). Meanwhile `attention.ts:32`, `pin-offers.ts:100` and `agent.ts:67` call `hasNoOwner`, which treats a row with an owner_user_id as owned. Fix: decide the chip and the label through `hasNoOwner(p)`. When a row has a user but no name, show that user's name. Add these screens and the card to the AC-1 table test.",
+   "original_severity": "major",
+   "pass": "review",
+   "pre_existing": true,
+   "rule": "B1",
+   "scenario": "A proposal has owner_user_id set and owner_name null. The detail page shows the 'Unassigned' warn chip and the update card shows 'From: Unassigned'. On the same row, the attention list has no 'Unassigned' need and the pin offers no 'Make me the owner'.",
+   "severity": "major"
+  },
+  {
+   "file": "modules/delivery/server/tasks.ts",
+   "fp": "231511bf5925",
+   "in_delta": false,
+   "line": 44,
+   "message": "Not fixed. 'Is withdrawn' is still written inline several times, and the copies disagree. `tasks.ts:44` and `services.ts:43` test `meta?.withdrawn` for truthiness. `lifecycle.ts:26`, `agent.ts:25` and `queries.ts:47` require `=== true`. `queries.ts:64` (ACTIVE) and `contracts.ts:72` compare `meta->>'withdrawn'` to 'true'. `tasks.ts:82` and `services.ts:118` check only `withdrawn_at` and ignore meta.withdrawn completely. Fix: export one predicate (the one in `lifecycle.ts`, or put it beside `hasNoOwner`) and call it from every TS site. Keep the SQL form in step with it.",
+   "original_severity": "major",
+   "pass": "review",
+   "pre_existing": true,
+   "rule": "B4",
+   "scenario": "(1) A proposal has meta.withdrawn = \"yes\" (or 1). tasks.ts:44 refuses to close its task as withdrawn, but lifecycle.ts and ACTIVE treat it as active. (2) A proposal the repo withdrew (meta.withdrawn = true, withdrawn_at null) gets through tasks.ts:82 and services.ts:118, which check only withdrawn_at.",
+   "severity": "major"
+  },
+  {
+   "file": "modules/time/db/migrations/0009_entry_proposal.sql",
+   "fp": "b70f149ca9aa",
+   "in_delta": false,
+   "line": 3,
+   "message": "Not fixed. 0009 still runs `add column proposal_id uuid references delivery.proposal(id)`. On a fresh install with Delivery switched off, this fails before 0010 can drop the key, so AC-10 ('Time's migrations run with Delivery off') still fails. Fix: remove the `references` clause from 0009, which hasn't merged yet. Keep 0010 as an `if exists` drop for databases that already ran 0009. Separately, `0001_time.sql:31` still references `delivery.project(id)`; that line was there before this change.",
+   "original_severity": "major",
+   "pass": "review",
+   "pre_existing": true,
+   "rule": "B1",
+   "scenario": "With AMAX_MODULES_DISABLED=delivery on an empty database, Time's migrations stop at 0009 with 'relation delivery.proposal does not exist'.",
+   "severity": "major"
+  },
+  {
+   "file": "modules/time/tests/proposal-time.test.ts",
+   "fp": "dda842af92e2",
+   "in_delta": true,
+   "line": 183,
+   "message": "The table for the partial-at-the-bound fix has only two variants. Add at least one more: a viewer who sees some lines but fewer than MAX_LINES by the last batch, where rows past the bound remain. That should give partial true with the lines kept. The REST fix in `ac1-rest.test.ts:85` likewise adds only one new row: assert the `retry-after` header, and check that an error with code 'unavailable' and retryable false also maps to 503.",
+   "original_severity": "minor",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B2",
+   "scenario": "",
+   "severity": "minor"
+  }
+ ],
+ "head": "becd1a37c68fce8d7ddb6ac91faa719e5f5cb03b",
+ "impact": [
+  "apps/mock/app/layout.tsx",
+  "apps/mock/public/mock/index.html",
+  "apps/mock/scripts/copy-mock.mjs",
+  "apps/web/app/(app)/overview.css",
+  "apps/web/app/(app)/settings/hub.css",
+  "apps/web/app/(app)/settings/settings.css",
+  "apps/web/app/(app)/suggestions/suggestions.css",
+  "apps/web/app/(public)/welcome/welcome.css",
+  "apps/web/app/layout.tsx",
+  "apps/web/tests/chat-markdown.test.ts",
+  "apps/web/tests/e2e/api-visual.spec.ts",
+  "apps/web/tests/e2e/backups-visual.spec.ts",
+  "apps/web/tests/e2e/delivery-visual.spec.ts",
+  "apps/web/tests/e2e/delivery.spec.ts",
+  "apps/web/tests/e2e/marketing-theme.spec.ts",
+  "apps/web/tests/e2e/retention-visual.spec.ts",
+  "apps/web/tests/e2e/secrets.spec.ts",
+  "apps/web/tests/e2e/shell.spec.ts",
+  "apps/web/tests/marketing-demo.test.ts",
+  "apps/web/tests/marketing-prose.ts"
+ ],
+ "model": "opus",
+ "passes": [
+  "review",
+  "design"
+ ],
+ "prompt_chars": 60217,
+ "round": 2,
+ "since": "0314f2b7",
+ "status": "clean",
+ "system_chars": 42977,
+ "tier": "review",
+ "tools": "Read,Grep,Glob",
+ "ts_end": 1794063442,
+ "ts_start": 1794063353
+}

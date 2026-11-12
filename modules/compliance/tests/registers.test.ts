@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, onTestFinished, vi } from "vitest";
 import { hasDb } from "@amax/db/testdb";
 import { createRegistry } from "@amax/mcp";
 import { EVENTS } from "../contracts";
@@ -37,6 +37,9 @@ describe.skipIf(!hasDb)("compliance registers (Postgres)", () => {
   }, 60_000);
 
   it("AC2 a personal-data breach gets its country pack's deadline, the owner is told, and reminders come daily in the last week", async () => {
+    // 103: the clock is the fixtures' day, so the new breach's deadline never lands in the Payslip breach's last week.
+    vi.useFakeTimers({ toFake: ["Date"], now: new Date("2026-10-16T08:00:00Z") });
+    onTestFinished(() => { vi.useRealTimers(); });
     const lk = await call("nimal", "report_incident", { title: "Test CV shared in a public channel (fictional)", personalData: true, dataClass: "candidate", entity: "LK", owner: "Ravi Perera" });
     expect(lk).toMatchObject({ breach: true, status: "assessing" });
     expect(new Date(lk.notifyBy).getTime() - Date.now()).toBeGreaterThan(71.9 * 3_600_000);
@@ -45,7 +48,10 @@ describe.skipIf(!hasDb)("compliance registers (Postgres)", () => {
     const au = (await call("sahan", "get_compliance_overview", {})).incidents.find((i: Any) => i.title === "Payslip emailed to the wrong person");
     expect(au).toMatchObject({ notifyBy: "2026-11-15T02:00:00.000Z", regulator: "OAIC" });
     const remind = (now: string) => remindBreaches(contextFor.job(T, "test"), { now });
-    expect((await remind("2026-11-01T08:00:00Z")).reminded).toEqual([lk.ref]);
+    // The new breach is due 72 h from the pinned clock, so its last week is checked from its own deadline (081). The
+    // Payslip breach keeps its fixed dates.
+    const lkWeek = new Date(new Date(lk.notifyBy).getTime() - 6 * 86_400_000).toISOString();
+    expect((await remind(lkWeek)).reminded).toContain(lk.ref);
     expect((await remind("2026-11-10T08:00:00Z")).reminded).toContain(au.ref);
     expect((await remind("2026-11-10T09:00:00Z")).reminded).toEqual([]);
     expect((await db.events(EVENTS.breachDeadline)).find((e) => e.incidentId === au.id)).toMatchObject({ daysLeft: 5 });

@@ -1,0 +1,65 @@
+{
+ "counts": {
+  "blocker": 0,
+  "major": 0,
+  "minor": 1
+ },
+ "escalated": [],
+ "files": [
+  "apps/mock/public/mock/index.html",
+  "modules/compliance/tests/registers.test.ts"
+ ],
+ "final": false,
+ "findings": [
+  {
+   "file": "modules/compliance/tests/registers.test.ts",
+   "fp": "60fa6688833b",
+   "in_delta": true,
+   "line": 41,
+   "message": "The pinned clock hard-codes the fixtures' day (\"2026-10-16T08:00:00Z\"). The Payslip breach's date lives separately in modules/compliance/fixtures/data.ts:30 (awareAt \"2026-10-16T02:00:00Z\"), and its deadline is hard-coded again at line 49. These are three copies of the same date. If the fixtures are moved to a new date (the repo has done this before for date drift), the clock stays at the old date. The new breach's last week can then overlap the Payslip breach's again, and the daysLeft: 5 check at line 57 starts depending on when the test runs. Fix: work out the clock from the fixture's awareAt (export it from fixtures/data.ts), or add a comment at the fixture that ties the two together.",
+   "original_severity": "minor",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B4",
+   "scenario": "Fixture awareAt moved to 2026-11-10 and the test clock left at 2026-10-16 \u2192 the Payslip breach's notifyBy no longer equals 2026-11-15, and the reminder checks at lines 55\u201357 fail or pass depending on the date.",
+   "severity": "minor"
+  }
+ ],
+ "head": "6e1646188552f768b3c40ecf9f6043309e335da7",
+ "impact": [
+  "apps/web/app/(app)/settings/api/LimitTable.tsx",
+  "apps/web/app/(app)/settings/api/format.ts",
+  "apps/web/components/agents/DecideTable.tsx",
+  "apps/web/components/shell/SessionWatch.tsx",
+  "apps/web/lib/admin/api.ts",
+  "apps/web/lib/admin/tool.ts",
+  "apps/web/lib/agents-fixtures.ts",
+  "apps/web/proxy.ts",
+  "apps/web/tests/admin/limits.test.ts",
+  "apps/web/tests/admin/proxy-wiring.test.ts",
+  "apps/web/tests/e2e/api-seed.ts",
+  "modules/delivery/suggestions.ts",
+  "modules/helpdesk/contracts.ts",
+  "modules/helpdesk/db/migrations/0001_helpdesk.sql",
+  "modules/helpdesk/fixtures/data.ts",
+  "modules/helpdesk/fixtures/index.ts",
+  "modules/helpdesk/mcp.ts",
+  "modules/helpdesk/module.ts",
+  "modules/helpdesk/server/handlers.ts",
+  "modules/helpdesk/server/rows.ts"
+ ],
+ "model": "opus",
+ "passes": [
+  "review",
+  "design"
+ ],
+ "prompt_chars": 54418,
+ "round": 1,
+ "since": null,
+ "status": "clean",
+ "system_chars": 43247,
+ "tier": "review",
+ "tools": "Read,Grep,Glob",
+ "ts_end": 1794493352,
+ "ts_start": 1794493304
+}

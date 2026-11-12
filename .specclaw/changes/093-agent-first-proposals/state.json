@@ -1,0 +1,10 @@
+{
+  "change": "093-agent-first-proposals",
+  "phase": "verify",
+  "branch": "",
+  "phases": {
+    "proposal": {"status":"approved","at":"2026-11-10T05:46:46Z"},
+    "tasks": {"status":"done","at":"2026-11-10T07:21:54Z"},
+    "verify": {"status":"done","at":"2026-11-10T08:42:33Z"}
+  }
+}

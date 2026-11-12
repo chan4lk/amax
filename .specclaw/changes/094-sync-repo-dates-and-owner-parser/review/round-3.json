@@ -1,0 +1,95 @@
+{
+ "counts": {
+  "blocker": 0,
+  "major": 3,
+  "minor": 0
+ },
+ "escalated": [],
+ "files": [
+  "modules/delivery/server/proposal-detail.ts",
+  "modules/delivery/server/push.ts",
+  "modules/delivery/server/repo-time.ts",
+  "modules/delivery/server/services.ts",
+  "modules/delivery/sync/import.ts",
+  "modules/delivery/tests/repo-dates-094.test.ts"
+ ],
+ "final": false,
+ "findings": [
+  {
+   "file": "modules/delivery/server/proposal-detail.ts",
+   "fp": "1343d9f087e7",
+   "in_delta": true,
+   "line": 50,
+   "message": "The repo history lines now say which read they came from, but they take it from `meta.source`. That field holds the latest sync's ref and sha, not the read that produced each phase time. This round's `repoPhasesOf` carries stored phase times forward in two cases: the sender didn't read them (an older plugin), or a phase arrived dated in the future. In both, the label names a later commit that never supplied that time, so the history points at the wrong revision. Fix: store the source next to each phase time when it is read, for example `repoPhases[k] = { at, source }` or a parallel `repoPhasesSource` map, and keep it with the time in `repoPhasesOf`. The line then names the read that really produced the time. Add test rows for a kept phase and for a phase that arrives dated in the future.",
+   "original_severity": "major",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B5",
+   "scenario": "A push at main@aaaaaaa sends phaseTimes {verify: 2026-10-01}. A later push at main@bbbbbbb from an older plugin, or with verify dated in 2030, keeps the stored verify time and sets meta.source to main@bbbbbbb. The detail page then shows 'Verified in the repo \u2014 From the repo, read at main@bbbbbbb', a commit that never supplied that time.",
+   "severity": "major"
+  },
+  {
+   "file": "modules/delivery/server/services.ts",
+   "fp": "561a0311aaf4",
+   "in_delta": true,
+   "line": 235,
+   "message": "The round-1/round-2 rule (phase times the sender didn't read are unknown, so the stored ones stand) now lives only in desired(). Push and self-sync use desired(), but the direct sync_proposal path does not. mcp.ts:117 passes `meta: a.meta ?? {}` as-is, and upsertSpecProposal sets `meta = excluded.meta` (services.ts:336). So a sync_proposal call whose meta has no `repoPhases`, or that sends no meta at all, wipes the stored phase times. The new refine at line 235 accepts that input (`m.repoPhases === undefined`), so the absent case passes validation and erases data. Fix: resolve repoPhases in upsertSpecProposal from the locked `found.meta`, using the same per-phase merge as repoPhasesOf (absent keeps the stored value; a future phase keeps its stored time). Then every writer goes through one rule. Add a sync_proposal row to the variant table.",
+   "original_severity": "major",
+   "pass": "design",
+   "pre_existing": false,
+   "rule": "B3",
+   "scenario": "Stored FLT-301 meta.repoPhases = {proposal: 2026-10-01, verify: 2026-10-05}. CI calls the sync_proposal tool with meta {lane:'Delivery', sha:'abc'} and no repoPhases \u2192 the row's meta.repoPhases is gone, and the proposal history drops its 'Approved in the repo' and 'Verified in the repo' lines.",
+   "severity": "major"
+  },
+  {
+   "file": "modules/delivery/server/services.ts",
+   "fp": "2f63c25c2f0f",
+   "in_delta": true,
+   "line": 235,
+   "message": "The same input now follows two different rules depending on the path. In push and self-sync, desired()/repoPhasesOf treat a phase dated in the future as unknown: they keep the stored time and still apply the write. In sync_proposal, the storedRepoPhases refine rejects the whole SyncInput, so title, phase, tasks and the stale mark are not written at all. createdAt and doneAt in the same SyncInput use repoTime, which nulls a future date instead of refusing, so even within one input the dates disagree. Fix: one rule in one place. Either sync_proposal resolves a future phase against the stored one, as desired() does (see the previous finding), or every path refuses. Do not keep both.",
+   "original_severity": "major",
+   "pass": "design",
+   "pre_existing": false,
+   "rule": "B4",
+   "scenario": "A CI runner with a clock 10 minutes fast calls sync_proposal with tasks [T3 done] and meta.repoPhases {verify: now+10m} \u2192 the call is refused and T3 stays open in amax. The same record sent through sync_specclaw (push) applies: T3 is closed and verify keeps its stored time.",
+   "severity": "major"
+  }
+ ],
+ "head": "70b56818f5cdf9956fc055cf908c056e1fb0152c",
+ "impact": [
+  ".github/workflows/ci.yml",
+  "apps/mock/app/page.tsx",
+  "apps/mock/public/mock/index.html",
+  "apps/web/app/(public)/welcome/page.tsx",
+  "apps/web/app/api/mcp/route.ts",
+  "apps/web/app/api/v1/[...path]/route.ts",
+  "apps/web/components/overview/SeriesChart.tsx",
+  "apps/web/lib/admin/status.ts",
+  "apps/web/lib/server.ts",
+  "apps/web/lib/site.ts",
+  "apps/web/tests/site-origin.test.ts",
+  "apps/web/tsconfig.json",
+  "modules/allocations/tsconfig.json",
+  "modules/career/server/live-hr.ts",
+  "modules/career/tsconfig.json",
+  "modules/compliance/server/overview.ts",
+  "modules/compliance/tests/contracts.test.ts",
+  "modules/compliance/tsconfig.json",
+  "modules/delivery/sync/specclaw.ts",
+  "modules/delivery/tests/sync-push.test.ts"
+ ],
+ "model": "opus",
+ "passes": [
+  "review",
+  "design"
+ ],
+ "prompt_chars": 67449,
+ "round": 3,
+ "since": "693b7336",
+ "status": "open",
+ "system_chars": 43096,
+ "tier": "review",
+ "tools": "Read,Grep,Glob",
+ "ts_end": 1794304255,
+ "ts_start": 1794304153
+}

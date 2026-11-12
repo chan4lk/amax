@@ -5,6 +5,7 @@ import { assertCan, can, viewerOf, type Viewer } from "@amax/auth";
 import { defineService, ForbiddenError, getRuntime } from "@amax/core/server";
 import { normaliseRepo, RepoUrl } from "../sync/repo-url";
 import { byLine, whoJoins } from "./activity";
+import { invalid, notFound } from "./refusal";
 
 // 062: the one repo a project's specclaw pushes are accepted from (push.ts), and the project's
 // Repo sync card: the linked repo and its recent pushes.
@@ -18,14 +19,14 @@ export const linkProjectRepo = defineService({
   input: z.object({ projectKey: z.string(), repoUrl: RepoUrl.nullable(), defaultBranch: z.string().min(1).max(200).optional() }),
   async run(tx, input, ctx) {
     const [p] = await tx.execute(sql`select id, repo_url, repo_default_ref from delivery.project where key = ${input.projectKey}`);
-    if (!p) throw new Error(`no project ${input.projectKey}`);
+    if (!p) throw notFound(`no project ${input.projectKey}`);
     const v = viewerOf(ctx);
     if (v) assertCan(v, "delivery:project:link", { projectId: p.id as string });
     const repoUrl = input.repoUrl ? normaliseRepo(input.repoUrl) : null;
     // The default branch is stored with the link, never taken from a push: it decides which pushes cover every change.
     // A relink to the same repo keeps the stored branch unless one is given; a first link or another repo must name it.
     const defaultRef = repoUrl ? input.defaultBranch ?? (repoUrl === p.repo_url ? (p.repo_default_ref as string | null) : null) : null;
-    if (repoUrl && !defaultRef) throw new Error(`name ${input.projectKey}'s default branch (for example main) when linking its repo`);
+    if (repoUrl && !defaultRef) throw invalid(`name ${input.projectKey}'s default branch (for example main) when linking its repo`);
     await tx.execute(sql`update delivery.project set repo_url = ${repoUrl}, repo_default_ref = ${defaultRef} where id = ${p.id}`);
     return { result: { projectKey: input.projectKey, repoUrl, defaultBranch: defaultRef }, resourceId: p.id as string, before: { repoUrl: p.repo_url, defaultBranch: p.repo_default_ref }, after: { repoUrl, defaultBranch: defaultRef } };
   },
@@ -39,10 +40,11 @@ const read = <T>(viewer: Viewer, fn: (tx: Tx) => Promise<T>) => {
 // Who pushed, as recorded: the person by name (their MCP client is not known), or the credential or agent for them.
 const pushBy = (r: Record<string, unknown>) => (r.actor_kind === "user" ? String(r.actor_name ?? "Someone") : byLine(r as never));
 
-export type PushRow = { id: string; at: string; by: string; ref: string; sha: string; outcome: "applied" | "refused"; created: number; updated: number; unchanged: number; skipped: string[]; reason: string | null; projectKey: string };
+export type PushRow = { id: string; at: string; by: string; ref: string; sha: string; outcome: "applied" | "refused"; created: number; updated: number; unchanged: number; withdrawn: number; skipped: string[]; needsReview: boolean; reason: string | null; projectKey: string };
 const push = (r: Record<string, unknown>): PushRow => ({
   id: r.id as string, at: new Date(r.at as string).toISOString(), by: pushBy(r), ref: r.ref as string, sha: r.sha as string, outcome: r.outcome as PushRow["outcome"],
-  created: Number(r.created), updated: Number(r.updated), unchanged: Number(r.unchanged), skipped: r.skipped as string[], reason: (r.reason as string | null) ?? null, projectKey: r.project_key as string,
+  created: Number(r.created), updated: Number(r.updated), unchanged: Number(r.unchanged), withdrawn: Number(r.withdrawn ?? 0), skipped: r.skipped as string[],
+  needsReview: r.needs_review === true, reason: (r.reason as string | null) ?? null, projectKey: r.project_key as string,
 });
 const pushes = (where: ReturnType<typeof sql>, limit: number) => sql`select a.*, pr.key as project_key, au.name as actor_name, sp.name as principal_name, fu.name as for_name
   from delivery.sync_push a join delivery.project pr on pr.id = a.project_id ${whoJoins} where ${where} order by a.at desc limit ${limit}`;

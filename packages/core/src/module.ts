@@ -285,6 +285,12 @@ export type ModuleManifest = {
   menu?: "rail" | "profile";
   /** A control the module adds to the top bar for the signed-in viewer (030's bell). */
   topBar?: ComponentType<{ viewer: unknown }>;
+  /**
+   * 081 review round 1: what this module fills in another module's named slot. The slot's owner declares its name and
+   * type in its contracts and reads it with `provided()`; the provider imports only those contracts, so the graph keeps
+   * its direction. A slot no installed module fills reads as empty, which is how a switched-off module looks.
+   */
+  provides?: Record<string, unknown>;
   /** `payloads`: each emitted event's fields with their 002 class or "plain" (declarePayload). Outgoing
    * webhooks send a declared plain field, mask a classified one and mask any field not declared (035, review 058). */
   events?: {

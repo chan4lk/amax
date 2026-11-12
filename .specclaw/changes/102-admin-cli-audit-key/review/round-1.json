@@ -1,0 +1,79 @@
+{
+ "counts": {
+  "blocker": 0,
+  "major": 1,
+  "minor": 1
+ },
+ "escalated": [],
+ "files": [
+  "README.md",
+  "packages/auth/bin/admin.ts",
+  "packages/auth/tests/admin-cli-102.test.ts"
+ ],
+ "final": false,
+ "findings": [
+  {
+   "file": "packages/auth/bin/admin.ts",
+   "fp": "238b3e9abc22",
+   "in_delta": true,
+   "line": 29,
+   "message": "The CLI reads AUDIT_HASH_KEY straight from process.env and only checks that it is set. The schema in packages/core/src/env.ts:15 (`z.string().min(32)`) is skipped, so this is a second, looser copy of the key rule (B4). `configureRuntime`/`setChainKey` accept any string. A malformed key is used as is: principal-add and user-deactivate then write audit rows hashed with a key the app would refuse at boot, and the chain no longer verifies under the deployment's real key. Fix: validate through core's env schema (`loadEnv()` or the same zod rule) before `createDb`, and fail closed on a short key. Add test rows for an empty key and a short key next to the unset case in the AC-3 test.",
+   "original_severity": "major",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B6",
+   "scenario": "AUDIT_HASH_KEY=abc pnpm --filter @amax/auth admin principal-add --tenant T --email maya@lumen.test --name x --roles delivery:proposal:sync \u2192 exits 0 and writes auth.principal.create hashed with 'abc'. verifyAuditChain(tx, T, <the app's 32+ char key>) then returns ok:false, where the CLI should have refused like the app does.",
+   "severity": "major"
+  },
+  {
+   "file": "packages/auth/tests/admin-cli-102.test.ts",
+   "fp": "93b51ab112cd",
+   "in_delta": true,
+   "line": 64,
+   "message": "The AC-4 test is named 'each command exits on its own', but it only runs scim-token. That is the one command whose runtime setup this change did not touch. The exit of principal-add and user-deactivate (the commands that now call configureRuntime) is proven only indirectly, through spawnSync's timeout in AC-1 and AC-2. Either run the two audited commands in AC-4 and assert that `error` and `signal` are unset, or rename the test.",
+   "original_severity": "minor",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B2",
+   "scenario": "",
+   "severity": "minor"
+  }
+ ],
+ "head": "d3f6b3fcd48f45bc2f9db9531d76a819bf30b3a9",
+ "impact": [
+  "apps/web/lib/rate-wiring.ts",
+  "apps/web/lib/server.ts",
+  "apps/web/scripts/backups.ts",
+  "apps/web/scripts/dev-seed.ts",
+  "apps/web/tests/admin/fixture.ts",
+  "apps/web/tests/e2e/api-seed.ts",
+  "apps/web/tests/e2e/global-auth.ts",
+  "apps/web/tests/e2e/proposal-agent.ts",
+  "apps/web/tests/e2e/secrets-seed.ts",
+  "modules/allocations/tests/setup.ts",
+  "modules/career/tests/db.ts",
+  "modules/compliance/server/evidence.ts",
+  "modules/compliance/tests/db.ts",
+  "modules/delivery/sync/bin.ts",
+  "modules/delivery/tests/chat-043.test.ts",
+  "modules/delivery/tests/chat-first.test.ts",
+  "modules/delivery/tests/chat.test.ts",
+  "modules/delivery/tests/create-project-contract.test.ts",
+  "modules/delivery/tests/create-project-surfaces.test.ts",
+  "modules/delivery/tests/delivery.test.ts"
+ ],
+ "model": "opus",
+ "passes": [
+  "review",
+  "design"
+ ],
+ "prompt_chars": 55575,
+ "round": 1,
+ "since": null,
+ "status": "open",
+ "system_chars": 43086,
+ "tier": "review",
+ "tools": "Read,Grep,Glob",
+ "ts_end": 1794490165,
+ "ts_start": 1794490080
+}

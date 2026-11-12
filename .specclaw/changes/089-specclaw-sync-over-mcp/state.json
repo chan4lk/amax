@@ -1,0 +1,10 @@
+{
+  "change": "089-specclaw-sync-over-mcp",
+  "phase": "verify",
+  "branch": "",
+  "phases": {
+    "proposal": {"status":"approved","at":"2026-11-09T12:32:42Z"},
+    "tasks": {"status":"done","at":"2026-11-09T12:34:49Z"},
+    "verify": {"status":"done","at":"2026-11-09T15:46:51Z"}
+  }
+}
