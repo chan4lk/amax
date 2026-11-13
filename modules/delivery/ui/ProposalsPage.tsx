@@ -54,7 +54,8 @@ export async function ProposalsPage({ viewer: raw, params, searchParams = {} }: 
     <>
       <div className="row head">
         {/* 104 AC-14: what the page is and where proposals come from is an info icon by the title, not a lede or a line in the actions. */}
-        <div><h1>Proposals{action.kind === "repo-line" ? <AgentFirstLine repoUrl={action.repoUrl} intro={LEDE} /> : null}</h1>{action.kind !== "repo-line" && <p className="lede">{LEDE}</p>}</div>
+        {/* Review round 1: the icon sits beside the heading, not in it, so the heading's name stays "Proposals". */}
+        <div><div className="dv-title"><h1>Proposals</h1>{action.kind === "repo-line" && <AgentFirstLine repoUrl={action.repoUrl} intro={LEDE} />}</div>{action.kind !== "repo-line" && <p className="lede">{LEDE}</p>}</div>
         {action.kind === "repo-line" ? action.addByHand && <div className="actions"><NewProposalButton secondary /></div>
           : action.kind === "new-proposal" && <div className="actions"><NewProposalButton project={filtered ? { pin: projectPin(filtered), name: filtered.name } : undefined} /></div>}
       </div>

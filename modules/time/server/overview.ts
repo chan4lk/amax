@@ -14,14 +14,17 @@ const pct = (part: number, all: number) => (all ? Math.round((part / all) * 100)
 export const hoursTrend = (v: Viewer, a: { weeks?: number; projectId?: string }) =>
   read(v, async (tx) => weeklyHours(tx, v, { last: await currentWeek(tx, v.userId), weeks: a.weeks ?? 12, projectId: a.projectId }));
 
-// 104 AC-15: submitted weeks wait whatever week they're from, so the Overview lists each week with timesheets the viewer
-// can approve, newest first (the last WAITING_WEEKS weeks with a submitted timesheet), not just the current one.
+// 104 AC-15: submitted weeks wait whatever week they're from, so the Overview lists the newest WAITING_WEEKS weeks that
+// hold a timesheet this viewer can approve. Review round 1: the limit applies after the approver check, so weeks waiting
+// on other approvers can't push this viewer's out; SCAN_WEEKS bounds how far back it looks.
 const WAITING_WEEKS = 8;
+const SCAN_WEEKS = 52;
 async function waiting(v: Viewer) {
-  const weeks = await read(v, async (tx) => (await tx.execute(sql`select distinct iso_year, iso_week from time.week where status = 'submitted' order by iso_year desc, iso_week desc limit ${WAITING_WEEKS}`))
+  const weeks = await read(v, async (tx) => (await tx.execute(sql`select distinct iso_year, iso_week from time.week where status = 'submitted' order by iso_year desc, iso_week desc limit ${SCAN_WEEKS}`))
     .map((r) => ({ year: Number(r.iso_year), week: Number(r.iso_week) })));
   const out = [];
   for (const w of weeks) {
+    if (out.length === WAITING_WEEKS) break;
     const team = await teamWeek(v, w);
     const rows = team.rows.filter((r) => r.status === "submitted" && r.canApprove);
     if (!rows.length) continue;

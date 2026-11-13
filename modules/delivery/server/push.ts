@@ -12,7 +12,8 @@ import { KeyTakenError, markSyncedRows, upsertSpecProposal } from "./services";
 import { TaskInput } from "./tasks";
 import { notFound } from "./refusal";
 import { repoOwnerStale } from "./owner";
-import { isWithdrawn } from "./readiness";
+import { isWithdrawn, withdrawnIn } from "./readiness";
+import { clockOf } from "./queries";
 import { duplicateNumbers, skipReason } from "../sync/duplicates";
 import { ownerEmailOf } from "../sync/authors";
 import { SHA_RE } from "../sync/sha";
@@ -61,8 +62,9 @@ export const PushInput = z.object({
 /** Why a record wasn't written. `released` always, and `back` and `stale` on a branch, are standing: they
  * come back every push until main or a Prod deployment catches up. Anything else needs a person. */
 type Code = "released" | "back" | "stale" | "unreadable" | "held" | "nomatch" | "duplicate";
-// 104 AC-4, AC-5: `drafted` timesheet suggestions from the changes' commits, and `unlinked` commits whose author has no verified git identity.
-type Counts = { created: number; updated: number; unchanged: number; withdrawn: number; ignored: number; skipped: string[]; needsReview: boolean; drafted: number; unlinked: number };
+// 104 AC-4, AC-5: `drafted` timesheet suggestions from the changes' commits; `unlinked` commits whose author has no verified git identity;
+// `unverified` commits by someone other than the pusher, which only a service credential (CI) may draft (review round 1).
+type Counts = { created: number; updated: number; unchanged: number; withdrawn: number; ignored: number; skipped: string[]; needsReview: boolean; drafted: number; unlinked: number; unverified: number };
 export type PushResult = Counts & { outcome: "preview" | "applied" | "unchanged" | "refused"; projectKey: string; reason: string | null };
 
 const Plan = PushInput.omit({ dryRun: true }).extend({ projectId: z.string().uuid() });
@@ -97,7 +99,7 @@ async function applyPush(tx: Tx, p: Plan, ctx: ServiceContext) {
   const own = p.ref.split("/").at(-1);
   const mine = p.records.filter((x) => onDefault || x.dir === own);
   const byKey = new Map((await storedSpecRows(tx, p.projectKey)).map((e) => [e.key as string, e as Stored]));
-  const counts: Counts = { created: 0, updated: 0, unchanged: 0, withdrawn: 0, ignored: p.records.length - mine.length, skipped: [], needsReview: false, drafted: 0, unlinked: 0 };
+  const counts: Counts = { created: 0, updated: 0, unchanged: 0, withdrawn: 0, ignored: p.records.length - mine.length, skipped: [], needsReview: false, drafted: 0, unlinked: 0, unverified: 0 };
   const dupes = duplicateNumbers(p.records);
   const skip = (key: string, [code, text]: [Code, string]) => {
     counts.skipped.push(`${key}: ${text}`);
@@ -107,7 +109,9 @@ async function applyPush(tx: Tx, p: Plan, ctx: ServiceContext) {
   if (!onDefault && !mine.length) skip(p.ref, ["nomatch", `not the default branch (${String(project.repo_default_ref)}) and no change is named ${own}`]);
   const events: Emitted[] = [];
   const same: string[] = [];
-  // 104 AC-4: the records this push read into a stored proposal (written or unchanged), whose commits may draft hours.
+  // 104 AC-4: the records whose commits may draft hours: each one this push read for a live stored proposal (or wrote),
+  // whether or not its phase write was accepted (review round 1: an archived change still drafts its last days). A
+  // record the sync can't trust its key for (duplicate number, unreadable, key held by another) drafts nothing.
   const timed: { key: string; commits: CommitInput[] }[] = [];
   for (const r of mine) {
     const key = `${p.projectKey}-${r.number}`;
@@ -125,6 +129,7 @@ async function applyPush(tx: Tx, p: Plan, ctx: ServiceContext) {
       if (!counts.skipped.includes(`${key}: ${text}`)) skip(key, [code, text]);
       continue;
     }
+    if (r.commits?.length) timed.push({ key, commits: r.commits });
     const prior = (cur?.meta ?? {}) as Stored;
     const base = desired(p.projectKey, { ...r, source: `${p.ref}@${p.sha}` }, p.sha, (cur?.tasks as Task[] | undefined) ?? [], { repoPhases: storedPhasesFor(cur) });
     // A change's branch may not have its PR link or verdict yet; main's word on them stands.
@@ -133,7 +138,6 @@ async function applyPush(tx: Tx, p: Plan, ctx: ServiceContext) {
     if (why) { skip(key, why); continue; }
     // 091 AC-7: unchanged files, but the owner the repo names may resolve differently now (a git identity linked since).
     const ownerEmail = ownerEmailOf(r);
-    if (r.commits?.length) timed.push({ key, commits: r.commits });
     if (cur && unchanged(cur, d) && !repoDatesStale(cur, d) && !(await repoOwnerStale(tx, ctx.tenantId, cur, ownerEmail))) { counts.unchanged++; same.push(key); continue; }
     try {
       const out = await upsertSpecProposal(tx, { projectKey: p.projectKey, project: { name: project.name as string, client: project.client as string }, source: "specclaw", sourceRef: r.dir, committedAt: p.committedAt, ...d, ownerEmail }, ctx, project);
@@ -141,20 +145,23 @@ async function applyPush(tx: Tx, p: Plan, ctx: ServiceContext) {
       events.push(...out.events);
     } catch (e) {
       if (!(e instanceof KeyTakenError)) throw e;
-      timed.pop();
+      if (timed.at(-1)?.key === key) timed.pop();
       skip(key, ["held", e.message]);
       continue;
     }
     if (cur) counts.updated++;
     else counts.created++;
   }
-  // 104 AC-4 to AC-8: hours from the commits, as drafts for their authors; only for days that have ended (UTC).
+  // 104 AC-4 to AC-8: hours from the commits, as drafts for their authors; only for days that have ended, each person's
+  // day in their own zone, "now" by Delivery's clock (a pinned tenant's today).
   if (timed.length) {
-    const ids = new Map((await tx.execute(sql`select id, key from delivery.proposal where project_id = ${p.projectId} and key = any(${textArray(timed.map((t) => t.key))})`)).map((x) => [x.key as string, x.id as string]));
+    const ids = new Map((await tx.execute(sql`select p.id, p.key from delivery.proposal p where p.project_id = ${p.projectId} and not ${withdrawnIn("p")}
+      and p.key = any(${textArray(timed.map((t) => t.key))})`)).map((x) => [x.key as string, x.id as string]));
     const records = timed.flatMap((t) => (ids.has(t.key) ? [{ proposalId: ids.get(t.key)!, proposalKey: t.key, commits: t.commits }] : []));
-    const time = await draftSyncTime(tx, ctx, { id: p.projectId, key: p.projectKey }, records, new Date().toISOString().slice(0, 10));
+    const time = await draftSyncTime(tx, ctx, { id: p.projectId, key: p.projectKey }, records, { source: `${p.ref}@${p.sha}`, now: await clockOf(tx) });
     counts.drafted = time.drafted;
     counts.unlinked = time.unlinked;
+    counts.unverified = time.unverified;
     events.push(...time.events);
   }
   // 089 AC-6: only a push from the default branch that carries every change may withdraw, by the shared rule.
@@ -199,7 +206,7 @@ const applied = defineService({
     const listed = Boolean(counts.created || counts.updated || counts.withdrawn || counts.needsReview);
     const [row] = listed ? await pushRow(tx, ctx, p, counts, "applied", null) : [null];
     return { result: { ...counts, listed }, resourceId: (row?.id as string | undefined) ?? null,
-      after: { projectId: p.projectId, ref: p.ref, sha: p.sha, created: counts.created, updated: counts.updated, unchanged: counts.unchanged, withdrawn: counts.withdrawn, skipped: counts.skipped, drafted: counts.drafted, unlinked: counts.unlinked }, events };
+      after: { projectId: p.projectId, ref: p.ref, sha: p.sha, created: counts.created, updated: counts.updated, unchanged: counts.unchanged, withdrawn: counts.withdrawn, skipped: counts.skipped, drafted: counts.drafted, unlinked: counts.unlinked, unverified: counts.unverified }, events };
   },
 });
 
@@ -212,7 +219,7 @@ const refused = defineService({
   input: Plan.omit({ records: true }).extend({ reason: z.string() }),
   async run(tx, p, ctx) {
     scope(ctx, p.projectId);
-    const [row] = await pushRow(tx, ctx, p, { created: 0, updated: 0, unchanged: 0, withdrawn: 0, skipped: [], needsReview: false, drafted: 0, unlinked: 0 }, "refused", p.reason);
+    const [row] = await pushRow(tx, ctx, p, { created: 0, updated: 0, unchanged: 0, withdrawn: 0, skipped: [], needsReview: false, drafted: 0, unlinked: 0, unverified: 0 }, "refused", p.reason);
     return { result: null, resourceId: row.id as string, after: { ref: p.ref, sha: p.sha, reason: p.reason } };
   },
 });
@@ -248,6 +255,6 @@ export async function pushSpecclaw(viewer: Viewer, raw: z.input<typeof PushInput
     if (!(e instanceof RepoRefused)) throw e;
     const { records: _, ...where } = plan;
     if (!dryRun) await refused(ctx, { ...where, reason: e.message });
-    return result("refused", { created: 0, updated: 0, unchanged: 0, withdrawn: 0, ignored: 0, skipped: [], needsReview: false, drafted: 0, unlinked: 0 }, e.message);
+    return result("refused", { created: 0, updated: 0, unchanged: 0, withdrawn: 0, ignored: 0, skipped: [], needsReview: false, drafted: 0, unlinked: 0, unverified: 0 }, e.message);
   }
 }

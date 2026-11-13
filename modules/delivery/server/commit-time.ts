@@ -20,8 +20,12 @@ export const setCommitTimeLogging = defineService({
   async run(tx, input, ctx) {
     if (input.enabled && !input.peopleNotified) throw invalid("tell the entity's people first that commits will draft their timesheets, then switch it on");
     const [before] = await tx.execute(sql`select enabled from delivery.commit_time where legal_entity_id = ${input.legalEntityId}`);
+    // 104 review round 1: notified_at is when the current enabled period began. Switching on again after off starts a new
+    // period (now), so commits made while it was off never draft; switching on while already on keeps the period.
     await tx.execute(sql`insert into delivery.commit_time (tenant_id, legal_entity_id, enabled, notified_at, set_by) values (${ctx.tenantId}, ${input.legalEntityId}, ${input.enabled}, ${input.enabled ? sql`now()` : null}, ${actorOf(ctx)})
-      on conflict (tenant_id, legal_entity_id) do update set enabled = excluded.enabled, notified_at = coalesce(excluded.notified_at, delivery.commit_time.notified_at), set_by = excluded.set_by, updated_at = now()`);
+      on conflict (tenant_id, legal_entity_id) do update set enabled = excluded.enabled,
+        notified_at = case when delivery.commit_time.enabled and excluded.enabled then delivery.commit_time.notified_at else coalesce(excluded.notified_at, delivery.commit_time.notified_at) end,
+        set_by = excluded.set_by, updated_at = now()`);
     return { result: { legalEntityId: input.legalEntityId, enabled: input.enabled }, resourceId: input.legalEntityId, before: { enabled: Boolean(before?.enabled) }, after: { enabled: input.enabled, peopleNotified: input.peopleNotified } };
   },
 });
@@ -33,11 +37,20 @@ export async function commitTimeSettings(viewer: Viewer) {
     from core.legal_entity e left join delivery.commit_time c on c.legal_entity_id = e.id order by e.name`)).map((r) => ({ legalEntityId: r.id as string, name: r.name as string, enabled: Boolean(r.enabled), notifiedAt: r.notified_at ? new Date(r.notified_at as string).toISOString() : null })));
 }
 
-/** Whether this person's legal entity drafts time from commits. */
-export async function commitTimeOn(tx: Tx, userId: string) {
-  const [r] = await tx.execute(sql`select c.enabled from auth.user u join delivery.commit_time c on c.legal_entity_id = u.legal_entity_id where u.id = ${userId}`);
-  return Boolean(r?.enabled);
+/**
+ * 104 review round 1: the one consent rule. For each person whose legal entity has commit time on, when its current
+ * enabled period began (an instant); a person missing from the map has it off. The webhook asks whether it's on; the
+ * repo sync also drafts only the days from that instant on.
+ */
+export async function commitTimeSince(tx: Tx, userIds: string[]): Promise<Map<string, string>> {
+  if (!userIds.length) return new Map();
+  const rows = await tx.execute(sql`select u.id, c.notified_at from auth.user u join delivery.commit_time c on c.legal_entity_id = u.legal_entity_id
+    where c.enabled and c.notified_at is not null and u.id::text in (${sql.join(userIds.map((id) => sql`${id}`), sql`, `)})`);
+  return new Map(rows.map((r) => [r.id as string, new Date(r.notified_at as string).toISOString()]));
 }
+
+/** Whether this person's legal entity drafts time from commits. */
+export const commitTimeOn = async (tx: Tx, userId: string) => (await commitTimeSince(tx, [userId])).has(userId);
 
 /** "Time: 1.5h" in a commit message: hours to draft, at most a working day. */
 export function hoursOf(message: string) {
@@ -56,6 +69,10 @@ export const draftCommitTime = defineService({
     const [p] = await tx.execute(sql`select p.id, p.key, p.project_id, pr.key as project_key from delivery.proposal p join delivery.project pr on pr.id = p.project_id where p.key = ${input.key}`);
     if (!p) throw notFound(`no proposal ${input.key}`);
     if (!(await commitTimeOn(tx, input.userId))) return { result: { drafted: false as boolean, repeated: false as boolean }, resourceId: p.id as string };
+    // 104 review round 1: the repo sync already drafted this person's day on this proposal (its commit ids are in
+    // commit_draft too, so the same commit is caught below); a webhook draft would count the day twice.
+    const [day] = await tx.execute(sql`select 1 from delivery.commit_day_draft where user_id = ${input.userId} and proposal_id = ${p.id} and day = ${input.day}`);
+    if (day) return { result: { drafted: false as boolean, repeated: true as boolean }, resourceId: p.id as string };
     // 071 review round 1: one draft per person and commit, for every provider (a repeated push drafts nothing).
     const [first] = await tx.execute(sql`insert into delivery.commit_draft (tenant_id, user_id, commit_id) values (${ctx.tenantId}, ${input.userId}, ${input.commit})
       on conflict do nothing returning commit_id`);

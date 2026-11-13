@@ -5,26 +5,51 @@ import { execFileSync } from "node:child_process";
 
 export type ChangeCommit = { id: string; email: string; at: string };
 
-/** A commit is a change's when its subject names the change: `specclaw(<NNN-slug>)` or `[specclaw] <NNN-slug>`. */
-export const namesChange = (subject: string, dir: string) => subject.startsWith(`specclaw(${dir})`) || subject.startsWith(`[specclaw] ${dir}`);
+const SUBJECT = /^(?:specclaw\((\d{3,}-[a-z0-9][a-z0-9-]*)\)|\[specclaw\] (\d{3,}-[a-z0-9][a-z0-9-]*)\b)/;
 
-const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-const MAX = 2000;
+/** The change a commit's subject names (`specclaw(<NNN-slug>)` or `[specclaw] <NNN-slug>`), or null. */
+export const changeOf = (subject: string) => {
+  const m = SUBJECT.exec(subject);
+  return m ? (m[1] ?? m[2]) : null;
+};
 
 /**
- * The change's commits reachable from `at`, newest first, merges left out. Git pre-filters by the subject's start and
- * the subject is checked again here, so a body line that mentions the change doesn't count. A failed walk reads as
- * no commits, which drafts nothing (amax keeps what it has).
+ * Review round 1: a squash merge (or any commit that folds several) names a change more than once in its message, the
+ * pre-squash subjects listed in its body. Its author time is the merge, not the work, and the work's own commits were
+ * read on their branch, so it isn't counted.
  */
-export function commitsOf(root: string, at: string, dir: string): ChangeCommit[] {
+export const foldsCommits = (message: string) => (message.match(/specclaw\(\d{3,}-|\[specclaw\] \d{3,}-/g) ?? []).length > 1;
+
+const MAX = 20_000;
+const SEP = "\u001e";
+
+/**
+ * Every change's commits reachable from `at`, by change folder, newest first: merges and squashes left out. One git walk
+ * for the whole repo (review round 1: one per change was a git process per folder), pre-filtered by git on the subject's
+ * start and checked again here, so a body line that mentions a change doesn't count. `undefined` when git couldn't be
+ * read, so the payload says the read wasn't made rather than "no commits".
+ */
+export function commitsByChange(root: string, at: string): Map<string, ChangeCommit[]> | undefined {
+  let out: string;
   try {
-    const grep = `^(specclaw\\(${escape(dir)}\\)|\\[specclaw\\] ${escape(dir)})`;
-    const out = execFileSync("git", ["log", at, "--no-merges", `-${MAX}`, "-E", `--grep=${grep}`, "--format=%H%x09%ae%x09%aI%x09%s"], { cwd: root, encoding: "utf8", stdio: ["ignore", "pipe", "ignore"], maxBuffer: 64 * 1024 * 1024 });
-    return out.split("\n").filter(Boolean).map((line) => {
-      const [id, email, at, ...subject] = line.split("\t");
-      return namesChange(subject.join("\t"), dir) ? [{ id, email, at: new Date(at).toISOString() }] : [];
-    }).flat();
+    out = execFileSync("git", ["log", at, "--no-merges", `-${MAX}`, "-E", "--grep=^(specclaw\\(|\\[specclaw\\] )", `--format=%H%x09%ae%x09%aI%x09%B${SEP}`],
+      { cwd: root, encoding: "utf8", stdio: ["ignore", "pipe", "ignore"], maxBuffer: 256 * 1024 * 1024 });
   } catch {
-    return [];
+    return undefined;
   }
+  const by = new Map<string, ChangeCommit[]>();
+  for (const c of out.split(SEP).map((x) => x.replace(/^\s+/, "")).filter(Boolean)) {
+    const [id, email, when, ...rest] = c.split("\t");
+    const message = rest.join("\t");
+    const dir = changeOf(message.split("\n")[0]);
+    if (!dir || foldsCommits(message)) continue;
+    by.set(dir, [...(by.get(dir) ?? []), { id, email, at: new Date(when).toISOString() }]);
+  }
+  return by;
 }
+
+/** One change's commits from `at` (see commitsByChange); `undefined` when git couldn't be read. */
+export const commitsOf = (root: string, at: string, dir: string) => {
+  const all = commitsByChange(root, at);
+  return all ? (all.get(dir) ?? []) : undefined;
+};

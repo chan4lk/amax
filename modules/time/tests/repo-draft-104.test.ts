@@ -20,7 +20,7 @@ describe.skipIf(!hasDb)("104 AC-4 hours the repo sync estimated are a draft sugg
   it("AC-4 says how many commits it came from; accepted, it's agent time from the repo sync on the proposal, in a draft week", async () => {
     const nimal = await db.as("nimal");
     const [con] = await db.q(sql`select id from delivery.project where key = 'CON'`);
-    const c: CommitTime = { userId: nimal.userId, projectId: con.id as string, projectKey: "CON", proposalKey: "CON-014", day: "2026-10-20", hours: 1.75, commit: "CON-014/2026-10-20", commits: 6 };
+    const c: CommitTime = { userId: nimal.userId, projectId: con.id as string, projectKey: "CON", proposalKey: "CON-014", day: "2026-10-20", hours: 1.75, commit: "CON-014/2026-10-20", commits: 6, source: "repo" };
     await withTenant(db.app, T, (tx) => commitTimeHandler.handle({ tx, tenantId: T, event: { id: "ev-104", name: DELIVERY.commitTime, payload: c } }));
     const [s] = await db.q(sql`select id, title, detail, agent_name from agents.suggestion where kind = 'time.commit-draft'`);
     expect(s).toMatchObject({ title: "Add 1.75 h on CON for 2026-10-20", detail: "From 6 commits on CON-014. Accept to add it to your timesheet as a draft.", agent_name: "Repo sync" });
@@ -32,5 +32,20 @@ describe.skipIf(!hasDb)("104 AC-4 hours the repo sync estimated are a draft sugg
     // The same day drafted again is already on the timesheet: no second suggestion.
     await withTenant(db.app, T, (tx) => commitTimeHandler.handle({ tx, tenantId: T, event: { id: "ev-104b", name: DELIVERY.commitTime, payload: c } }));
     expect(await db.q(sql`select 1 from agents.suggestion where kind = 'time.commit-draft'`)).toHaveLength(1);
+  });
+
+  // Review round 1 (B3): the repo marker decides the kind, never whether `commits` is truthy.
+  it.each([
+    ["repo, 1 commit", { source: "repo" as const, commits: 1, commit: "CON-014/2026-10-21" }, "From 1 commit on CON-014.", "Repo sync"],
+    ["repo, 0 commits (the lead-in of a session past midnight)", { source: "repo" as const, commits: 0, commit: "CON-014/2026-10-22" }, "From 0 commits on CON-014.", "Repo sync"],
+    ["a webhook Time: line, no marker", { commit: "d00dfeed1" }, "Your commit d00dfee for CON-014 says 1 h.", "Git ingestion"],
+    ["a webhook Time: line with a stray count", { commit: "d00dfeed2", commits: 3 }, "Your commit d00dfee for CON-014 says 1 h.", "Git ingestion"],
+  ])("review-1 %s", async (_, kind, detail, agent) => {
+    const nimal = await db.as("nimal");
+    const [con] = await db.q(sql`select id from delivery.project where key = 'CON'`);
+    const c: CommitTime = { userId: nimal.userId, projectId: con.id as string, projectKey: "CON", proposalKey: "CON-014", day: "2026-10-21", hours: 1, ...kind };
+    await withTenant(db.app, T, (tx) => commitTimeHandler.handle({ tx, tenantId: T, event: { id: `ev-${kind.commit}`, name: DELIVERY.commitTime, payload: c } }));
+    const [s] = await db.q(sql`select detail, agent_name, proposed->>'source' as source from agents.suggestion where proposed->>'commit' = ${kind.commit}`);
+    expect(s).toMatchObject({ detail: expect.stringContaining(detail), agent_name: agent, source: "source" in kind ? "repo" : null });
   });
 });

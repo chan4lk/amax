@@ -22,7 +22,8 @@ describe("104 AC-1 the manual-creation button is named for what it opens", () =>
   it("AC-14 the agent-first line is a labelled info button with a tooltip naming the repo and the sync", async () => {
     const one = await html(createElement(AgentFirstLine, { repoUrl: "github.com/example/amax", intro: "Every change, with its time." }));
     expect(one).toContain('aria-label="About proposals and how to add one"');
-    expect(one).toMatch(/<button[^>]*aria-describedby="([^"]+)"[\s\S]*<span role="tooltip" id="\1"/);
+    // Review round 1 (WCAG 1.4.13): a native popover the button toggles, so click, tap, Enter and Escape all work.
+    expect(one).toMatch(/<button[^>]*aria-describedby="([^"]+)"[^>]*popover[Tt]arget="\1"[\s\S]*<div popover="auto" role="tooltip" id="\1"/);
     expect(one).toContain("<p>Every change, with its time.</p>");
     expect(one).toContain("Proposals come from github.com/example/amax; nothing is typed in here. To add one:");
     expect(one).toMatch(/<ol><li>In the repo, write it with <code>\/specclaw:propose<\/code>\.<\/li><li>Sync the repo to amax: run <code>\/amax:sync-specclaw<\/code> there, or merge the change and CI syncs it\.<\/li><\/ol>/);

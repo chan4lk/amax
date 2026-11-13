@@ -62,10 +62,12 @@ What amax accepts:
 - **Hours (104):** the reader also sends each change's commits (those whose subject names it, `specclaw(<NNN-slug>)`
   or `[specclaw] <NNN-slug>`: id, author email, time). amax estimates hours per author, proposal and day from the commit
   times (commits less than 90 minutes apart are one session, counted from 30 minutes before the first; at most 8 h a
-  day) and drafts them as a timesheet suggestion for the author, found by a verified git identity, never whoever pushed.
-  Only when an Admin has switched commit time on for the author's legal entity, only for days that have ended, once
-  per day however many syncs carry the same commits. Nothing is logged until the person accepts; a wrong figure is
-  corrected in chat after accepting. The result counts `drafted` and `unlinked` (commits whose author isn't linked).
+  day, on the author's own calendar) and drafts them as a timesheet suggestion for the author, found by a verified git
+  identity. Your own sync drafts only your own commits; CI's credential drafts for every author. Only when an Admin has
+  switched commit time on for the author's legal entity, only for days that have ended, once per day however many
+  syncs carry the same commits; a squash merge isn't counted again. Nothing is logged until the person accepts; a wrong
+  figure is corrected in chat after accepting. The result counts `drafted`, `unlinked` (commits whose author isn't
+  linked) and `unverified` (someone else's commits in your own sync).
 
 Each project's page in amax shows a **Repo sync** card: the linked repo, the last sync, and refused pushes with their reasons.
 

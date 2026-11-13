@@ -75,7 +75,7 @@ were drafted from the repo.
 10. **AC-10** The waiting total reaches Delivery the way approved hours do (081 AC-4): Time hands totals to a Delivery
     service under its job; Delivery reads no Time table. It moves when an entry named for a proposal is logged, corrected
     or deleted, and when a week is submitted, approved, rejected or reopened.
-11. **AC-11** The proposal's history says "Drafted 1.5 h for 12 Nov from the repo, waiting to be accepted" when a draft is
+11. **AC-11** The proposal's history says "Drafted 1.5 h for 12 Nov for Kasun Dias from the repo" (review round 1: the event, not a state that goes stale once accepted) when a draft is
     made, visible under the same rule as its other time lines (081 AC-28).
 
 **Standards**

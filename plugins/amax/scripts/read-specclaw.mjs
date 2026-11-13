@@ -165,20 +165,34 @@ var readParts = (source) => {
 
 // modules/delivery/sync/commits.ts
 import { execFileSync } from "node:child_process";
-var namesChange = (subject, dir) => subject.startsWith(`specclaw(${dir})`) || subject.startsWith(`[specclaw] ${dir}`);
-var escape = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-var MAX = 2e3;
-function commitsOf(root, at, dir) {
+var SUBJECT = /^(?:specclaw\((\d{3,}-[a-z0-9][a-z0-9-]*)\)|\[specclaw\] (\d{3,}-[a-z0-9][a-z0-9-]*)\b)/;
+var changeOf = (subject) => {
+  const m = SUBJECT.exec(subject);
+  return m ? m[1] ?? m[2] : null;
+};
+var foldsCommits = (message) => (message.match(/specclaw\(\d{3,}-|\[specclaw\] \d{3,}-/g) ?? []).length > 1;
+var MAX = 2e4;
+var SEP = "";
+function commitsByChange(root, at) {
+  let out;
   try {
-    const grep = `^(specclaw\\(${escape(dir)}\\)|\\[specclaw\\] ${escape(dir)})`;
-    const out = execFileSync("git", ["log", at, "--no-merges", `-${MAX}`, "-E", `--grep=${grep}`, "--format=%H%x09%ae%x09%aI%x09%s"], { cwd: root, encoding: "utf8", stdio: ["ignore", "pipe", "ignore"], maxBuffer: 64 * 1024 * 1024 });
-    return out.split("\n").filter(Boolean).map((line) => {
-      const [id, email, at2, ...subject] = line.split("	");
-      return namesChange(subject.join("	"), dir) ? [{ id, email, at: new Date(at2).toISOString() }] : [];
-    }).flat();
+    out = execFileSync(
+      "git",
+      ["log", at, "--no-merges", `-${MAX}`, "-E", "--grep=^(specclaw\\(|\\[specclaw\\] )", `--format=%H%x09%ae%x09%aI%x09%B${SEP}`],
+      { cwd: root, encoding: "utf8", stdio: ["ignore", "pipe", "ignore"], maxBuffer: 256 * 1024 * 1024 }
+    );
   } catch {
-    return [];
+    return void 0;
   }
+  const by = /* @__PURE__ */ new Map();
+  for (const c of out.split(SEP).map((x) => x.replace(/^\s+/, "")).filter(Boolean)) {
+    const [id, email, when, ...rest] = c.split("	");
+    const message = rest.join("	");
+    const dir = changeOf(message.split("\n")[0]);
+    if (!dir || foldsCommits(message)) continue;
+    by.set(dir, [...by.get(dir) ?? [], { id, email, at: new Date(when).toISOString() }]);
+  }
+  return by;
 }
 
 // modules/delivery/sync/authors.ts
@@ -192,6 +206,11 @@ var isShallow = (root) => {
 };
 function authorsOf(root, rev, records, only) {
   const shallow = isShallow(root);
+  const walks = /* @__PURE__ */ new Map();
+  const walk = (at) => {
+    if (!walks.has(at)) walks.set(at, commitsByChange(root, at));
+    return walks.get(at);
+  };
   return records.map((r) => {
     if (shallow || only && r.dir !== only) return { ...r, author: void 0 };
     const at = readParts(r.source)?.sha ?? rev;
@@ -201,7 +220,8 @@ function authorsOf(root, rev, records, only) {
       const lines = git(root, "log", at, "--follow", "--diff-filter=A", "--format=%ae%x09%aI", "--", path).split("\n").filter(Boolean);
       const [author, addedAt] = lines.length ? lines[lines.length - 1].split("	") : [void 0, void 0];
       const createdAt = r.createdAt ?? (addedAt ? new Date(addedAt).toISOString() : r.createdAt);
-      return { ...r, author, createdAt, ...r.tasks ? { tasks: tickDates(root, at, path, r.tasks) } : {}, commits: commitsOf(root, at, r.dir) };
+      const all = walk(at);
+      return { ...r, author, createdAt, ...r.tasks ? { tasks: tickDates(root, at, path, r.tasks) } : {}, ...all ? { commits: all.get(r.dir) ?? [] } : {} };
     } catch {
       return { ...r, author: void 0 };
     }

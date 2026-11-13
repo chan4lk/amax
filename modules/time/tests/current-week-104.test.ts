@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { hasDb } from "@amax/db/testdb";
-import { isoWeekOf, weekKey } from "../week";
+import { isoWeekOf, weekKey, weekStart } from "../week";
 import { myWeek } from "../server/my";
 import { hoursTrend, timeOverview } from "../server/overview";
 import { teamWeek } from "../server/team";
@@ -26,5 +26,16 @@ describe.skipIf(!hasDb)("104 AC-15 screens open on the current week", () => {
     expect(overview.tickets?.[0]).toMatchObject({ label: "Hours this week", pin: { args: { week: now } } });
     expect(overview.waiting?.map((w) => w.title)).toEqual(["W42 timesheets"]);
     void T;
+  });
+
+  // Review round 1: eight newer weeks waiting on someone else's approver don't push this approver's week off the list.
+  it("review-1 the waiting list keeps the weeks this viewer can approve, however many newer ones wait on others", async () => {
+    const maya = await db.as("maya", "PM");
+    const liam = await db.idOf("liam");
+    for (let w = 43; w <= 50; w++)
+      await db.t.owner`insert into time.week (tenant_id, user_id, person_name, iso_year, iso_week, starts_on, status, submitted_at)
+        values (${T}, ${liam}, 'Liam Murphy', 2026, ${w}, ${weekStart({ year: 2026, week: w }).toISOString().slice(0, 10)}, 'submitted', now()) on conflict do nothing`;
+    const titles = ((await timeOverview(maya, {})).waiting ?? []).map((w) => w.title);
+    expect(titles).toContain("W42 timesheets");
   });
 });

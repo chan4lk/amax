@@ -120,7 +120,7 @@ describe.skipIf(!hasDb)("081 the proposal page (Postgres)", () => {
       ] };
     };
     const lines = async (v: Viewer, key = "CON-017") => ((await getProposal(v, { key }))!.history as { text: string }[]).map((h) => h.text).filter((t) => /logged|Corrected|Removed|Drafted/.test(t));
-    const want = ["Drafted 1.5 h for Nov 12 from the repo, waiting to be accepted", "Removed Nimal Silva's 2.5 h for Oct 19", "Corrected Nimal Silva's entry for Oct 19 to 2.5 h", "Nimal Silva logged 2 h for Oct 19"];
+    const want = ["Drafted 1.5 h for Nov 12 for Nimal Silva from the repo", "Removed Nimal Silva's 2.5 h for Oct 19", "Corrected Nimal Silva's entry for Oct 19 to 2.5 h", "Nimal Silva logged 2 h for Oct 19"];
     // With Time switched off, nothing fills the slot and there are no time lines.
     setProvided([]);
     expect(await lines(nimal)).toEqual([]);

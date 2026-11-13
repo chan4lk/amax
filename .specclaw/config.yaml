@@ -29,7 +29,7 @@ models:
 #   worktree-per-change  — isolated worktree per change, enables parallel multi-change builds
 git:
   strategy: "worktree-per-change" # "branch-per-change" | "direct" | "worktree-per-change"
-  base_branch: ""                 # Branch to fork changes from and target PRs/merges at.
+  base_branch: ""                       # Branch to fork changes from and target PRs/merges at.
                                   # Empty = auto-detect: origin/HEAD, then gh default branch,
                                   # then main/master. Set explicitly for release-branch flows.
   merge_on_finalize: false        # true = `specclaw-build finalize` merges the change branch into the

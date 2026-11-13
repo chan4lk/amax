@@ -97,7 +97,7 @@ export default defineModule({
       [EVENTS.taskDone]: declarePayload<TaskDone>({ proposalId: "plain", key: "plain", task: "plain", projectId: "plain", by: "plain", ownerUserId: "plain" }),
       [EVENTS.taskReopened]: declarePayload<TaskReopened>({ proposalId: "plain", key: "plain", task: "plain", projectId: "plain", by: "plain" }),
       [EVENTS.ownerChanged]: declarePayload<ProposalOwnerChanged>({ proposalId: "plain", key: "plain", title: "plain", projectId: "plain", from: "plain", to: "plain", toName: "plain", cleared: "plain", by: "plain" }),
-      [EVENTS.commitTime]: declarePayload<CommitTime>({ userId: "plain", projectId: "plain", projectKey: "plain", proposalKey: "plain", day: "plain", hours: "plain", commit: "plain", commits: "plain" }),
+      [EVENTS.commitTime]: declarePayload<CommitTime>({ userId: "plain", projectId: "plain", projectKey: "plain", proposalKey: "plain", day: "plain", hours: "plain", commit: "plain", commits: "plain", source: "plain" }),
     },
   },
   // 030: a rollback is urgent for the PMs who manage that project (their data scope).

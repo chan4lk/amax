@@ -15,12 +15,15 @@ import { projectNames } from "./server/read";
 import { actorId, type WeekRow } from "./server/weeks";
 import { isWeekend } from "./week";
 
-// 104 AC-4: a repo sync's day estimate (`commits` set) is its own source, "repo:<proposalKey>/<day>"; a commit's `Time:` line stays "git:<sha>".
-const gitRef = (p: { commit: string; commits?: number }) => (p.commits ? `repo:${p.commit}` : `git:${p.commit}`);
-const Draft = z.object({ userId: z.uuid(), projectKey: z.string().min(1), day: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), hours: z.number().positive().max(12), commit: z.string().min(4), proposalKey: z.string(), commits: z.number().int().positive().optional() });
+// 104 AC-4: a repo sync's day estimate is its own source, "repo:<proposalKey>/<day>"; a commit's `Time:` line stays
+// "git:<sha>". Review round 1: told apart by the explicit `source: "repo"` marker, never by whether `commits` is set.
+type Kind = { commit: string; source?: "repo" };
+const fromRepo = (p: { source?: "repo" }) => p.source === "repo";
+const gitRef = (p: Kind) => (fromRepo(p) ? `repo:${p.commit}` : `git:${p.commit}`);
+const Draft = z.object({ userId: z.uuid(), projectKey: z.string().min(1), day: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), hours: z.number().positive().max(12), commit: z.string().min(4), proposalKey: z.string(),
+  commits: z.number().int().nonnegative().optional(), source: z.literal("repo").optional() });
 type Draft = z.infer<typeof Draft>;
-const fromRepo = (p: { commits?: number }) => Boolean(p.commits);
-const noteOf = (p: Draft) => (fromRepo(p) ? `${p.proposalKey}, ${p.commits} commits` : `${p.proposalKey}, commit ${p.commit.slice(0, 7)}`);
+const noteOf = (p: Draft) => (fromRepo(p) ? `${p.proposalKey}, ${p.commits === 1 ? "1 commit" : `${p.commits ?? 0} commits`}` : `${p.proposalKey}, commit ${p.commit.slice(0, 7)}`);
 
 /** 081 AC-2: the commit's proposal, unless it was withdrawn or moved since; the hours then go to the project alone. */
 async function stillOn(tx: Tx, key: string, projectKey: string) {
@@ -65,16 +68,19 @@ export const commitTimeHandler: EventHandlerDef = {
     const [taken] = await tx.execute(sql`select 1 from time.entry where user_id = ${c.userId} and source_ref = ${gitRef(c)} and deleted_at is null`);
     if (taken) return;
     const weekend = isWeekend(c.day) ? " of weekend work" : "";
+    const repo = fromRepo(c);
+    const many = (n: number | undefined) => (n === 1 ? "1 commit" : `${n ?? 0} commits`);
     // 104 AC-4: a repo sync's estimate says how many commits it came from; a commit's own line says which commit.
-    const detail = c.commits
-      ? `From ${c.commits} commits on ${c.proposalKey}${weekend ? ", on a weekend" : ""}. Accept to add it to your timesheet as a draft.`
+    const detail = repo
+      ? `From ${many(c.commits)} on ${c.proposalKey}${weekend ? ", on a weekend" : ""}. Accept to add it to your timesheet as a draft.`
       : `Your commit ${c.commit.slice(0, 7)} for ${c.proposalKey} says ${c.hours} h${weekend}. Accept to add it to your timesheet as a draft.`;
     await createSuggestion(contextFor.job(tenantId, "time.commit-draft", `user:${c.userId}`), {
       kind: commitDraft.kind, target: { type: "time.week", id: `${c.userId}:${c.day}:${c.commit}`, label: `${c.hours} h on ${c.projectKey}, ${c.day}` },
       // 073 AC-2: a weekend commit says so; accepting it logs the weekend work.
       title: `Add ${c.hours} h on ${c.projectKey} for ${c.day}${isWeekend(c.day) ? " (weekend)" : ""}`, detail,
-      proposed: { userId: c.userId, projectKey: c.projectKey, day: c.day, hours: c.hours, commit: c.commit, proposalKey: c.proposalKey, ...(c.commits ? { commits: c.commits } : {}) }, confidence: 0.6, agentName: c.commits ? "Repo sync" : "Git ingestion",
-      scope: { ownerUserId: c.userId, projectId: c.projectId }, evidence: [{ type: "record", label: c.commits ? `${c.commits} commits on ${c.proposalKey}` : `Commit ${c.commit.slice(0, 7)}`, ref: proposalHref(c.proposalKey) }],
+      proposed: { userId: c.userId, projectKey: c.projectKey, day: c.day, hours: c.hours, commit: c.commit, proposalKey: c.proposalKey, ...(repo ? { commits: c.commits ?? 0, source: "repo" as const } : {}) },
+      confidence: 0.6, agentName: repo ? "Repo sync" : "Git ingestion",
+      scope: { ownerUserId: c.userId, projectId: c.projectId }, evidence: [{ type: "record", label: repo ? `${many(c.commits)} on ${c.proposalKey}` : `Commit ${c.commit.slice(0, 7)}`, ref: proposalHref(c.proposalKey) }],
     });
   },
 };

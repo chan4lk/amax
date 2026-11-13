@@ -4,7 +4,7 @@
 // arguments, never the arguments). 094 AC-1, AC-2: the same walk dates the change and its ticked tasks.
 import { execFileSync } from "node:child_process";
 import { readParts } from "./sha";
-import { commitsOf, type ChangeCommit } from "./commits";
+import { commitsByChange, type ChangeCommit } from "./commits";
 
 const git = (cwd: string, ...args: string[]) => execFileSync("git", args, { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "ignore"], maxBuffer: 64 * 1024 * 1024 }).trim();
 
@@ -28,6 +28,9 @@ export const isShallow = (root: string) => { try { return git(root, "rev-parse",
  */
 export function authorsOf<T extends Readable>(root: string, rev: string, records: T[], only?: string): (T & { author?: string | null; commits?: ChangeCommit[] })[] {
   const shallow = isShallow(root);
+  // Review round 1: one walk of every change's commits per commit read (records usually share one), not one per folder.
+  const walks = new Map<string, ReturnType<typeof commitsByChange>>();
+  const walk = (at: string) => { if (!walks.has(at)) walks.set(at, commitsByChange(root, at)); return walks.get(at); };
   return records.map((r) => {
     if (shallow || (only && r.dir !== only)) return { ...r, author: undefined };
     // The sha at the end of a record's source ("main@4f2c9a1"), by the one read rule (sync/sha.ts).
@@ -39,7 +42,9 @@ export function authorsOf<T extends Readable>(root: string, rev: string, records
       // 092 AC-3: the file is in the tree, so a missing add commit means git couldn't tell, not "nobody".
       const [author, addedAt] = lines.length ? lines[lines.length - 1].split("\t") : [undefined, undefined];
       const createdAt = r.createdAt ?? (addedAt ? new Date(addedAt).toISOString() : r.createdAt);
-      return { ...r, author, createdAt, ...(r.tasks ? { tasks: tickDates(root, at, path, r.tasks) } : {}), commits: commitsOf(root, at, r.dir) };
+      // Review round 1: commits are sent only when git could read them; absent means "not read", never "none".
+      const all = walk(at);
+      return { ...r, author, createdAt, ...(r.tasks ? { tasks: tickDates(root, at, path, r.tasks) } : {}), ...(all ? { commits: all.get(r.dir) ?? [] } : {}) };
     } catch {
       return { ...r, author: undefined };
     }
