@@ -38,12 +38,15 @@ describe.skipIf(!hasDb)("104 AC-4 hours the repo sync estimated are a draft sugg
   it.each([
     ["repo, 1 commit", { source: "repo" as const, commits: 1, commit: "CON-014/2026-10-21" }, "From 1 commit on CON-014.", "Repo sync"],
     ["repo, 0 commits (the lead-in of a session past midnight)", { source: "repo" as const, commits: 0, commit: "CON-014/2026-10-22" }, "From 0 commits on CON-014.", "Repo sync"],
+    ["repo, with who pushed it (review round 2: drafts are untrusted)", { source: "repo" as const, commits: 2, commit: "CON-014/2026-10-23/aaaaaaa", pushedBy: "PUSHER" }, "From 2 commits on CON-014. Pushed by Maya Fernando.", "Repo sync"],
     ["a webhook Time: line, no marker", { commit: "d00dfeed1" }, "Your commit d00dfee for CON-014 says 1 h.", "Git ingestion"],
     ["a webhook Time: line with a stray count", { commit: "d00dfeed2", commits: 3 }, "Your commit d00dfee for CON-014 says 1 h.", "Git ingestion"],
   ])("review-1 %s", async (_, kind, detail, agent) => {
     const nimal = await db.as("nimal");
     const [con] = await db.q(sql`select id from delivery.project where key = 'CON'`);
-    const c: CommitTime = { userId: nimal.userId, projectId: con.id as string, projectKey: "CON", proposalKey: "CON-014", day: "2026-10-21", hours: 1, ...kind };
+    const maya = await db.idOf("maya");
+    const c: CommitTime = { userId: nimal.userId, projectId: con.id as string, projectKey: "CON", proposalKey: "CON-014", day: "2026-10-21", hours: 1, ...kind,
+      ...("pushedBy" in kind ? { pushedBy: `user:${maya}` } : {}) };
     await withTenant(db.app, T, (tx) => commitTimeHandler.handle({ tx, tenantId: T, event: { id: `ev-${kind.commit}`, name: DELIVERY.commitTime, payload: c } }));
     const [s] = await db.q(sql`select detail, agent_name, proposed->>'source' as source from agents.suggestion where proposed->>'commit' = ${kind.commit}`);
     expect(s).toMatchObject({ detail: expect.stringContaining(detail), agent_name: agent, source: "source" in kind ? "repo" : null });

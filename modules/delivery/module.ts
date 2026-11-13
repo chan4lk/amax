@@ -75,6 +75,9 @@ export default defineModule({
     { table: "delivery.commit_time", label: "Who switched commit time on or off", subject: ["set_by"], entity: "legal_entity_id", fields: ["set_by"], class: "personal", period: "P7Y", start: { at: ["updated_at"] }, action: "anonymise" },
     // 062: who pushed a repo's specclaw state, kept with the delivery evidence it changed.
     { table: "delivery.sync_push", label: "Who pushed specclaw changes", subject: ["for_user_id", "actor_id"], fields: ["actor_id", "for_user_id"], keep: { skipped: "the change keys a push left out", reason: "the sync's own refusal text, written by amax" }, class: "personal", period: "P7Y", start: { at: ["at"] }, action: "anonymise" },
+    // 104 review round 2: whose hours the repo sync drafted, and who pushed. The row is the "drafted once" key for that
+    // person's day, so it goes whole, with the delivery evidence's seven years.
+    { table: "delivery.commit_day_draft", label: "Hours the repo sync drafted", subject: ["user_id", "drafted_by"], fields: ["user_id", "drafted_by", "commit_ids", "source"], class: "personal", period: "P7Y", start: { at: ["drafted_at"] }, action: "delete" },
     // The Overview feed is recent news, not a record: its lines go after two years.
     { table: "delivery.activity", label: "Agent activity feed", subject: ["for_user_id", "actor_id"], fields: ["actor_id", "for_user_id", "text", "detail"], class: "personal", period: "P2Y", start: { at: ["at"] }, action: "delete" },
   ],
@@ -97,7 +100,7 @@ export default defineModule({
       [EVENTS.taskDone]: declarePayload<TaskDone>({ proposalId: "plain", key: "plain", task: "plain", projectId: "plain", by: "plain", ownerUserId: "plain" }),
       [EVENTS.taskReopened]: declarePayload<TaskReopened>({ proposalId: "plain", key: "plain", task: "plain", projectId: "plain", by: "plain" }),
       [EVENTS.ownerChanged]: declarePayload<ProposalOwnerChanged>({ proposalId: "plain", key: "plain", title: "plain", projectId: "plain", from: "plain", to: "plain", toName: "plain", cleared: "plain", by: "plain" }),
-      [EVENTS.commitTime]: declarePayload<CommitTime>({ userId: "plain", projectId: "plain", projectKey: "plain", proposalKey: "plain", day: "plain", hours: "plain", commit: "plain", commits: "plain", source: "plain" }),
+      [EVENTS.commitTime]: declarePayload<CommitTime>({ userId: "plain", projectId: "plain", projectKey: "plain", proposalKey: "plain", day: "plain", hours: "plain", commit: "plain", commits: "plain", source: "plain", pushedBy: "plain" }),
     },
   },
   // 030: a rollback is urgent for the PMs who manage that project (their data scope).

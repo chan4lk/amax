@@ -13,12 +13,19 @@ export const changeOf = (subject: string) => {
   return m ? (m[1] ?? m[2]) : null;
 };
 
+const MARK = /specclaw\(\d{3,}-|\[specclaw\] \d{3,}-/g;
+const LISTED = /^\s*(?:[*-]\s*)?(?:specclaw\(\d{3,}-|\[specclaw\] \d{3,}-)/gm;
+
 /**
- * Review round 1: a squash merge (or any commit that folds several) names a change more than once in its message, the
- * pre-squash subjects listed in its body. Its author time is the merge, not the work, and the work's own commits were
- * read on their branch, so it isn't counted.
+ * Review rounds 1 and 2: a commit that folds others isn't work of its own: its author time is the merge, and the work's
+ * own commits were read on their branch. Told by its shape, not by any mention: a pull request number on the subject
+ * (GitHub's squash and merge, "… (#120)"), a body that lists change subjects at the start of lines (GitHub's default
+ * squash body), or a subject that joins several. A body that only mentions another change is an ordinary commit.
  */
-export const foldsCommits = (message: string) => (message.match(/specclaw\(\d{3,}-|\[specclaw\] \d{3,}-/g) ?? []).length > 1;
+export const foldsCommits = (message: string) => {
+  const [subject, ...body] = message.split("\n");
+  return /\(#\d+\)\s*$/.test(subject) || (subject.match(MARK) ?? []).length > 1 || (body.join("\n").match(LISTED) ?? []).length > 0;
+};
 
 const MAX = 20_000;
 const SEP = "\u001e";

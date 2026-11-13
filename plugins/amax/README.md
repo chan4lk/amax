@@ -64,8 +64,9 @@ What amax accepts:
   times (commits less than 90 minutes apart are one session, counted from 30 minutes before the first; at most 8 h a
   day, on the author's own calendar) and drafts them as a timesheet suggestion for the author, found by a verified git
   identity. Your own sync drafts only your own commits; CI's credential drafts for every author. Only when an Admin has
-  switched commit time on for the author's legal entity, only for days that have ended, once per day however many
-  syncs carry the same commits; a squash merge isn't counted again. Nothing is logged until the person accepts; a wrong
+  switched commit time on for the author's legal entity, only for days that have ended, each commit once however many
+  syncs carry it; a squash merge isn't counted again. A draft says who pushed it, so a person can dismiss one that
+  isn't theirs, and it never blocks their own commits. Nothing is logged until the person accepts; a wrong
   figure is corrected in chat after accepting. The result counts `drafted`, `unlinked` (commits whose author isn't
   linked) and `unverified` (someone else's commits in your own sync).
 

@@ -61,9 +61,11 @@ were drafted from the repo.
    the sync's result counts those commits.
 6. **AC-6** Drafting happens only when commit time is on for the author's legal entity (008 AC-6), and only for days on or
    after the day it was switched on. With it off, the sync behaves exactly as today.
-7. **AC-7** A day is drafted only once it has ended (UTC), so its estimate is final. There is one draft per person,
-   proposal and day: a second sync, or the plugin and CI both syncing, drafts nothing more. A commit whose hours already
-   came through the push webhook's `Time:` line is left out of the estimate.
+7. **AC-7** A day is drafted only once it has ended (the author's own day), so its estimate is final. Each commit is
+   counted once, whichever path gets it first: a second sync, the plugin and CI both syncing, or the push webhook's
+   `Time:` line drafts nothing more for it. Review round 2 (product owner, 2026-11-13: drafts are untrusted): commits
+   are claimed, never a whole day, so a later commit on a drafted day still drafts, a draft made from someone else's
+   push can't block a person's own commits, and each suggestion says who pushed it.
 8. **AC-8** No sync, agent or job logs, submits or approves time. The only writes are the suggestion and, on the
    person's accept, their own entry (table test over the sync path's audit rows).
 

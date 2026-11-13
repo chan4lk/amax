@@ -4,7 +4,9 @@ import type { Tx } from "@amax/db";
 import { can, type Viewer } from "@amax/auth";
 import { defineService, ForbiddenError, getRuntime, type ServiceContext } from "@amax/core/server";
 import { withTenant } from "@amax/db";
+import { entityZone } from "@amax/workflows";
 import { EVENTS, type CommitTime } from "../contracts";
+import { dayIn } from "../sync/estimate";
 import { recordActivity } from "./activity";
 import { invalid, notFound } from "./refusal";
 
@@ -59,26 +61,38 @@ export function hoursOf(message: string) {
   return Number.isFinite(h) && h > 0 && h <= 12 ? Math.round(h * 4) / 4 : null;
 }
 
-/** 008 AC-3: hours from a commit, sent to the time module as a draft for the person to accept. Never logged here. */
+/** 104 review round 2: the person's own day for an instant, by their legal entity's zone (Time's day rule, the sync's too). */
+export async function personDay(tx: Tx, userId: string, at: string) {
+  const [u] = await tx.execute(sql`select legal_entity_id from auth.user where id = ${userId}`);
+  return dayIn(await entityZone(tx, (u?.legal_entity_id as string | null) ?? null))(Date.parse(at));
+}
+
+/**
+ * 008 AC-3: hours from a commit, sent to the time module as a draft for the person to accept. Never logged here.
+ * 104 review round 2: given the commit's instant (`at`), it's held to the same rules as the repo sync: nothing from
+ * before the current consent period, and the day is the author's own. `day` alone is the older form, used as given.
+ */
 export const draftCommitTime = defineService({
   name: "delivery.commit_time.draft",
   action: "delivery:task:done",
   resource: "delivery.proposal",
-  input: z.object({ userId: z.uuid(), key: z.string(), day: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), hours: z.number().positive().max(12), commit: z.string().min(4).max(64) }),
+  input: z.object({ userId: z.uuid(), key: z.string(), day: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(), at: z.string().datetime({ offset: true }).optional(),
+    hours: z.number().positive().max(12), commit: z.string().min(4).max(64) }).refine((x) => x.day || x.at, "say when: the commit's time (at) or its day"),
   async run(tx, input, ctx) {
     const [p] = await tx.execute(sql`select p.id, p.key, p.project_id, pr.key as project_key from delivery.proposal p join delivery.project pr on pr.id = p.project_id where p.key = ${input.key}`);
     if (!p) throw notFound(`no proposal ${input.key}`);
-    if (!(await commitTimeOn(tx, input.userId))) return { result: { drafted: false as boolean, repeated: false as boolean }, resourceId: p.id as string };
-    // 104 review round 1: the repo sync already drafted this person's day on this proposal (its commit ids are in
-    // commit_draft too, so the same commit is caught below); a webhook draft would count the day twice.
-    const [day] = await tx.execute(sql`select 1 from delivery.commit_day_draft where user_id = ${input.userId} and proposal_id = ${p.id} and day = ${input.day}`);
-    if (day) return { result: { drafted: false as boolean, repeated: true as boolean }, resourceId: p.id as string };
+    const since = (await commitTimeSince(tx, [input.userId])).get(input.userId);
+    const off = { result: { drafted: false as boolean, repeated: false as boolean }, resourceId: p.id as string };
+    if (!since || (input.at && Date.parse(input.at) < Date.parse(since))) return off;
+    const day = input.at ? await personDay(tx, input.userId, input.at) : input.day!;
     // 071 review round 1: one draft per person and commit, for every provider (a repeated push drafts nothing).
+    // 104 review round 2: the repo sync claims its commits here too, so whichever path counts a commit first, the other
+    // drafts nothing for it; nothing claims a whole day.
     const [first] = await tx.execute(sql`insert into delivery.commit_draft (tenant_id, user_id, commit_id) values (${ctx.tenantId}, ${input.userId}, ${input.commit})
       on conflict do nothing returning commit_id`);
     if (!first) return { result: { drafted: false as boolean, repeated: true as boolean }, resourceId: p.id as string };
     await recordActivity(tx, ctx, { projectId: p.project_id as string, text: `drafted ${input.hours} h on ${p.key as string} for the timesheet`, detail: `From commit ${input.commit.slice(0, 7)}, waiting to be accepted` });
-    const payload: CommitTime = { userId: input.userId, projectId: p.project_id as string, projectKey: p.project_key as string, proposalKey: p.key as string, day: input.day, hours: input.hours, commit: input.commit };
-    return { result: { drafted: true as boolean, repeated: false as boolean }, resourceId: p.id as string, after: { hours: input.hours, day: input.day, commit: input.commit }, events: [{ name: EVENTS.commitTime, payload }] };
+    const payload: CommitTime = { userId: input.userId, projectId: p.project_id as string, projectKey: p.project_key as string, proposalKey: p.key as string, day, hours: input.hours, commit: input.commit };
+    return { result: { drafted: true as boolean, repeated: false as boolean }, resourceId: p.id as string, after: { hours: input.hours, day, commit: input.commit }, events: [{ name: EVENTS.commitTime, payload }] };
   },
 });

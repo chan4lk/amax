@@ -81,9 +81,11 @@ export async function getProposalRef(tx: Tx, keyOrId: string): Promise<ProposalR
  * 008 AC-3: hours a person's commit says they spent, for the time module to draft on their timesheet as a
  * suggestion they accept. Never a logged entry, never a rating. `day` is the commit's date (UTC).
  * 104 AC-4: `source: "repo"` marks the repo sync's estimate for that day from `commits` commits, and `commit` is the
- * draft's own id ("<proposalKey>/<day>") rather than a sha. Absent: one commit's `Time:` line.
+ * draft's own id ("<proposalKey>/<day>/<first commit>") rather than a sha. Absent: one commit's `Time:` line.
+ * Review round 2: `pushedBy` is who sent the push, as ids ("sp:<id> for user:<id>", "user:<id>"): a repo draft is an
+ * untrusted suggestion, so Time names the pusher on it and the person sees where it came from before accepting.
  */
-export type CommitTime = { userId: string; projectId: string; projectKey: string; proposalKey: string; day: string; hours: number; commit: string; commits?: number; source?: "repo" };
+export type CommitTime = { userId: string; projectId: string; projectKey: string; proposalKey: string; day: string; hours: number; commit: string; commits?: number; source?: "repo"; pushedBy?: string };
 
 /** 008: a proposal task was closed (by a commit, CI or a person). `by` is the actor, "… for user:…" when acting for someone. */
 export type TaskDone = { proposalId: string; key: string; task: string; projectId: string; by: string; ownerUserId?: string | null };

@@ -170,7 +170,12 @@ var changeOf = (subject) => {
   const m = SUBJECT.exec(subject);
   return m ? m[1] ?? m[2] : null;
 };
-var foldsCommits = (message) => (message.match(/specclaw\(\d{3,}-|\[specclaw\] \d{3,}-/g) ?? []).length > 1;
+var MARK = /specclaw\(\d{3,}-|\[specclaw\] \d{3,}-/g;
+var LISTED = /^\s*(?:[*-]\s*)?(?:specclaw\(\d{3,}-|\[specclaw\] \d{3,}-)/gm;
+var foldsCommits = (message) => {
+  const [subject, ...body] = message.split("\n");
+  return /\(#\d+\)\s*$/.test(subject) || (subject.match(MARK) ?? []).length > 1 || (body.join("\n").match(LISTED) ?? []).length > 0;
+};
 var MAX = 2e4;
 var SEP = "";
 function commitsByChange(root, at) {

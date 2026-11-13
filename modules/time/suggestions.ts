@@ -60,6 +60,17 @@ export const commitDraft = defineSuggestionKind<Draft, { entryId: string; alread
   },
 });
 
+/** "sp:<id> for user:<id>" as names ("amax CI for Maya Fernando"); an id with no name left reads as "someone". */
+async function pusherName(tx: Tx, by: string) {
+  const name = async (ref: string) => {
+    const id = ref.slice(ref.indexOf(":") + 1);
+    const [r] = await tx.execute(sql`select name from auth.user where id::text = ${id} union all select name from auth.service_principal where id::text = ${id}`);
+    return (r?.name as string | undefined) ?? (ref.startsWith("agent:") ? "an agent" : "someone");
+  };
+  const [actor, forUser] = by.split(" for ");
+  return forUser ? `${await name(actor)} for ${await name(forUser)}` : name(actor);
+}
+
 export const commitTimeHandler: EventHandlerDef = {
   id: "time.commit-draft",
   event: DELIVERY.commitTime,
@@ -70,9 +81,11 @@ export const commitTimeHandler: EventHandlerDef = {
     const weekend = isWeekend(c.day) ? " of weekend work" : "";
     const repo = fromRepo(c);
     const many = (n: number | undefined) => (n === 1 ? "1 commit" : `${n ?? 0} commits`);
+    // 104 review round 2 (drafts are untrusted): a repo draft says who pushed it, so the person can tell where it came from.
+    const sent = repo && c.pushedBy ? ` Pushed by ${await pusherName(tx, c.pushedBy)}.` : "";
     // 104 AC-4: a repo sync's estimate says how many commits it came from; a commit's own line says which commit.
     const detail = repo
-      ? `From ${many(c.commits)} on ${c.proposalKey}${weekend ? ", on a weekend" : ""}. Accept to add it to your timesheet as a draft.`
+      ? `From ${many(c.commits)} on ${c.proposalKey}${weekend ? ", on a weekend" : ""}.${sent} Accept to add it to your timesheet as a draft.`
       : `Your commit ${c.commit.slice(0, 7)} for ${c.proposalKey} says ${c.hours} h${weekend}. Accept to add it to your timesheet as a draft.`;
     await createSuggestion(contextFor.job(tenantId, "time.commit-draft", `user:${c.userId}`), {
       kind: commitDraft.kind, target: { type: "time.week", id: `${c.userId}:${c.day}:${c.commit}`, label: `${c.hours} h on ${c.projectKey}, ${c.day}` },

@@ -44,7 +44,8 @@ describe.skipIf(!hasDb)("104 review round 1: drafting from the sync", () => {
     const job = contextFor.job(T, "delivery.ingest", `user:${db.nimal.userId}`);
     const again = (id: string, day: string) => draftCommitTime(job, { userId: db.nimal.userId, key: "FLT-101", day, hours: 1, commit: id });
     expect(await again(sha(21), "2026-11-06")).toMatchObject({ drafted: false, repeated: true });
-    expect(await again(sha(23), "2026-11-06")).toMatchObject({ drafted: false, repeated: true });
+    // Review round 2 (drafts are untrusted): commits are claimed, not days, so another commit that day still drafts.
+    expect(await again(sha(23), "2026-11-06")).toMatchObject({ drafted: true });
     expect(await again(sha(24), "2026-11-07")).toMatchObject({ drafted: true });
   });
 

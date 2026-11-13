@@ -19,7 +19,7 @@ function repo() {
   mkdirSync(join(root, ".specclaw/changes/101-export"), { recursive: true });
   writeFileSync(join(root, ".specclaw/changes/101-export/change.md"), "# 101\n");
   const a = commit("kasun@example.test", "specclaw(101-export): propose: export", "2026-11-12T09:00:00+05:30");
-  const b = commit("kasun@example.test", "[specclaw] 101-export build T1\n\nmentions another change in the body only", "2026-11-12T10:30:00+05:30");
+  const b = commit("kasun@example.test", "[specclaw] 101-export build T1\n\nsee specclaw(102-other) for why: mentioned in the body only", "2026-11-12T10:30:00+05:30");
   commit("kasun@example.test", "chore: unrelated, mentions specclaw(101-export) in the body\n\nspecclaw(101-export): not the subject", "2026-11-12T11:00:00+05:30");
   commit("ayesha@example.test", "specclaw(101-exporter): another change whose name starts the same", "2026-11-12T11:30:00+05:30");
   git("checkout", "-qb", "side"); writeFileSync(join(root, "side.txt"), "x\n"); commit("ayesha@example.test", "specclaw(101-export): side work", "2026-11-12T12:00:00+05:30");
@@ -51,14 +51,18 @@ describe("104 AC-2 the commits named for a change", () => {
     expect(SpecRecordInput.safeParse({ ...base, commits: [{ id: "not-a-sha", email: "x@y.test", at: "2026-11-12T05:00:00Z" }] }).success).toBe(false);
   });
 
-  // Review round 1: a commit that folds others isn't counted, and a read git couldn't make says so (no `commits`).
+  // Review rounds 1 and 2: a commit that folds others is told by its shape, not by a mention; a read git couldn't make
+  // says so (no `commits`).
   it.each([
     ["GitHub's squash body", "specclaw(101-export): export (#120)\n\n* specclaw(101-export): propose\n* specclaw(101-export): T1", true],
+    ["GitHub's squash with the pull request title only", "specclaw(101-export): export invoices (#120)", true],
+    ["a squash body listed without bullets", "Export invoices\n\nspecclaw(101-export): propose\n[specclaw] 101-export T1", true],
     ["several subjects joined on one line", "specclaw(101-export): T1 specclaw(101-export): T2", true],
-    ["[specclaw] and specclaw() forms mixed", "[specclaw] 101-export T1\n\nspecclaw(101-export): T2", true],
-    ["one subject, another change named in the body", "specclaw(101-export): T1\n\nsee specclaw(102-other)", true],
+    ["one subject, another change named in the body", "specclaw(101-export): T1\n\nsee specclaw(102-other) for why", false],
+    ["one subject, another change named in its subject text", "specclaw(101-export): T1, like [specclaw] 090-x", true],
+    ["one subject, a number in the body that isn't a PR", "specclaw(101-export): T1\n\nfixes (#12) on the board", false],
     ["one subject, no other", "specclaw(101-export): T1\n\nwhy it changed", false],
-  ])("review-1 foldsCommits: %s", (_, message, folds) => {
+  ])("review-2 foldsCommits: %s", (_, message, folds) => {
     expect(foldsCommits(message)).toBe(folds);
   });
 
