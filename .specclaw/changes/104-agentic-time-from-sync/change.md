@@ -134,7 +134,16 @@ were drafted from the repo.
      line per criterion, quality before → after, preset check, and screenshot paths
      (or "compared by eye: <who>"). -->
 
-**Verdict:** PENDING — every AC passes below; the specclaw-review loop hasn't run, since it reads committed history and 104 is uncommitted.
+**Verdict:** PASS — every AC passes below. Review stopped at the five-pass cap (AGENTS.md) with 0 blockers, 4 majors and 7
+minors open, all in `follow-ups.md`.
+
+**Review:** passes 1 to 5 = rounds 1, 2, 4, 5 (final) and 6 (final); round 3 didn't run (the backend's weekly limit) and
+doesn't count. Round 2 put a design choice to the product owner (2026-11-13: drafts are untrusted); round 5 escalated
+(exit 4) on the drafting design, and the product owner chose the day ledger (2026-11-14), built in commit 95dbedb. The
+final pass at 95dbedb (round 6, exit 4) found no blocker and 4 majors, open at the cap: a session across midnight is
+estimated as two; a CI draft dismissed after the person's own sync confirmed its commits loses those hours; the
+once-per-commit rule holds per proposal, not across proposals; the nightly hours refresh has no test that runs it. They
+want a follow-up change before agentic hours are switched on for a legal entity (the feature is off until an Admin does).
 
 - AC-1: pass — `proposals-button-104` (label, tooltip, intent; no "Add by hand"); `shots/app-proposals.png` shows "New proposal in chat".
 - AC-2: pass — `commits-104`: subject-named commits only, newest first, merges left out; an old payload without `commits` parses; plugin `reader.test` 5/5 on the rebuilt bundle.
@@ -142,20 +151,21 @@ were drafted from the repo.
 - AC-4: pass — `repo-draft-104`: title, "From 6 commits on CON-014…", agent "Repo sync"; accepting logs agent time on CON-014 in a draft week, `repo:` source; no second suggestion.
 - AC-5: pass — `sync-time-104`: hours go to the verified git identity, an unknown email counts as `unlinked`, never the pusher.
 - AC-6: pass — `sync-time-104`: commit time off drafts nothing; days before `notified_at` are left out.
-- AC-7: pass — `sync-time-104`: today (unended) left out, a re-push drafts nothing, a webhook-drafted commit left out.
+- AC-7: pass — `sync-time-104`: today (unended) left out, a re-push drafts nothing, a webhook-drafted commit left out; `sync-time-r2-104` and `sync-time-r3-104` (the day ledger): a CI draft never blocks the person's own commits, the sync and webhook racing count a commit once (5 runs), a day's total is its estimate in five push orders, a dismissed CI draft's commits leave the estimate.
 - AC-8: pass — `sync-time-104`: Delivery audit actions are draft, repo link, sync, push; no `time.entry` rows.
 - AC-9: pass — `board-band-081` (104 row): waiting line, absent at 0, band unchanged; mock section 3. Dev server shows no line until `pnpm db:migrate`.
 - AC-10: pass — `proposal-hours-104`: logged hours wait, approve moves them, reopen moves them back; seven events refresh under `job:time.proposal-hours`.
-- AC-11: pass — `draft-line-104` (owner and approver see it, an outsider doesn't, its pin is refused); `proposal-detail` words it "Drafted 1.5 h for Nov 12 from the repo, waiting to be accepted".
+- AC-11: pass — `draft-line-104` (owner and approver see it, an outsider doesn't, its pin is refused); `proposal-detail` words it "Drafted 1.5 h for Nov 12 for Nimal Silva from the repo" (review round 1: the event, not a state).
 - AC-12: pass — `ProposalRow.waitingHours` feeds `get_proposal` and `list_proposals`; the Time card's pin resolves through `get_proposal`.
 - AC-13: pass — delivery, time and plugin READMEs and the sync skill updated; `check:graph` ok; the 008, 081 and 089–094 suites green (below).
-- AC-14: pass — `proposals-button-104` (labelled button, `aria-describedby` tooltip, lede and two steps); `shots/app-proposals.png` (tooltip open on focus) against `shots/mock.png` section 1.
+- AC-14: pass — `proposals-button-104` (labelled button, `aria-describedby` tooltip, lede and two steps); `shots/app-proposals.png` (retaken 2026-11-14: the popover opens on click, Escape closes it, the heading reads "Proposals") against `shots/mock.png` section 1.
 - AC-15: pass — `current-week-104` (Team time, My timesheet, trend and Overview pin on this week; W42 still waits); `shots/app-time.png` (Week 46, This week), `shots/app-overview.png` (trend ends W46).
 
-**Commands (Windows host, dev Postgres 5440):** `tsc --noEmit` delivery, time, web: exit 0. `node scripts/check-graph.mjs`: ok.
-`vitest` time 53 files, 248/248; delivery 637/639, the two host-only failures older than 104 (`releases.test.ts`
-backslash paths, `create-project-surfaces` timing); 104 files rerun at verify: delivery 32/32, time 6/6; plugin 5/5;
-`specclaw-sync-ci` 11/11. `specclaw-preset-check .`: exit 1, the repo-wide backlog as in 066–103 (4,175 violations, nearly
+**Commands (Windows host, dev Postgres 5440), at 95dbedb:** `tsc --noEmit` delivery and time: exit 0. `node scripts/check-graph.mjs`: ok.
+`vitest` time 257/257; delivery 682/683, the one failure host-only and older than 104 (`releases.test.ts` backslash
+paths); plugin reader 5/5. Earlier at verify (before the review fixes): web `tsc` exit 0; `specclaw-sync-ci` 11/11 (since
+then its AC-2 runs over 30 s on this host: 201 changes' per-change git calls from 091 and 094, measured at 13.8 s against
+28 ms for 104's walk). `specclaw-preset-check .`: exit 1, the repo-wide backlog as in 066–103 (4,175 violations, nearly
 all the comment rule, which this repo's AC-citing comments don't follow); 104's new files add comment-rule hits and one
 max_lines (`sync-time-104.test.ts`). `specclaw-quality-scan . --gate`: exit 126, not_run (jq "Argument list too long").
 Screenshots: `shots/mock.png`, `shots/app-proposals.png`, `shots/app-time.png`, `shots/app-proposal.png`,
