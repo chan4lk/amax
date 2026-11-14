@@ -6,7 +6,7 @@ import { EVENTS, type ChangeCompleted, type ChangeDecided, type ChangeRequested,
 import { timeFixtures } from "./fixtures";
 import { mcpTools } from "./mcp";
 import { timeOverview } from "./server/overview";
-import { commitDraft, commitTimeHandler } from "./suggestions";
+import { commitDraft, commitTimeHandler, releaseOnDismiss } from "./suggestions";
 import { proposalHoursHandlers } from "./server/proposal-hours";
 import { proposalTimeLines } from "./server/proposal-lines";
 import { PROPOSAL_TIME_SLOT } from "@amax/delivery/contracts";
@@ -57,6 +57,8 @@ export default defineModule({
     // 073 review round 1: reminders say who sent them (id and name) and carry the sender's own words; the per-project
     // switch says which PM changed it.
     { table: "time.reminder", label: "Timesheet reminders", subject: ["user_id", "sent_by"], subjectName: ["sender_name"], fields: ["message", "sent_by", "sender_name"], class: "personal", period: "P2Y", start: { at: ["sent_at"] }, action: "anonymise" },
+    // 104 review round 3: whose untrusted repo draft is waiting, and its commits, until the person decides it.
+    { table: "time.repo_draft", label: "Repo drafts pushed by someone else", subject: ["user_id"], fields: ["user_id", "commit_ids"], class: "personal", period: "P2Y", start: { at: ["created_at"] }, action: "delete" },
     { table: "time.project_reminder", label: "Project reminder switches", subject: ["updated_by"], fields: ["updated_by"], class: "personal", period: "P7Y", start: { at: ["updated_at"] }, action: "anonymise" },
     // 071 review round 1: who last changed the tenant's entry rules.
     { table: "time.setting", label: "Who changed the timesheet rules", subject: ["updated_by"], fields: ["updated_by"], class: "personal", period: "P7Y", start: { at: ["updated_at"] }, action: "anonymise" },
@@ -129,7 +131,7 @@ export default defineModule({
   },
   // 008 AC-3: a commit's hours become a draft suggestion on the person's own timesheet. 081 AC-4: approved hours per
   // proposal are handed to Delivery whenever an approved week changes.
-  handles: [commitTimeHandler, ...proposalHoursHandlers] },
+  handles: [commitTimeHandler, releaseOnDismiss, ...proposalHoursHandlers] },
   suggestions: [commitDraft],
   fixtures: [timeFixtures],
 });

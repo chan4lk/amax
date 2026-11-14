@@ -7,7 +7,7 @@ import { agentsPlatform } from "@amax/agents/module";
 import { installedModules } from "./installed";
 import { acceptSuggestion, setSuggestionKinds } from "@amax/agents/server";
 import { EVENTS as DELIVERY, type CommitTime } from "@amax/delivery/contracts";
-import { commitDraft, commitTimeHandler } from "../suggestions";
+import { commitDraft, commitTimeHandler, releaseOnDismiss } from "../suggestions";
 import { T, timeDb } from "./db";
 
 // 104 AC-4: a repo sync's day estimate is a suggestion on the person's own timesheet, from N commits; accepting it logs
@@ -38,7 +38,9 @@ describe.skipIf(!hasDb)("104 AC-4 hours the repo sync estimated are a draft sugg
   it.each([
     ["repo, 1 commit", { source: "repo" as const, commits: 1, commit: "CON-014/2026-10-21" }, "From 1 commit on CON-014.", "Repo sync"],
     ["repo, 0 commits (the lead-in of a session past midnight)", { source: "repo" as const, commits: 0, commit: "CON-014/2026-10-22" }, "From 0 commits on CON-014.", "Repo sync"],
-    ["repo, with who pushed it (review round 2: drafts are untrusted)", { source: "repo" as const, commits: 2, commit: "CON-014/2026-10-23/aaaaaaa", pushedBy: "PUSHER" }, "From 2 commits on CON-014. Pushed by Maya Fernando.", "Repo sync"],
+    // Review rounds 2 and 3 (drafts are untrusted): it says whose sync sent it, with no name in the text.
+    ["repo, pushed by someone else", { source: "repo" as const, commits: 2, commit: "CON-014/2026-10-23/aaaaaaa", pushedBy: "PUSHER", trusted: false }, "From 2 commits on CON-014. Sent by someone else's sync (CI or another person): dismiss it if it isn't your work.", "Repo sync"],
+    ["repo, the person's own sync", { source: "repo" as const, commits: 2, commit: "CON-014/2026-10-24/bbbbbbb", trusted: true }, "From 2 commits on CON-014. From your own sync.", "Repo sync"],
     ["a webhook Time: line, no marker", { commit: "d00dfeed1" }, "Your commit d00dfee for CON-014 says 1 h.", "Git ingestion"],
     ["a webhook Time: line with a stray count", { commit: "d00dfeed2", commits: 3 }, "Your commit d00dfee for CON-014 says 1 h.", "Git ingestion"],
   ])("review-1 %s", async (_, kind, detail, agent) => {
@@ -50,5 +52,24 @@ describe.skipIf(!hasDb)("104 AC-4 hours the repo sync estimated are a draft sugg
     await withTenant(db.app, T, (tx) => commitTimeHandler.handle({ tx, tenantId: T, event: { id: `ev-${kind.commit}`, name: DELIVERY.commitTime, payload: c } }));
     const [s] = await db.q(sql`select detail, agent_name, proposed->>'source' as source from agents.suggestion where proposed->>'commit' = ${kind.commit}`);
     expect(s).toMatchObject({ detail: expect.stringContaining(detail), agent_name: agent, source: "source" in kind ? "repo" : null });
+    expect(s.detail).not.toContain("Maya");
+  });
+
+  // Review round 3: dismissing a draft someone else pushed releases its commits in Delivery; accepting one keeps them.
+  it.each([
+    ["dismissed", "dismissed", true],
+    ["accepted", "accepted", false],
+  ])("review-3 an untrusted draft %s", async (_, decision, released) => {
+    const nimal = await db.as("nimal");
+    const [con] = await db.q(sql`select id from delivery.project where key = 'CON'`);
+    const id = (decision === "dismissed" ? "d" : "a").repeat(40);
+    await db.t.owner`insert into delivery.commit_draft (tenant_id, user_id, commit_id) values (${T}, ${nimal.userId}, ${id})`;
+    const c: CommitTime = { userId: nimal.userId, projectId: con.id as string, projectKey: "CON", proposalKey: "CON-014", day: "2026-10-26", hours: 0.5,
+      commit: `CON-014/2026-10-26/${id}`, commits: 1, source: "repo", pushedBy: "sp:ci", commitIds: [id], trusted: false };
+    await withTenant(db.app, T, (tx) => commitTimeHandler.handle({ tx, tenantId: T, event: { id: `ev-r3-${decision}`, name: DELIVERY.commitTime, payload: c } }));
+    const [s] = await db.q(sql`select id from agents.suggestion where proposed->>'commit' = ${c.commit}`);
+    await withTenant(db.app, T, (tx) => releaseOnDismiss.handle({ tx, tenantId: T, event: { id: `ev-r3-d-${decision}`, name: "agents.suggestion.decided", payload: { suggestionId: s.id, decision, kind: "time.commit-draft" } } }));
+    const [k] = await db.q(sql`select released_at is not null as released from delivery.commit_draft where commit_id = ${id}`);
+    expect([k.released, (await db.q(sql`select 1 from time.repo_draft where suggestion_id = ${s.id as string}`)).length]).toEqual([released, 0]);
   });
 });

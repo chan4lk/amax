@@ -69,6 +69,8 @@ export type ProposalTimeSource = (tx: Tx, viewer: Viewer, proposal: { id: string
 
 /** 081 AC-4: Time's approved hours per proposal, a Delivery service Time runs under a job context (see the service). */
 export { PROPOSAL_HOURS_JOB, setProposalHours } from "./server/proposal-hours";
+/** 104 review round 3: Time releases an untrusted repo draft's commit claims when the person dismisses it (its job only). */
+export { COMMIT_CLAIMS_JOB, releaseCommitClaims } from "./server/claims";
 
 export async function getProposalRef(tx: Tx, keyOrId: string): Promise<ProposalRef | null> {
   const [r] = await tx.execute(sql`select p.id, p.key, p.title, p.phase, p.project_id, pr.key as project_key,
@@ -79,13 +81,15 @@ export async function getProposalRef(tx: Tx, keyOrId: string): Promise<ProposalR
 
 /**
  * 008 AC-3: hours a person's commit says they spent, for the time module to draft on their timesheet as a
- * suggestion they accept. Never a logged entry, never a rating. `day` is the commit's date (UTC).
+ * suggestion they accept. Never a logged entry, never a rating. `day` is the person's own day (their entity's zone; 104).
  * 104 AC-4: `source: "repo"` marks the repo sync's estimate for that day from `commits` commits, and `commit` is the
  * draft's own id ("<proposalKey>/<day>/<first commit>") rather than a sha. Absent: one commit's `Time:` line.
  * Review round 2: `pushedBy` is who sent the push, as ids ("sp:<id> for user:<id>", "user:<id>"): a repo draft is an
  * untrusted suggestion, so Time names the pusher on it and the person sees where it came from before accepting.
  */
-export type CommitTime = { userId: string; projectId: string; projectKey: string; proposalKey: string; day: string; hours: number; commit: string; commits?: number; source?: "repo"; pushedBy?: string };
+export type CommitTime = { userId: string; projectId: string; projectKey: string; proposalKey: string; day: string; hours: number; commit: string; commits?: number; source?: "repo"; pushedBy?: string;
+  /** Review round 3: the commits a repo draft counted (full shas), and whether the person pushed it themselves; Time releases an untrusted one's claims if the person dismisses it. */
+  commitIds?: string[]; trusted?: boolean };
 
 /** 008: a proposal task was closed (by a commit, CI or a person). `by` is the actor, "… for user:…" when acting for someone. */
 export type TaskDone = { proposalId: string; key: string; task: string; projectId: string; by: string; ownerUserId?: string | null };

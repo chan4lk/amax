@@ -20,6 +20,7 @@ import { SHA_RE } from "../sync/sha";
 import { planWithdrawals } from "../sync/withdraw";
 import { commitTime, repoPhaseTimes, repoTime, storedPhasesFor } from "./repo-time";
 import { draftSyncTime } from "./sync-time";
+import { FULL_SHA } from "./claims";
 
 // 062: sync_specclaw, a repo's specclaw state pushed from a developer's machine. amax decides what it
 // accepts: the project's linked repo only, a person on the project (delivery:proposal:push, not the
@@ -30,7 +31,8 @@ import { draftSyncTime } from "./sync-time";
 // relink serialise with it, and a failure leaves nothing half applied.
 
 const text = (n: number) => z.string().max(n);
-const CommitInput = z.object({ id: z.string().regex(SHA_RE), email: z.string().max(320), at: z.string().datetime({ offset: true }) });
+// Review round 3: a full sha, lowercase, the one key every path claims a commit by.
+const CommitInput = z.object({ id: z.string().regex(FULL_SHA, "a commit's full sha, 40 lowercase hex characters"), email: z.string().max(320), at: z.string().datetime({ offset: true }) });
 export type CommitInput = z.infer<typeof CommitInput>;
 export const SpecRecordInput = z.object({
   number: z.string().regex(/^\d{3,6}$/), dir: z.string().regex(/^\d{3,6}-[a-z0-9][a-z0-9-]{0,99}$/), title: text(200).min(1), lane: text(80), module: text(200),

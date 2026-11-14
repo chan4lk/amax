@@ -29,7 +29,7 @@ describe.skipIf(!hasDb)("104 sync_specclaw drafts hours from commits", () => {
     ];
     expect(await db.push(fakeRepo(commits))).toMatchObject({ drafted: 1, unlinked: 1, unverified: 0 });
     expect(await db.drafts()).toEqual([
-      { userId: db.nimal.userId, projectId: expect.any(String), projectKey: "FLT", proposalKey: "FLT-101", day: "2026-11-12", hours: 1.75, commit: `FLT-101/2026-11-12/${sha(1)}`, commits: 3, source: "repo", pushedBy: expect.stringContaining(db.nimal.userId) },
+      { userId: db.nimal.userId, projectId: expect.any(String), projectKey: "FLT", proposalKey: "FLT-101", day: "2026-11-12", hours: 1.75, commit: `FLT-101/2026-11-12/${sha(1)}`, commits: 3, source: "repo", pushedBy: expect.stringContaining(db.nimal.userId), commitIds: [sha(1), sha(2), sha(3)], trusted: true },
     ]);
     expect(await db.push(fakeRepo(commits))).toMatchObject({ outcome: "unchanged", drafted: 0 });
     expect(await db.drafts()).toHaveLength(1);

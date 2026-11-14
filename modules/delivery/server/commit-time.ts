@@ -7,6 +7,7 @@ import { withTenant } from "@amax/db";
 import { entityZone } from "@amax/workflows";
 import { EVENTS, type CommitTime } from "../contracts";
 import { dayIn } from "../sync/estimate";
+import { claimOne, shaKey } from "./claims";
 import { recordActivity } from "./activity";
 import { invalid, notFound } from "./refusal";
 
@@ -70,7 +71,8 @@ export async function personDay(tx: Tx, userId: string, at: string) {
 /**
  * 008 AC-3: hours from a commit, sent to the time module as a draft for the person to accept. Never logged here.
  * 104 review round 2: given the commit's instant (`at`), it's held to the same rules as the repo sync: nothing from
- * before the current consent period, and the day is the author's own. `day` alone is the older form, used as given.
+ * before the current consent period, and the day is the author's own. `day` alone is the older form: review round 3
+ * holds it to the period too, by the day the period began on.
  */
 export const draftCommitTime = defineService({
   name: "delivery.commit_time.draft",
@@ -85,14 +87,17 @@ export const draftCommitTime = defineService({
     const off = { result: { drafted: false as boolean, repeated: false as boolean }, resourceId: p.id as string };
     if (!since || (input.at && Date.parse(input.at) < Date.parse(since))) return off;
     const day = input.at ? await personDay(tx, input.userId, input.at) : input.day!;
+    if (!input.at && day < (await personDay(tx, input.userId, since))) return off;
+    // Review round 3: one key per commit, lowercase, as the repo sync claims it.
+    const commit = shaKey(input.commit);
     // 071 review round 1: one draft per person and commit, for every provider (a repeated push drafts nothing).
     // 104 review round 2: the repo sync claims its commits here too, so whichever path counts a commit first, the other
     // drafts nothing for it; nothing claims a whole day.
-    const [first] = await tx.execute(sql`insert into delivery.commit_draft (tenant_id, user_id, commit_id) values (${ctx.tenantId}, ${input.userId}, ${input.commit})
-      on conflict do nothing returning commit_id`);
-    if (!first) return { result: { drafted: false as boolean, repeated: true as boolean }, resourceId: p.id as string };
-    await recordActivity(tx, ctx, { projectId: p.project_id as string, text: `drafted ${input.hours} h on ${p.key as string} for the timesheet`, detail: `From commit ${input.commit.slice(0, 7)}, waiting to be accepted` });
-    const payload: CommitTime = { userId: input.userId, projectId: p.project_id as string, projectKey: p.project_key as string, proposalKey: p.key as string, day, hours: input.hours, commit: input.commit };
-    return { result: { drafted: true as boolean, repeated: false as boolean }, resourceId: p.id as string, after: { hours: input.hours, day, commit: input.commit }, events: [{ name: EVENTS.commitTime, payload }] };
+    // Review round 3: the provider attributed the commit to this person, so this is a trusted path and may take back a
+    // claim released when the person dismissed someone else's draft of it.
+    if (!(await claimOne(tx, ctx.tenantId, input.userId, commit, true))) return { result: { drafted: false as boolean, repeated: true as boolean }, resourceId: p.id as string };
+    await recordActivity(tx, ctx, { projectId: p.project_id as string, text: `drafted ${input.hours} h on ${p.key as string} for the timesheet`, detail: `From commit ${commit.slice(0, 7)}, waiting to be accepted` });
+    const payload: CommitTime = { userId: input.userId, projectId: p.project_id as string, projectKey: p.project_key as string, proposalKey: p.key as string, day, hours: input.hours, commit };
+    return { result: { drafted: true as boolean, repeated: false as boolean }, resourceId: p.id as string, after: { hours: input.hours, day, commit }, events: [{ name: EVENTS.commitTime, payload }] };
   },
 });

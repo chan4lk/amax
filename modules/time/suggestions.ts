@@ -5,7 +5,7 @@ import type { EventHandlerDef } from "@amax/core";
 import { contextFor } from "@amax/core/server";
 import { defineSuggestionKind } from "@amax/agents";
 import { createSuggestion } from "@amax/agents/server";
-import { EVENTS as DELIVERY, getProjectRef, getProposalRef, proposalHref, type CommitTime } from "@amax/delivery/contracts";
+import { COMMIT_CLAIMS_JOB, EVENTS as DELIVERY, getProjectRef, getProposalRef, proposalHref, releaseCommitClaims, type CommitTime } from "@amax/delivery/contracts";
 import { refuse } from "./server/card";
 import { writeDelete } from "./server/correct";
 import { liveEntry } from "./server/entry";
@@ -21,7 +21,10 @@ type Kind = { commit: string; source?: "repo" };
 const fromRepo = (p: { source?: "repo" }) => p.source === "repo";
 const gitRef = (p: Kind) => (fromRepo(p) ? `repo:${p.commit}` : `git:${p.commit}`);
 const Draft = z.object({ userId: z.uuid(), projectKey: z.string().min(1), day: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), hours: z.number().positive().max(12), commit: z.string().min(4), proposalKey: z.string(),
-  commits: z.number().int().nonnegative().optional(), source: z.literal("repo").optional() });
+  commits: z.number().int().nonnegative().optional(), source: z.literal("repo").optional(),
+  // Review round 3: who pushed a repo draft (ids, never a name: retention finds them here), the commits it counted, and
+  // whether the person pushed it themselves.
+  pushedBy: z.string().max(200).optional(), commitIds: z.array(z.string()).max(2000).optional(), trusted: z.boolean().optional() });
 type Draft = z.infer<typeof Draft>;
 const noteOf = (p: Draft) => (fromRepo(p) ? `${p.proposalKey}, ${p.commits === 1 ? "1 commit" : `${p.commits ?? 0} commits`}` : `${p.proposalKey}, commit ${p.commit.slice(0, 7)}`);
 
@@ -60,17 +63,6 @@ export const commitDraft = defineSuggestionKind<Draft, { entryId: string; alread
   },
 });
 
-/** "sp:<id> for user:<id>" as names ("amax CI for Maya Fernando"); an id with no name left reads as "someone". */
-async function pusherName(tx: Tx, by: string) {
-  const name = async (ref: string) => {
-    const id = ref.slice(ref.indexOf(":") + 1);
-    const [r] = await tx.execute(sql`select name from auth.user where id::text = ${id} union all select name from auth.service_principal where id::text = ${id}`);
-    return (r?.name as string | undefined) ?? (ref.startsWith("agent:") ? "an agent" : "someone");
-  };
-  const [actor, forUser] = by.split(" for ");
-  return forUser ? `${await name(actor)} for ${await name(forUser)}` : name(actor);
-}
-
 export const commitTimeHandler: EventHandlerDef = {
   id: "time.commit-draft",
   event: DELIVERY.commitTime,
@@ -81,19 +73,41 @@ export const commitTimeHandler: EventHandlerDef = {
     const weekend = isWeekend(c.day) ? " of weekend work" : "";
     const repo = fromRepo(c);
     const many = (n: number | undefined) => (n === 1 ? "1 commit" : `${n ?? 0} commits`);
-    // 104 review round 2 (drafts are untrusted): a repo draft says who pushed it, so the person can tell where it came from.
-    const sent = repo && c.pushedBy ? ` Pushed by ${await pusherName(tx, c.pushedBy)}.` : "";
+    // 104 review rounds 2 and 3 (drafts are untrusted): a repo draft says whether the person pushed it, so they can tell
+    // one that isn't their work. No name in the text: who pushed it is kept as ids in `proposed`.
+    const untrusted = repo && c.trusted === false;
+    const sent = !repo ? "" : untrusted ? " Sent by someone else's sync (CI or another person): dismiss it if it isn't your work." : c.trusted ? " From your own sync." : "";
     // 104 AC-4: a repo sync's estimate says how many commits it came from; a commit's own line says which commit.
     const detail = repo
       ? `From ${many(c.commits)} on ${c.proposalKey}${weekend ? ", on a weekend" : ""}.${sent} Accept to add it to your timesheet as a draft.`
       : `Your commit ${c.commit.slice(0, 7)} for ${c.proposalKey} says ${c.hours} h${weekend}. Accept to add it to your timesheet as a draft.`;
-    await createSuggestion(contextFor.job(tenantId, "time.commit-draft", `user:${c.userId}`), {
+    const made = await createSuggestion(contextFor.job(tenantId, "time.commit-draft", `user:${c.userId}`), {
       kind: commitDraft.kind, target: { type: "time.week", id: `${c.userId}:${c.day}:${c.commit}`, label: `${c.hours} h on ${c.projectKey}, ${c.day}` },
       // 073 AC-2: a weekend commit says so; accepting it logs the weekend work.
       title: `Add ${c.hours} h on ${c.projectKey} for ${c.day}${isWeekend(c.day) ? " (weekend)" : ""}`, detail,
-      proposed: { userId: c.userId, projectKey: c.projectKey, day: c.day, hours: c.hours, commit: c.commit, proposalKey: c.proposalKey, ...(repo ? { commits: c.commits ?? 0, source: "repo" as const } : {}) },
+      proposed: { userId: c.userId, projectKey: c.projectKey, day: c.day, hours: c.hours, commit: c.commit, proposalKey: c.proposalKey, ...(repo ? { commits: c.commits ?? 0, source: "repo" as const, pushedBy: c.pushedBy, commitIds: c.commitIds, trusted: c.trusted } : {}) },
       confidence: 0.6, agentName: repo ? "Repo sync" : "Git ingestion",
       scope: { ownerUserId: c.userId, projectId: c.projectId }, evidence: [{ type: "record", label: repo ? `${many(c.commits)} on ${c.proposalKey}` : `Commit ${c.commit.slice(0, 7)}`, ref: proposalHref(c.proposalKey) }],
     });
+    // Review round 3: remember an untrusted draft's commits, so dismissing it can release them for the person's own path.
+    if (untrusted && c.commitIds?.length) await tx.execute(sql`insert into time.repo_draft (suggestion_id, tenant_id, user_id, commit_ids)
+      values (${made.id}, ${tenantId}, ${c.userId}, ${JSON.stringify(c.commitIds)}::jsonb) on conflict do nothing`);
+  },
+};
+
+/**
+ * 104 review round 3: when the person dismisses a draft someone else pushed, its commits are released in Delivery (its
+ * contract, run as this job), so their own sync or a `Time:` line can still draft them; CI won't push them again. Any
+ * decision ends the record (an accepted draft keeps its claims).
+ */
+export const releaseOnDismiss: EventHandlerDef = {
+  id: "time.repo-draft.release",
+  event: "agents.suggestion.decided",
+  async handle({ tx, tenantId, event }) {
+    const e = event.payload as { suggestionId?: string; decision?: string; kind?: string };
+    if (e.kind !== commitDraft.kind || !e.suggestionId) return;
+    const [d] = await tx.execute(sql`delete from time.repo_draft where suggestion_id = ${e.suggestionId} returning user_id, commit_ids`);
+    if (!d || e.decision !== "dismissed") return;
+    await releaseCommitClaims(contextFor.job(tenantId, COMMIT_CLAIMS_JOB), { userId: d.user_id as string, commitIds: d.commit_ids as string[] });
   },
 };
