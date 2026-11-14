@@ -49,6 +49,8 @@ were drafted from the repo.
    commits less than 90 minutes apart are one session; a session counts from 30 minutes before its first commit to its
    last (a lone commit is 0.5 h); the day's sessions are summed, rounded to a quarter hour, and capped at 8 h. A table
    test covers one commit, one session, two sessions, the cap and a session that crosses midnight (split by day).
+   (Amended at review rounds 1 and 2: the day is the author's own, in their legal entity's zone, not UTC; a day names only
+   the commits made on it, and a lead-in before midnight goes to the day of the session's first commit.)
 
 **Drafting**
 
@@ -65,7 +67,11 @@ were drafted from the repo.
    counted once, whichever path gets it first: a second sync, the plugin and CI both syncing, or the push webhook's
    `Time:` line drafts nothing more for it. Review round 2 (product owner, 2026-11-13: drafts are untrusted): commits
    are claimed, never a whole day, so a later commit on a drafted day still drafts, a draft made from someone else's
-   push can't block a person's own commits, and each suggestion says who pushed it.
+   push can't block a person's own commits, and each suggestion says who pushed it. (Amended at review rounds 3 and 4,
+   product owner 2026-11-14, the day ledger: one locked row per person, proposal and day holds that day's commits with
+   their times from every path; a push drafts only the day's estimate beyond what was already suggested, so the total
+   doesn't depend on push order. A suggestion says whether the person pushed it, never who did. Dismissing a draft
+   someone else pushed takes its CI commits out of the estimate; the person's own sync can bring them back.)
 8. **AC-8** No sync, agent or job logs, submits or approves time. The only writes are the suggestion and, on the
    person's accept, their own entry (table test over the sync path's audit rows).
 
@@ -96,6 +102,8 @@ were drafted from the repo.
     the title there; then: proposals come from the repo (named when one project is in view) and nothing is typed in
     here; to add one, (1) write it in the repo with `/specclaw:propose`, (2) sync the repo to amax with
     `/amax:sync-specclaw`, or merge the change and CI syncs it. The old chip text is gone from the app and the mock.
+   (Amended at review round 1, WCAG 1.4.13: a native popover that opens on click, tap, Enter or hover and closes on
+   Escape or a click outside, rather than on focus alone; the icon sits beside the heading, not inside it.)
 
 **Amendment 2**
 
@@ -160,6 +168,8 @@ want a follow-up change before agentic hours are switched on for a legal entity 
 - AC-13: pass — delivery, time and plugin READMEs and the sync skill updated; `check:graph` ok; the 008, 081 and 089–094 suites green (below).
 - AC-14: pass — `proposals-button-104` (labelled button, `aria-describedby` tooltip, lede and two steps); `shots/app-proposals.png` (retaken 2026-11-14: the popover opens on click, Escape closes it, the heading reads "Proposals") against `shots/mock.png` section 1.
 - AC-15: pass — `current-week-104` (Team time, My timesheet, trend and Overview pin on this week; W42 still waits); `shots/app-time.png` (Week 46, This week), `shots/app-overview.png` (trend ends W46).
+
+**PR #117 CI fix:** `delivery-visual.spec.ts` (041 AC-6) failed on the Proposals heading: round 1 put it in the `.dv-title` flex row on every page. The fix is change 105-pr-117-ci-green, reviewed by its own loop, since 104 is at its five-pass cap.
 
 **Commands (Windows host, dev Postgres 5440), at 95dbedb:** `tsc --noEmit` delivery and time: exit 0. `node scripts/check-graph.mjs`: ok.
 `vitest` time 257/257; delivery 682/683, the one failure host-only and older than 104 (`releases.test.ts` backslash
