@@ -54,7 +54,8 @@ shows them, as before 104; with it, as `104-agentic-time-from-sync` shows.
      line per criterion, quality before → after, preset check, and screenshot paths
      (or "compared by eye: <who>"). -->
 
-**Verdict:** PASS. Review clean (1 round, final pass at `002785f3`, opus). Verified on 2026-11-14.
+**Verdict:** PASS. Review clean (2 rounds, both final; last at `240616a2`, opus, 0 blockers, 0 majors, 1 minor in
+`follow-ups.md`). Verified on 2026-11-14.
 
 - AC-1: pass. `ProposalsPage.tsx` renders `.dv-title` only when the agent-first icon shows; otherwise the plain `h1` and
   lede as before 104. `delivery-visual.spec.ts` (041 AC-6) runs in PR #117's CI, the check of record: it can't run
@@ -66,7 +67,11 @@ shows them, as before 104; with it, as `104-agentic-time-from-sync` shows.
   `002785f3`, named for 105, whose final pass ran there.
   `node scripts/check-review-gate.mjs --base 94565fc2 --head HEAD --fork true`: 104 pass; 105 passes once its review
   record is committed.
-- Commands (Windows host): `tsc --noEmit` (delivery) exit 0; `proposals-button-104` and `proposals-action-094` 9/9.
+- AC-4: pass. `time.proposal-hours-refresh` is declared with no `timezone` (one run per tenant); `schedules.test.ts`
+  pins it as `["time.proposal-hours-refresh", "30 2 * * *", undefined]` (2/2). `admin.spec.ts` (047 AC-1) runs in CI.
+  Review round 2's minor: a database that already synced 104's per-entity rows keeps them (`ensure_schedules` only adds
+  or updates); only a local dev database can have them, since 104 never merged and CI starts fresh.
+- Commands (Windows host): `tsc --noEmit` (delivery) exit 0; `proposals-button-104` and `proposals-action-094` 9/9; `tsc --noEmit` (time) exit 0.
   `docker-k3s` failed on a k3d image import (`short read … unexpected EOF`), a runner fault; the next push re-runs it.
 - Screenshot: no new one (no new design; the page without the icon is as `001-amax-foundation-proposals`, compared by
   CI's visual test).
