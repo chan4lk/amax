@@ -1,0 +1,11 @@
+{
+  "change": "104-agentic-time-from-sync",
+  "phase": "pr",
+  "branch": "",
+  "phases": {
+    "proposal": {"status":"approved","at":"2026-11-13T03:52:56Z"},
+    "tasks": {"status":"done","at":"2026-11-13T03:58:31Z"},
+    "verify": {"status":"done","at":"2026-11-14T16:49:11Z"},
+    "pr": {"status":"raised","at":"2026-11-14T17:04:10Z","url":"https://github.com/chan4lk/amax/pull/117"}
+  }
+}

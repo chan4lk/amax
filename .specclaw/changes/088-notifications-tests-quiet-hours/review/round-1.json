@@ -1,0 +1,52 @@
+{
+ "counts": {
+  "blocker": 0,
+  "major": 0,
+  "minor": 0
+ },
+ "escalated": [],
+ "files": [
+  "modules/notifications/tests/db.ts",
+  "modules/notifications/tests/delivery-flow.test.ts",
+  "modules/notifications/tests/rules.test.ts"
+ ],
+ "final": true,
+ "findings": [],
+ "head": "aad6acabd6f5a3de9f3c32929ac1acbfbfcaa58b",
+ "impact": [
+  "apps/mock/public/mock/index.html",
+  "apps/web/lib/admin/tool.ts",
+  "apps/web/lib/admin/workflows.ts",
+  "apps/web/lib/server.ts",
+  "apps/web/tests/admin/fixture.ts",
+  "apps/web/tests/admin/it-admin.test.ts",
+  "apps/web/tests/admin/review-052.test.ts",
+  "apps/web/tests/admin/tools.test.ts",
+  "deploy/helm/amax/templates/_helpers.tpl",
+  "deploy/helm/amax/templates/temporal-worker.yaml",
+  "deploy/helm/amax/values.yaml",
+  "modules/compliance/tests/registers.test.ts",
+  "modules/delivery/tests/chat.test.ts",
+  "modules/experience/tests/pulse.test.ts",
+  "modules/keyflow/tests/standard.test.ts",
+  "modules/notifications/tests/channels.test.ts",
+  "modules/notifications/tests/delivery-routing.test.ts",
+  "modules/notifications/tests/masking.test.ts",
+  "modules/notifications/tests/time-routing.test.ts",
+  "modules/payroll/fixtures/demo-pack.ts"
+ ],
+ "model": "opus",
+ "passes": [
+  "review",
+  "design"
+ ],
+ "prompt_chars": 51355,
+ "round": 1,
+ "since": null,
+ "status": "clean",
+ "system_chars": 43089,
+ "tier": "review",
+ "tools": "Read,Grep,Glob",
+ "ts_end": 1794068482,
+ "ts_start": 1794068448
+}

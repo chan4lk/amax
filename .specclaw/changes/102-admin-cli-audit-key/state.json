@@ -1,0 +1,11 @@
+{
+  "change": "102-admin-cli-audit-key",
+  "phase": "pr",
+  "branch": "",
+  "phases": {
+    "proposal": {"status":"approved","at":"2026-11-12T13:07:52Z"},
+    "tasks": {"status":"done","at":"2026-11-12T13:14:38Z"},
+    "verify": {"status":"done","at":"2026-11-12T13:57:41Z"},
+    "pr": {"status":"raised","at":"2026-11-12T14:07:09Z","url":"https://github.com/chan4lk/amax/pull/116"}
+  }
+}

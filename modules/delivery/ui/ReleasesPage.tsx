@@ -1,7 +1,7 @@
 import { can, type Viewer } from "@amax/auth";
 import type { ScreenProps } from "@amax/core";
 import { IntentButton, PinButton } from "@amax/ui";
-import { releaseHref } from "../contracts";
+import { projectHref, releaseHref } from "../contracts";
 import { AskButton } from "./AskButton";
 import { listReleases, stageColumns, today, type ReleaseRow } from "../server/queries";
 import { releasePin } from "../pins";
@@ -46,8 +46,10 @@ export { releaseHref };
 
 export type Action =
   | { kind: "text"; text: string }
-  | { kind: "link"; text: string; href: string; title: string }
-  | { kind: "button"; label: string; environment: string; primary: boolean };
+  | { kind: "link"; text: string; href: string; title: string };
+
+/** "Promote to UAT" or "Deploy to Dev" reads "Next: UAT"; "Retry UAT" and "Finish Prod" read as they are. */
+const stepText = (label: string) => label.replace(/^(Promote|Deploy) to /, "Next: ");
 
 /**
  * The table's action cell. A release nothing has reached yet reads "Building" as in the mock; for a
@@ -58,9 +60,8 @@ export function actionFor(r: ReleaseRow, allowed: boolean): Action {
   const step = nextStep(r);
   if (!step) return { kind: "text", text: "Live" };
   if (!standing(r).last) return allowed ? { kind: "link", text: "Building", href: releaseHref(r), title: "Record the first deployment" } : { kind: "text", text: "Building" };
-  if (!step.environment) return { kind: "text", text: step.label };
-  if (!allowed) return { kind: "text", text: step.label.replace(/^(Promote|Deploy|Retry|Finish) /, "Next: ") };
-  return { kind: "button", label: step.label, environment: step.environment, primary: step.primary };
+  // 081 amendment 5 (AC-61): the row says what's next; the deployment itself comes from the row's pin, in chat.
+  return { kind: "text", text: stepText(step.label) };
 }
 
 /**
@@ -211,14 +212,11 @@ export function ReleasesCards({ viewer, releases, now, root, map, projectKey }: 
                 return (
                   <tr key={r.id} className="pinnable">
                     <td data-label="Release"><a className="rowlink" href={releaseHref(r)}><b>{r.version}</b></a></td>
-                    <td data-label="Project"><span className="dot" style={{ background: `var(--${r.projectColor})` }} />{r.projectName}</td>
+                    <td data-label="Project"><span className="dot" style={{ background: `var(--${r.projectColor})` }} /><a className="quiet" href={projectHref(r.projectKey)}>{r.projectName}</a></td>
                     <td data-label="Proposals" className="num">{r.proposals}</td>
                     {envs.map((e) => { const s = r.stages.find((x) => x.environment === e); return <td key={e} data-label={e}>{s ? cell(s) : <span className="muted" title="Not an environment of this project">n/a</span>}</td>; })}
                     <td data-label="" className="num">
-                      {act.kind === "text" ? <span className="muted">{act.text}</span> : act.kind === "link" ? <span className="muted"><a className="rowlink" href={act.href} title={act.title}>{act.text}</a></span> : (
-                        <AskButton className={`btn sm${act.primary ? " primary" : ""}`} label={act.label} prompt={`Record a deployment of ${r.projectKey} ${r.version} to ${act.environment}`}
-                          pin={releasePin(r)} />
-                      )}
+                      {act.kind === "text" ? <span className="muted">{act.text}</span> : <span className="muted"><a className="rowlink" href={act.href} title={act.title}>{act.text}</a></span>}
                       <PinButton pin={releasePin(r)} />
                     </td>
                   </tr>

@@ -22,9 +22,9 @@ test("068 AC-1 to AC-9 the Overview leads with tickets, the hours chart and deci
   await page.getByRole("button", { name: "Sign in as demo user" }).click();
   const tickets = page.locator(".overview-tickets .ticket");
   await expect(tickets.locator(".k")).toHaveText(["Hours this week", "Proposals in flight", "Ready to invoice"]);
-  await expect(tickets.locator(".v")).toHaveText(["141.5", /^\d+$/, "$14,200"]);
+  // 104 AC-15: "this week" is the real current week (the fixtures' hours are in 2026-W42), so the figure isn't fixed.
+  await expect(tickets.locator(".v")).toHaveText([/^\d+(\.\d+)?$/, /^\d+$/, "$14,200"]);
   for (const t of await tickets.all()) await expect(t.getByRole("button", { name: /^Add .* to chat$/ })).toHaveCount(1);
-  await expect(page.locator(".lede")).toContainText("Agents logged 90.2 h of the team's 141.5 h this week.");
 
   const chart = page.locator(".card", { has: page.getByRole("heading", { name: "Hours logged" }) });
   await expect(chart.getByRole("img", { name: /Hours logged per week/ })).toBeVisible();
@@ -48,7 +48,7 @@ test("068 AC-1 to AC-9 the Overview leads with tickets, the hours chart and deci
   expect(await insights.locator(".list li").count()).toBeLessThanOrEqual(3);
   await expect(insights.getByRole("link", { name: "Open insights" })).toHaveAttribute("href", "/insights");
   await expect(page.locator(".card", { has: page.getByRole("heading", { name: "Delivery performance" }) })).toContainText("Nimal Silva");
-  await expect(page.locator(".card", { has: page.getByRole("heading", { name: "Where time went" }) }).locator(".donut-legend")).toContainText("Contoso Portal");
+  await expect(page.locator(".card", { has: page.getByRole("heading", { name: "Where time went" }) })).toBeVisible();
   const ready = page.locator(".card", { has: page.getByRole("heading", { name: "Release readiness" }) });
   await expect(ready).toContainText("Fleet v1.8.0");
   await expect(ready).toContainText("2 of 4");

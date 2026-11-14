@@ -59,10 +59,11 @@ export async function ingestPush(e: InboundEvent) {
     const tasks = closedTasks(c.message);
     for (const t of tasks) await markTaskDone(ctx, { ...t, commit: c.id }).catch((err: unknown) => logError(`delivery.ingest ${t.key} ${t.task}`, err));
     // 008 AC-3: "Time: 1.5h" drafts hours for the first proposal the commit names, if the person's entity allows it.
+    // 104 review round 2: the commit's instant, so the draft takes the author's own day and the consent period's start.
     const hours = hoursOf(c.message);
-    const day = c.at.slice(0, 10);
-    if (hours && tasks[0] && /^\d{4}-\d{2}-\d{2}$/.test(day)) {
-      await draftCommitTime(ctx, { userId: who.userId, key: tasks[0].key, day, hours, commit: c.id }).catch((err: unknown) => logError(`delivery.ingest time ${c.id}`, err));
+    const at = Number.isFinite(Date.parse(c.at)) ? new Date(c.at).toISOString() : null;
+    if (hours && tasks[0] && at) {
+      await draftCommitTime(ctx, { userId: who.userId, key: tasks[0].key, at, hours, commit: c.id }).catch((err: unknown) => logError(`delivery.ingest time ${c.id}`, err));
     }
   }
 }

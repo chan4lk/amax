@@ -1,7 +1,7 @@
 import type { ModuleManifest, NavEntry } from "@amax/core";
 import type { NavItem } from "@amax/ui";
 import { modules } from "../generated/modules";
-import { setInstalledModules } from "@amax/core/server";
+import { setInstalledModules, setProvided } from "@amax/core/server";
 import { OPERATIONS } from "./operations";
 
 const GROUPS = ["Work", "People", "Business", "Operations"];
@@ -11,6 +11,8 @@ const ordered = (mods: readonly ModuleManifest[]) => [...mods].sort((a, b) => ra
 export const installed: ModuleManifest[] = ordered(modules);
 // 072: what hasModule answers for this deployment (AMAX_MODULES_DISABLED is already out of the generated list).
 setInstalledModules(installed.map((m) => m.id));
+// 081 review round 1: what modules fill in each other's slots (a proposal's time lines), from the same list.
+setProvided(installed);
 
 const inRail = (n: NavEntry) => n.parent !== "settings";
 

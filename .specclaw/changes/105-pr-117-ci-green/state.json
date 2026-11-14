@@ -1,0 +1,12 @@
+{
+  "change": "105-pr-117-ci-green",
+  "phase": "pr",
+  "branch": "",
+  "phases": {
+    "proposal": {"status":"approved","at":"2026-11-14T17:39:21Z"},
+    "tasks": {"status":"done","at":"2026-11-14T17:39:21Z"},
+    "build": {"status":"done","at":"2026-11-14T17:39:23Z"},
+    "verify": {"status":"done","at":"2026-11-14T17:42:52Z","verdict":"PASS"},
+    "pr": {"status":"raised","at":"2026-11-14T17:44:56Z","url":"https://github.com/chan4lk/amax/pull/117"}
+  }
+}

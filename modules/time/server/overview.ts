@@ -1,7 +1,9 @@
+import { sql } from "drizzle-orm";
 import type { OverviewPart, OverviewQuery } from "@amax/core";
 import type { Viewer } from "@amax/auth";
 import { projectHours, weekTotals, weeklyHours } from "../contracts";
-import { latestWeek, projectNames, read, round1 } from "./read";
+import { projectNames, read, round1 } from "./read";
+import { currentWeek } from "./rules";
 import { teamWeek } from "./team";
 import { weekKey, weekStart, workDays, type IsoWeek } from "../week";
 
@@ -10,22 +12,35 @@ const pct = (part: number, all: number) => (all ? Math.round((part / all) * 100)
 
 /** 068 AC-2: the hours trend, also the get_hours_trend tool behind the chart's pin. */
 export const hoursTrend = (v: Viewer, a: { weeks?: number; projectId?: string }) =>
-  read(v, async (tx) => weeklyHours(tx, v, { last: await latestWeek(tx), weeks: a.weeks ?? 12, projectId: a.projectId }));
+  read(v, async (tx) => weeklyHours(tx, v, { last: await currentWeek(tx, v.userId), weeks: a.weeks ?? 12, projectId: a.projectId }));
 
-async function waiting(v: Viewer, w: IsoWeek) {
-  const team = await teamWeek(v, w);
-  const weeks = team.rows.filter((r) => r.status === "submitted" && r.canApprove);
-  if (!weeks.length) return [];
-  const hours = round1(weeks.reduce((t, r) => t + r.total, 0));
-  return [{ id: `time:${team.key}`, title: `${team.key.replace(/^\d{4}-/, "")} timesheets`, detail: `${weeks.length} submitted, ${hours} h, ${pct(weeks.reduce((t, r) => t + r.agentHours, 0), hours)}% from agents`,
-    context: `${weeks.length} ${weeks.length === 1 ? "person" : "people"}`, raisedBy: "Time", agent: false, since: weekStart(w).toISOString(), action: "Review",
-    prompt: `Review the ${team.key} timesheets waiting for my approval`, pin: { label: `${team.key} timesheets`, tool: "get_team_week", args: { week: team.key } } }];
+// 104 AC-15: submitted weeks wait whatever week they're from, so the Overview lists the newest WAITING_WEEKS weeks that
+// hold a timesheet this viewer can approve. Review round 1: the limit applies after the approver check, so weeks waiting
+// on other approvers can't push this viewer's out; SCAN_WEEKS bounds how far back it looks.
+const WAITING_WEEKS = 8;
+const SCAN_WEEKS = 52;
+async function waiting(v: Viewer) {
+  const weeks = await read(v, async (tx) => (await tx.execute(sql`select distinct iso_year, iso_week from time.week where status = 'submitted' order by iso_year desc, iso_week desc limit ${SCAN_WEEKS}`))
+    .map((r) => ({ year: Number(r.iso_year), week: Number(r.iso_week) })));
+  const out = [];
+  for (const w of weeks) {
+    if (out.length === WAITING_WEEKS) break;
+    const team = await teamWeek(v, w);
+    const rows = team.rows.filter((r) => r.status === "submitted" && r.canApprove);
+    if (!rows.length) continue;
+    const hours = round1(rows.reduce((t, r) => t + r.total, 0));
+    out.push({ id: `time:${team.key}`, title: `${team.key.replace(/^\d{4}-/, "")} timesheets`, detail: `${rows.length} submitted, ${hours} h, ${pct(rows.reduce((t, r) => t + r.agentHours, 0), hours)}% from agents`,
+      context: `${rows.length} ${rows.length === 1 ? "person" : "people"}`, raisedBy: "Time", agent: false, since: weekStart(w).toISOString(), action: "Review",
+      prompt: `Review the ${team.key} timesheets waiting for my approval`, pin: { label: `${team.key} timesheets`, tool: "get_team_week", args: { week: team.key } } });
+  }
+  return out;
 }
 
 // 068: the Hours ticket, the trend and by-project panels, and timesheets waiting on the viewer.
 export const timeOverview = async (v: Viewer, q: OverviewQuery): Promise<OverviewPart> => {
   const part = await read(v, async (tx): Promise<OverviewPart & { week: IsoWeek }> => {
-    const w = await latestWeek(tx);
+    // 104 AC-15: "this week" is the viewer's current week, the same week Team time opens on.
+    const w = await currentWeek(tx, v.userId);
     const key = weekKey(w);
     const names = await projectNames(tx);
     const people = await weekTotals(tx, v, w);
@@ -53,6 +68,6 @@ export const timeOverview = async (v: Viewer, q: OverviewQuery): Promise<Overvie
       ],
     };
   });
-  const { week, ...rest } = part;
-  return { ...rest, waiting: await waiting(v, week) };
+  const { week: _week, ...rest } = part;
+  return { ...rest, waiting: await waiting(v) };
 };

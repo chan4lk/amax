@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { hasDb } from "@amax/db/testdb";
 import { getProjectRef } from "@amax/delivery/contracts";
 import { withTenant } from "@amax/db";
@@ -7,8 +7,9 @@ import { T, timeDb } from "./db";
 
 describe.skipIf(!hasDb)("Overview parts (Postgres)", () => {
   let db: Awaited<ReturnType<typeof timeDb>>;
-  beforeAll(async () => { db = await timeDb(); }, 60_000);
-  afterAll(() => db?.t.drop());
+  // 104 AC-15: "this week" is the viewer's current week, so the clock is pinned to the fixtures' day (2026-10-16, W42).
+  beforeAll(async () => { vi.useFakeTimers({ toFake: ["Date"], now: new Date("2026-10-16T08:00:00Z") }); db = await timeDb(); }, 60_000);
+  afterAll(() => { vi.useRealTimers(); return db?.t.drop(); });
 
   it("068 AC-2 hours per week split agents and people, filtered by project, with the ticket, by-project share and timesheets to approve", async () => {
     const maya = await db.as("maya");

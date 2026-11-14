@@ -1,0 +1,83 @@
+{
+ "counts": {
+  "blocker": 0,
+  "major": 1,
+  "minor": 1
+ },
+ "escalated": [
+  "379d6840d47a"
+ ],
+ "files": [
+  "README.md",
+  "apps/mock/public/mock/index.html",
+  "packages/auth/bin/admin.ts",
+  "packages/auth/tests/admin-cli-102.test.ts",
+  "packages/db/migrations/0032_deployment_key_probe.sql"
+ ],
+ "final": true,
+ "findings": [
+  {
+   "file": "packages/auth/bin/admin.ts",
+   "fp": "379d6840d47a",
+   "in_delta": true,
+   "line": 41,
+   "message": "`deploymentKey()` treats \"the probe returned no row\" as \"the key is fine\" (`if (r && ...)`). On a deployment with no keyed v2 audit row yet, `principal-add` and `user-deactivate` accept any AUDIT_HASH_KEY of 32 or more characters. The README's own setup reaches that state: `tenant-add` and `user-add` write no audit rows, and `principal-add` for the specclaw sync usually runs before anyone signs in. The bad row then becomes the newest keyed row, so the probe starts accepting the wrong key and refusing the app's real one until the app writes something. `walkChain` compares `keyed(raw, key)` with the stored `*_key`, so the row also breaks `verifyAuditChain` for that tenant for good, because audit_event is append-only. The same row also makes keyed erasure lookups miss. Fix: fail closed when there is no row to compare against. Either refuse the audited commands until the deployment has a reference, or store a key fingerprint (an HMAC of a fixed label) when the app or migrations first configure the runtime, and check against that. Add an AC-3 row for a freshly migrated database with no keyed rows. AC-3's WRONG cases pass today only because AC-1 ran first and wrote a row under KEY, so running AC-3 alone (`-t AC-3`) would accept the wrong key.",
+   "original_severity": "major",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B6",
+   "scenario": "Fresh migrated DB \u2192 `admin tenant-add`, `admin user-add` (no audit rows) \u2192 `AUDIT_HASH_KEY=$(32 \u00d7 'w') admin principal-add ...` exits 0 and writes `auth.principal.create` with actor_key = HMAC under the wrong key \u2192 `verifyAuditChain(tx, tenant, realKey)` returns `{ ok: false, reason: 'value mismatch' }`, and a later `admin user-deactivate` with the real key fails with 'AUDIT_HASH_KEY is not this deployment's key'.",
+   "severity": "major"
+  },
+  {
+   "file": "packages/db/migrations/0032_deployment_key_probe.sql",
+   "fp": "0763c817ee4b",
+   "in_delta": true,
+   "line": 10,
+   "message": "[design] The migration header says the function \"returns one keyed hash, never a tenant's data\", but `core.latest_keyed_actor()` also returns the raw `actor` value from another tenant's row. That raw value is a person identifier the erasure design treats as personal data. Either fix the comment, or have the function compare the hash in SQL so the caller only gets back a match or no match.",
+   "original_severity": "minor",
+   "pass": "design",
+   "pre_existing": false,
+   "rule": "B10",
+   "scenario": "select * from core.latest_keyed_actor() as the schema owner \u2192 returns e.g. actor='user:<uuid of a person in another tenant>' together with its hash.",
+   "severity": "minor"
+  }
+ ],
+ "head": "c7fe3b66a0456335572b4fafb5c1b31385c644da",
+ "impact": [
+  "apps/web/lib/rate-wiring.ts",
+  "apps/web/lib/server.ts",
+  "apps/web/scripts/backups.ts",
+  "apps/web/scripts/dev-seed.ts",
+  "apps/web/tests/admin/fixture.ts",
+  "apps/web/tests/e2e/api-seed.ts",
+  "apps/web/tests/e2e/global-auth.ts",
+  "apps/web/tests/e2e/proposal-agent.ts",
+  "apps/web/tests/e2e/secrets-seed.ts",
+  "modules/allocations/tests/setup.ts",
+  "modules/career/tests/db.ts",
+  "modules/compliance/server/evidence.ts",
+  "modules/compliance/tests/db.ts",
+  "modules/delivery/sync/bin.ts",
+  "modules/delivery/tests/chat-043.test.ts",
+  "modules/delivery/tests/chat-first.test.ts",
+  "modules/delivery/tests/chat.test.ts",
+  "modules/delivery/tests/create-project-contract.test.ts",
+  "modules/delivery/tests/create-project-surfaces.test.ts",
+  "modules/delivery/tests/delivery.test.ts"
+ ],
+ "model": "opus",
+ "passes": [
+  "review",
+  "design"
+ ],
+ "prompt_chars": 64876,
+ "round": 5,
+ "since": null,
+ "status": "escalate",
+ "system_chars": 43067,
+ "tier": "review",
+ "tools": "Read,Grep,Glob",
+ "ts_end": 1794491665,
+ "ts_start": 1794491571
+}

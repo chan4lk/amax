@@ -3,7 +3,7 @@ import { withTenant, type Tx } from "@amax/db";
 import { can, type Viewer } from "@amax/auth";
 import { ForbiddenError, getRuntime } from "@amax/core/server";
 import { listProjectRefs } from "@amax/delivery/contracts";
-import { isoWeekOf, type IsoWeek } from "../week";
+import type { IsoWeek } from "../week";
 
 export const read = async <T>(viewer: Viewer, fn: (tx: Tx) => Promise<T>) => {
   if (!can(viewer, "time:read")) throw new ForbiddenError("time:read", "time");
@@ -23,12 +23,6 @@ export async function entrySums(tx: Tx, w: IsoWeek, userId?: string): Promise<En
 
 export async function projectNames(tx: Tx) {
   return new Map((await listProjectRefs(tx)).map((p) => [p.id, p.name]));
-}
-
-export async function latestWeek(tx: Tx, userId?: string): Promise<IsoWeek> {
-  const mine = userId ? sql`and user_id = ${userId}` : sql``;
-  const [r] = await tx.execute(sql`select iso_year, iso_week from time.week where starts_on <= current_date ${mine} order by starts_on desc limit 1`);
-  return r ? { year: Number(r.iso_year), week: Number(r.iso_week) } : isoWeekOf(new Date());
 }
 
 export type EntryLine = { id: string; projectId: string; projectName: string; day: string; hours: number; billable: boolean; source: string; note: string | null };

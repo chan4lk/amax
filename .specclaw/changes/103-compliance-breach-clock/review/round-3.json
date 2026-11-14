@@ -1,0 +1,45 @@
+{
+ "counts": {
+  "blocker": 0,
+  "major": 0,
+  "minor": 1
+ },
+ "escalated": [],
+ "files": [
+  "apps/web/lib/privacy-fixtures.ts"
+ ],
+ "final": false,
+ "findings": [
+  {
+   "file": "apps/web/lib/privacy-fixtures.ts",
+   "fp": "c4d0a046a588",
+   "in_delta": true,
+   "line": 23,
+   "message": "The fix only works on a fresh database. The seed returns early once any privacy.purge_log row exists (line 19-20), so on a reused demo or local e2e database the rows keep the timestamp from the first seed. Once that is more than 30 days old, they drop out of the card's window (packages/core/src/privacy/view.ts:40 uses `at > now() - 30 days`). That brings back the same empty Data retention card this amendment set out to fix. The card should show the seeded purge however old the database is. Fix: make the seed refresh the fixture rows' dates each time it runs. For example, when it finds the three fixture rules already logged, update their `at` to now() - 4 days instead of returning. Or check for a row inside the 30-day window rather than for any row.",
+   "original_severity": "minor",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B1",
+   "scenario": "A developer seeds the local database on 2026-11-12, so the rows get at = 2026-11-08. On 2026-12-15 they run the retention e2e test against the same database. The seed sees an existing purge_log row and skips. The card's 30-day window starts at 2026-11-15, so it shows no purges and the test fails.",
+   "severity": "minor"
+  }
+ ],
+ "head": "35c8157b65c3da9c3fb0f5557b422896c9c5986e",
+ "impact": [
+  "apps/web/scripts/seed-demo.ts"
+ ],
+ "model": "opus",
+ "passes": [
+  "review",
+  "design"
+ ],
+ "prompt_chars": 45348,
+ "round": 3,
+ "since": "66730fa8",
+ "status": "clean",
+ "system_chars": 42917,
+ "tier": "review",
+ "tools": "Read,Grep,Glob",
+ "ts_end": 1794495460,
+ "ts_start": 1794495415
+}

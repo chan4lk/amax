@@ -1,0 +1,101 @@
+{
+ "counts": {
+  "blocker": 0,
+  "major": 1,
+  "minor": 1
+ },
+ "escalated": [],
+ "files": [
+  ".github/workflows/specclaw-sync.yml",
+  "modules/delivery/README.md",
+  "modules/delivery/mcp.ts",
+  "modules/delivery/server/push.ts",
+  "modules/delivery/sync/withdraw.ts",
+  "modules/delivery/tests/sync-push-089.test.ts",
+  "modules/delivery/tests/withdraw-089.test.ts",
+  "packages/testing/tests/change-numbers.test.ts",
+  "packages/testing/tests/specclaw-sync-ci.test.ts",
+  "plugins/amax/README.md",
+  "scripts/check-change-numbers.mjs",
+  "scripts/specclaw-sync-ci.mjs"
+ ],
+ "final": false,
+ "findings": [
+  {
+   "file": "modules/delivery/sync/withdraw.ts",
+   "fp": "66af7890da81",
+   "in_delta": true,
+   "line": 22,
+   "message": "Instance fix for the 'nobody can decide' finding. The confirm path was added only to the sync_specclaw push. The self-sync calls the same shared rule without `confirm` (modules/delivery/sync/import.ts:83), and the self-sync has no flag or option that could supply one. So a self-hosted amax that uses the self-sync still holds a real mass deletion forever. The shared hold message also tells that user to 'sync again with confirmWithdraw N', which is an option the self-sync doesn't have. Fix: add a confirm option to the self-sync (CLI flag \u2192 importChanges opts \u2192 planWithdrawals `confirm`), or make the hold message name the right control for each caller. Add a self-sync test where a held plan is confirmed and then applied.",
+   "original_severity": "major",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B1",
+   "scenario": "Self-sync on a project with 6 live specclaw proposals after 5 folders are really deleted from main \u2192 the result skips 'FLT: withdrawal held \u2026 sync again with confirmWithdraw 5'. Every later self-sync gives the same hold, and nothing the self-sync accepts can release it.",
+   "severity": "major"
+  },
+  {
+   "file": "modules/delivery/sync/withdraw.ts",
+   "fp": "eb7c97f3e313",
+   "in_delta": true,
+   "line": 22,
+   "message": "The confirmation is matched only on the count (`o.confirm === keys.length`), not on the set of proposals the hold named. The hold message lists only the first five keys. If main changes between the hold and the confirm, the same count can withdraw proposals the person never saw. Consider binding the confirm to the held keys, for example a hash or the key list, and showing that in the message.",
+   "original_severity": "minor",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B6",
+   "scenario": "A push is held for 6 keys (FLT-101..106). Before the person runs the workflow with confirm_withdraw 6, a merge restores FLT-101 and deletes FLT-107. The confirm still matches 6 and withdraws FLT-107, which no one reviewed.",
+   "severity": "minor"
+  },
+  {
+   "file": "modules/delivery/sync/import.ts",
+   "fp": "36b913c3e995",
+   "in_delta": false,
+   "line": 83,
+   "message": "The confirm path was added to one caller of `planWithdrawals` but not the other. `sync_specclaw` (push.ts) passes `confirm: p.confirmWithdraw`. The self-sync (`importSpecclaw`, run by `sync:specclaw`, bin.ts) calls the same rule without `confirm` and has no CLI flag to set it. A self-hosted amax that really deletes most of its change folders is held on every run, the same 'nobody can decide' defect as before, and the hold message tells the person to 'sync again with confirmWithdraw N', which this path doesn't accept. Fix: add a `--confirm-withdraw <n>` option in bin.ts, pass it through `importSpecclaw`'s opts to `planWithdrawals`, and add a self-sync row to the held-then-confirmed test.",
+   "original_severity": "major",
+   "pass": "design",
+   "pre_existing": true,
+   "rule": "B1",
+   "scenario": "Self-sync with 6 live specclaw proposals and 5 folders really deleted: `pnpm --filter @amax/delivery sync:specclaw` \u2192 skipped 'withdrawal held \u2026 sync again with confirmWithdraw 5' \u2192 there is no way to pass 5, so all 5 stay live on every later run.",
+   "severity": "major"
+  }
+ ],
+ "head": "e4bfc5c86af80569b6b20cb1dfef3331df2249e9",
+ "impact": [
+  "apps/mock/public/mock/index.html",
+  "apps/web/lib/agents-fixtures.ts",
+  "apps/web/scripts/dev.ts",
+  "modules/allocations/fixtures/index.ts",
+  "modules/allocations/suggestions.ts",
+  "modules/allocations/tests/allocations.test.ts",
+  "modules/allocations/tests/scope.test.ts",
+  "modules/allocations/ui/AllocationsPage.tsx",
+  "modules/career/fixtures/kasun.ts",
+  "modules/career/server/live.ts",
+  "modules/delivery/server/overview.ts",
+  "modules/delivery/sync/import.ts",
+  "modules/delivery/tests/sync-push.test.ts",
+  "modules/delivery/ui/ProjectsPage.tsx",
+  "modules/experience/server/collect.ts",
+  "modules/hr/server/change.ts",
+  "modules/hr/tests/records.test.ts",
+  "modules/inbox-agent/server/scan.ts",
+  "modules/insights/server/risk.ts",
+  "modules/insights/tests/agents.test.ts"
+ ],
+ "model": "opus",
+ "passes": [
+  "review",
+  "design"
+ ],
+ "prompt_chars": 87233,
+ "round": 3,
+ "since": "2d741c29",
+ "status": "open",
+ "system_chars": 43043,
+ "tier": "review",
+ "tools": "Read,Grep,Glob",
+ "ts_end": 1794236710,
+ "ts_start": 1794236633
+}
