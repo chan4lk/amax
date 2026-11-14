@@ -1,0 +1,10 @@
+{
+  "change": "105-pr-117-ci-green",
+  "phase": "build",
+  "branch": "",
+  "phases": {
+    "proposal": {"status":"approved","at":"2026-11-14T17:39:21Z"},
+    "tasks": {"status":"done","at":"2026-11-14T17:39:21Z"},
+    "build": {"status":"done","at":"2026-11-14T17:39:23Z"}
+  }
+}
