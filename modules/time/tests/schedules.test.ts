@@ -56,6 +56,6 @@ describe.skipIf(!hasDb)("073 scheduled reminders (Postgres)", () => {
     expect(await remindDrafts(job(), { legalEntityId: au, now: monday })).toMatchObject({ reminded: 0 });
     // 104 review round 4 adds the nightly proposal hours refresh.
     expect((manifest.schedules as { name: string; cron: string; timezone?: string }[] | undefined)?.map((s) => [s.name, s.cron, s.timezone])).toEqual([["time.daily-reminders", "*/15 * * * 1-5", "entity"], ["time.draft-reminders", "0 9 * * 1", "entity"],
-      ["time.proposal-hours-refresh", "30 2 * * *", "entity"]]);
+      ["time.proposal-hours-refresh", "30 2 * * *", undefined]]);
   }, 60_000);
 });

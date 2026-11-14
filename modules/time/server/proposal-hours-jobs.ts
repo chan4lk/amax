@@ -8,6 +8,8 @@ import { refreshProposalHours } from "./proposal-hours";
  * 104 review round 4: approved and waiting hours per proposal, recomputed nightly for every project with time on it.
  * The event handlers keep them current as entries and weeks change; this run fills them in for proposals that had hours
  * before 104 (waiting_hours starts at 0) and puts right anything an event missed. Idempotent: the same figures twice.
+ * PR #117 CI: once per tenant (no time zone), not once per legal entity: it covers every project, and an entity
+ * schedule would also wait on an entity with no time zone (the Settings hub counts those).
  */
 export const proposalHoursWorkflows = [defineWorkflow({
   name: "time.proposal-hours-refresh", title: "Proposal hours refresh",
@@ -20,5 +22,5 @@ export const proposalHoursWorkflows = [defineWorkflow({
 })];
 
 export const proposalHoursSchedules = [
-  cron({ name: "time.proposal-hours-refresh", title: "Proposal hours refresh", description: "Nightly: recomputes approved and waiting hours on every proposal with time logged against it", workflow: "time.proposal-hours-refresh", cron: "30 2 * * *", timezone: "entity" }),
+  cron({ name: "time.proposal-hours-refresh", title: "Proposal hours refresh", description: "Nightly: recomputes approved and waiting hours on every proposal with time logged against it", workflow: "time.proposal-hours-refresh", cron: "30 2 * * *" }),
 ];

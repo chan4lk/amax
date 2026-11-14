@@ -14,6 +14,12 @@ its five-pass cap, so `review-gate` (fork PR) failed every covered-by change in 
 under 093): no loop in the PR reviewed that commit. `docker-k3s` failed on a k3d image import (`short read … unexpected
 EOF`), a runner fault.
 
+**Amendment 1 (2026-11-14, PR #117 CI run 2):** with the heading fixed, `checks` failed next on `admin.spec.ts`
+(047 AC-1): the Settings hub said "3 schedules wait for an entity's time zone" where it expects 2. 104's nightly
+`time.proposal-hours-refresh` was declared per legal entity, so it counted as one more schedule waiting for an
+entity's zone, and it recomputed every project of the tenant once per entity (104 review pass 6's minor). It now runs
+once per tenant, with no time zone (AC-4).
+
 ## Mock Delta
 
 What changes on screen, and where to see it: [`105-pr-117-ci-green`](../../mock/index.html#105-pr-117-ci-green)
@@ -31,10 +37,16 @@ shows them, as before 104; with it, as `104-agentic-time-from-sync` shows.
 3. **AC-3** The fix is in a commit named for 105, after `d2badfd` is taken out of the branch, and 105's own final
    review pass runs at or after it, so `review-gate` passes for every change in PR #117, covered-by ones included.
 
+4. **AC-4** (Amendment 1) `time.proposal-hours-refresh` is a tenant-wide schedule (no `timezone`), so the Settings
+   hub counts 2 schedules waiting for an entity's time zone again (`admin.spec.ts` 047 AC-1) and the refresh runs once
+   per tenant. `schedules.test.ts` pins it.
+
 ## Tasks
 
 - [x] `T1` — Render the `.dv-title` row only with the info icon; otherwise the plain heading and lede (AC-1, AC-2)
   Files: modules/delivery/ui/ProposalsPage.tsx
+- [x] `T2` — Amendment 1: the nightly proposal hours refresh runs once per tenant, not per legal entity (AC-4)
+  Files: modules/time/server/proposal-hours-jobs.ts, modules/time/tests/schedules.test.ts
 
 ## Verify
 
