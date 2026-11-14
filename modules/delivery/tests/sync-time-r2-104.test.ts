@@ -10,9 +10,9 @@ import { at, commit, fakeRepo, sha, syncTimeDb, T } from "./sync-time-db";
 
 const CI = (onBehalfOf: string): ServiceContext => ({ tenantId: T, actor: { id: "sp:ci", kind: "service" }, onBehalfOf, source: "api" });
 
-// 104 review round 2 (product owner, 2026-11-13: drafts are untrusted): each commit is counted once, claimed before it's
-// counted, whichever path gets it first; nothing claims a whole day; a draft says who pushed it.
-describe.skipIf(!hasDb)("104 review round 2: commits, not days, are claimed", () => {
+// 104 review rounds 2 and 4 (drafts are untrusted; the day ledger): a draft from someone else's push never blocks the
+// person's own commits, a commit is counted once whichever path gets it first, and a day's commits wait until it ends.
+describe.skipIf(!hasDb)("104 review round 2: the day ledger between pushers", () => {
   let db: Awaited<ReturnType<typeof syncTimeDb>>;
   let proposalId: string;
   const sync = (ctx: ServiceContext, commits: ReturnType<typeof commit>[]) =>
@@ -32,16 +32,16 @@ describe.skipIf(!hasDb)("104 review round 2: commits, not days, are claimed", ()
     const own = await sync(ctxFor(db.nimal), [commit(72, "nimal@lumenlabs.test", at("15:00", "2026-11-10"))]);
     expect([ci.drafted, own.drafted]).toEqual([1, 1]);
     expect(await sync(ctxFor(db.nimal), [commit(72, "nimal@lumenlabs.test", at("15:00", "2026-11-10"))])).toMatchObject({ drafted: 0 });
-    expect((await db.q(sql`select drafted_by, commit_ids from delivery.commit_day_draft where day = '2026-11-10' order by drafted_at`)).map((r) => [r.drafted_by, r.commit_ids])).toEqual([
-      [`sp:ci for user:${db.ayesha.userId}`, [sha(71)]], [expect.stringContaining(db.nimal.userId), [sha(72)]]]);
-    // Each draft names its own first commit in full, so two drafts on one day stay two suggestions, and says who pushed it.
-    const sent = [...ci.events, ...own.events].map((e) => e.payload as { commit: string; pushedBy: string }).map((p) => [p.commit, p.pushedBy]);
-    expect(sent).toEqual([[`FLT-101/2026-11-10/${sha(71)}`, `sp:ci for user:${db.ayesha.userId}`], [`FLT-101/2026-11-10/${sha(72)}`, expect.stringContaining(db.nimal.userId)]]);
+    expect((await db.q(sql`select drafted_by, commit_ids, hours::float as hours from delivery.commit_day_draft where day = '2026-11-10' order by drafted_at`)).map((r) => [r.drafted_by, r.commit_ids, r.hours])).toEqual([
+      [`sp:ci for user:${db.ayesha.userId}`, [sha(71)], 0.5], [expect.stringContaining(db.nimal.userId), [sha(72)], 0.5]]);
+    // Each draft names its own first commit in full, and says whether the person pushed it; never who did.
+    const sent = [...ci.events, ...own.events].map((e) => e.payload as Record<string, unknown>);
+    expect(sent.map((p) => [p.commit, p.trusted, "pushedBy" in p])).toEqual([[`FLT-101/2026-11-10/${sha(71)}`, false, false], [`FLT-101/2026-11-10/${sha(72)}`, true, false]]);
   });
 
   it("review-2 B7 the sync and the webhook racing over the same commit count it once, five times over", async () => {
     for (let i = 0; i < 5; i++) {
-      const id = sha(80 + i), when = at(`1${i}:00`, "2026-11-11");
+      const id = sha(80 + i), when = at("10:00", `2026-11-0${3 + i}`);
       await Promise.all([sync(CI(`user:${db.nimal.userId}`), [{ id, email: "nimal@lumenlabs.test", at: when }]), hook(id, when)]);
       const bySync = (await db.q(sql`select 1 from delivery.commit_day_draft where commit_ids ? ${id}`)).length;
       const byHook = (await db.q(sql`select 1 from core.event where name = 'delivery.commit.time' and payload->>'commit' = ${id}`)).length;
@@ -49,9 +49,9 @@ describe.skipIf(!hasDb)("104 review round 2: commits, not days, are claimed", ()
     }
   });
 
-  it("review-2 commits of today aren't claimed, so a later sync still drafts them", async () => {
+  it("review-2 a day that hasn't ended isn't recorded, so a later sync still drafts it", async () => {
     const today = commit(90, "nimal@lumenlabs.test", at("09:00", "2026-11-20"));
     expect(await sync(ctxFor(db.nimal), [today])).toMatchObject({ drafted: 0 });
-    expect(await db.q(sql`select 1 from delivery.commit_draft where commit_id = ${today.id}`)).toEqual([]);
+    expect(await db.q(sql`select 1 from delivery.commit_ledger where commits ? ${today.id}`)).toEqual([]);
   });
 });

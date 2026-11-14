@@ -20,7 +20,7 @@ import { SHA_RE } from "../sync/sha";
 import { planWithdrawals } from "../sync/withdraw";
 import { commitTime, repoPhaseTimes, repoTime, storedPhasesFor } from "./repo-time";
 import { draftSyncTime } from "./sync-time";
-import { FULL_SHA } from "./claims";
+import { FULL_SHA } from "./ledger";
 
 // 062: sync_specclaw, a repo's specclaw state pushed from a developer's machine. amax decides what it
 // accepts: the project's linked repo only, a person on the project (delivery:proposal:push, not the

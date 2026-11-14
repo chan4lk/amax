@@ -3,18 +3,16 @@ import type { Tx } from "@amax/db";
 import { appendAudit, type Emitted, type ServiceContext } from "@amax/core/server";
 import { entityZone } from "@amax/workflows";
 import { EVENTS, type CommitTime } from "../contracts";
-import { dayIn, estimateDays } from "../sync/estimate";
+import { dayIn } from "../sync/estimate";
 import { commitTimeSince } from "./commit-time";
 import { personOf } from "./owner";
 import type { CommitInput } from "./push";
-import { claimOne, takenIds, unclaim } from "./claims";
+import { dayHours, lockDay, merge, saveDay, shaKey, suggestedHours } from "./ledger";
 
-// 104 AC-4 to AC-8: hours from a change's commits, drafted for the person to accept. Each draft is a row of
-// delivery.commit_day_draft (several a day are possible) and the commit-time event Time turns into a timesheet
-// suggestion; the sync never logs, submits or approves time. The commit's author is found by a verified git identity
-// (AC-5). Review rounds 2 and 3 (drafts are untrusted): each commit is counted once, claimed in commit_draft (claims.ts),
-// and a day drafts only the hours its estimate has beyond what is already drafted for it, so the total doesn't depend on
-// when or how often the repo is pushed.
+// 104 AC-4 to AC-8: hours from a change's commits, suggested to the person to accept. The sync never logs, submits or
+// approves time. The commit's author is found by a verified git identity (AC-5). Review round 4 (the day ledger): each
+// person's day of commits is one locked ledger row (ledger.ts); a push merges its commits in and suggests only what the
+// day's estimate has beyond what was already suggested, so the total doesn't depend on when or in what order pushes come.
 
 export type SyncTimeRecord = { proposalId: string; proposalKey: string; commits: CommitInput[] };
 export type SyncTimeResult = { drafted: number; unlinked: number; unverified: number; events: Emitted[] };
@@ -34,7 +32,8 @@ async function peopleOf(tx: Tx, emails: string[]) {
 /**
  * Review round 1: who a push may draft hours for. The pusher controls the payload, so a person's own push (the plugin,
  * directly or through an agent) drafts only their own commits. A service credential (CI, made by an Admin, reading git on
- * the runner) drafts for every author. Anyone else's commits count as unverified and draft nothing.
+ * the runner) drafts for every author, as untrusted drafts the person may dismiss. Anyone else's commits count as
+ * unverified and draft nothing.
  */
 const mayDraftFor = (ctx: ServiceContext) => {
   if (ctx.actor.kind === "service") return () => true;
@@ -42,42 +41,43 @@ const mayDraftFor = (ctx: ServiceContext) => {
   return (userId: string) => userId === me;
 };
 
-/** The days to draft for one person: from the start of their consent period, up to their own today (not included). */
-function daysFor(commits: CommitInput[], person: Person, since: string, now: Date) {
-  const today = dayIn(person.zone)(now.getTime());
-  // Review round 2: the day's count and ids come from the estimate's own per-day set, so they always agree.
-  return estimateDays(commits.filter((c) => Date.parse(c.at) >= Date.parse(since)), person.zone).filter((d) => d.day < today);
-}
-
 /** Review round 2: who pushed, and whom an agent or credential pushed for, as the rest of Delivery writes it. */
 const pusherOf = (ctx: ServiceContext) => (ctx.onBehalfOf ? `${ctx.actor.id} for ${ctx.onBehalfOf}` : ctx.actor.id);
 
-/**
- * Hours already drafted for this person, proposal and day by drafts this estimate covers: every commit of the draft is
- * among the day's commits here (so the two figures measure the same work) and still claimed (a draft the person
- * dismissed was released, and no longer counts). Read before this push claims anything (review round 3).
- */
-async function draftedHours(tx: Tx, userId: string, proposalId: string, day: string, ids: string[]) {
-  const [r] = await tx.execute(sql`select coalesce(sum(d.hours), 0) as hours from delivery.commit_day_draft d
-    where d.user_id = ${userId} and d.proposal_id = ${proposalId} and d.day = ${day} and d.commit_ids <@ ${JSON.stringify(ids)}::jsonb
-      and not exists (select 1 from jsonb_array_elements_text(d.commit_ids) c(id) join delivery.commit_draft k on k.user_id = d.user_id and k.commit_id = c.id
-                      where k.released_at is not null)`);
-  return Number(r.hours);
-}
-
-/** Commits only the webhook's `Time:` line drafted (claimed, in no repo draft): their hours are its, so they leave the estimate. */
-async function webhookOnly(tx: Tx, userId: string, ids: string[]) {
-  if (!ids.length) return new Set<string>();
-  const rows = await tx.execute(sql`select k.commit_id from delivery.commit_draft k where k.user_id = ${userId}
-    and k.commit_id in (${sql.join(ids.map((id) => sql`${id}`), sql`, `)})
-    and not exists (select 1 from delivery.commit_day_draft d where d.user_id = k.user_id and d.commit_ids ? k.commit_id)`);
-  return new Set(rows.map((r) => r.commit_id as string));
-}
-
 const quarter = (h: number) => Math.round(h * 4) / 4;
 
-/** Review round 3: one key per commit (a full sha, lowercase), and each commit once however often a payload repeats it. */
-const distinct = (commits: CommitInput[]) => [...new Map(commits.map((c) => [c.id.toLowerCase(), { ...c, id: c.id.toLowerCase() }])).values()];
+/**
+ * One person's commits from the start of their consent period, by their own day, days that have ended only; each commit
+ * once (one lowercase key), however often a payload repeats it (review round 3).
+ */
+function byDay(commits: CommitInput[], person: Person, since: string, now: Date) {
+  const dayOf = dayIn(person.zone);
+  const today = dayOf(now.getTime());
+  const out = new Map<string, Map<string, { id: string; at: string }>>();
+  for (const c of commits) {
+    const ms = Date.parse(c.at);
+    if (!Number.isFinite(ms) || ms < Date.parse(since)) continue;
+    const day = dayOf(ms);
+    if (day >= today) continue;
+    const id = shaKey(c.id);
+    out.set(day, (out.get(day) ?? new Map()).set(id, { id, at: new Date(ms).toISOString() }));
+  }
+  return [...out].map(([day, m]) => ({ day, commits: [...m.values()] }));
+}
+
+/** Merges one day's commits into its ledger and suggests what's new; the draft, or null when nothing is. */
+async function draftDay(tx: Tx, ctx: ServiceContext, a: { userId: string; zone: string; proposalId: string; day: string; commits: { id: string; at: string }[]; own: boolean; source: string }) {
+  const l = await lockDay(tx, ctx.tenantId, a.userId, a.proposalId, a.day);
+  const added = merge(l, a.commits, a.own);
+  if (!added.length) return null;
+  await saveDay(tx, a.userId, a.proposalId, a.day, l);
+  const hours = quarter(Math.max(0, dayHours(l, a.day, a.zone) - (await suggestedHours(tx, a.userId, a.proposalId, a.day))));
+  if (hours <= 0) return null;
+  // Review round 1: the row keeps the read it came from and the commits it added, so a later correction can be traced.
+  const [d] = await tx.execute(sql`insert into delivery.commit_day_draft (tenant_id, user_id, proposal_id, day, hours, commits, source, commit_ids, drafted_by)
+    values (${ctx.tenantId}, ${a.userId}, ${a.proposalId}, ${a.day}, ${hours}, ${added.length}, ${a.source}, ${JSON.stringify(added)}::jsonb, ${pusherOf(ctx)}) returning id`);
+  return { id: d.id as string, hours, added };
+}
 
 export async function draftSyncTime(tx: Tx, ctx: ServiceContext, project: { id: string; key: string }, records: SyncTimeRecord[], read: { source: string; now: Date }): Promise<SyncTimeResult> {
   const out: SyncTimeResult = { drafted: 0, unlinked: 0, unverified: 0, events: [] };
@@ -86,42 +86,26 @@ export async function draftSyncTime(tx: Tx, ctx: ServiceContext, project: { id: 
   const may = mayDraftFor(ctx);
   const own = ctx.actor.kind !== "service";
   for (const r of records) {
-    const byUser = new Map<string, CommitInput[]>();
+    const byUser = new Map<string, { person: Person; commits: CommitInput[] }>();
     for (const c of r.commits) {
       const person = people.get(c.email.toLowerCase());
       if (!person) { out.unlinked++; continue; }
       if (!may(person.userId)) { out.unverified++; continue; }
-      byUser.set(person.userId, [...(byUser.get(person.userId) ?? []), c]);
+      byUser.set(person.userId, { person, commits: [...(byUser.get(person.userId)?.commits ?? []), c] });
     }
-    for (const [userId, commits] of byUser) {
+    for (const [userId, { person, commits }] of byUser) {
       const since = consent.get(userId);
       if (!since) continue;
-      const person = [...people.values()].find((p) => p.userId === userId)!;
-      const mine = distinct(commits);
-      const hook = await webhookOnly(tx, userId, mine.map((c) => c.id));
-      const days = daysFor(mine.filter((c) => !hook.has(c.id)), person, since, read.now);
-      const taken = await takenIds(tx, userId, days.flatMap((d) => d.ids), own);
-      for (const d of days) {
-        const fresh = d.ids.filter((id) => !taken.has(id));
-        if (!fresh.length) continue;
-        // Claimed before anything is counted; a day whose commits this transaction didn't all win drafts nothing and
-        // is left as it was, for the next sync to estimate again (review rounds 2 and 3).
-        const prior = await draftedHours(tx, userId, r.proposalId, d.day, d.ids);
-        const won: { id: string; how: "new" | "back" }[] = [];
-        for (const id of fresh) { const how = await claimOne(tx, ctx.tenantId, userId, id, own); if (how) won.push({ id, how }); }
-        if (won.length < fresh.length) { await unclaim(tx, userId, won); continue; }
-        const hours = quarter(Math.max(0, d.hours - prior));
-        if (hours <= 0) continue;
-        // Review round 1: the row keeps the read it came from and its commits, so a later correction can be traced.
-        await tx.execute(sql`insert into delivery.commit_day_draft (tenant_id, user_id, proposal_id, day, hours, commits, source, commit_ids, drafted_by)
-          values (${ctx.tenantId}, ${userId}, ${r.proposalId}, ${d.day}, ${hours}, ${fresh.length}, ${read.source}, ${JSON.stringify(fresh)}::jsonb, ${pusherOf(ctx)})`);
-        const after = { proposalId: r.proposalId, userId, day: d.day, hours, commits: fresh.length, source: read.source, commitIds: fresh };
+      for (const { day, commits: dayCommits } of byDay(commits, person, since, read.now)) {
+        const d = await draftDay(tx, ctx, { userId, zone: person.zone, proposalId: r.proposalId, day, commits: dayCommits, own, source: read.source });
+        if (!d) continue;
+        const after = { proposalId: r.proposalId, userId, day, hours: d.hours, commits: d.added.length, source: read.source, commitIds: d.added };
         // 104 AC-11: the proposal's history says the hours were drafted; Time shows the line by its own rule.
         await appendAudit(tx, ctx, { action: "delivery.commit_time.draft", resource: "delivery.proposal", resourceId: r.proposalId, after });
-        // One draft per set of commits: its first commit names it. Who pushed it, and whether that was the person, go
-        // with it, so Time can say where it came from and release it if the person dismisses an untrusted one.
-        const payload: CommitTime = { userId, projectId: project.id, projectKey: project.key, proposalKey: r.proposalKey, day: d.day, hours,
-          commit: `${r.proposalKey}/${d.day}/${fresh[0]}`, commits: fresh.length, source: "repo", pushedBy: pusherOf(ctx), commitIds: fresh, trusted: own };
+        // Review round 4: no pusher in the event (it stays in commit_day_draft.drafted_by, a retention subject); the
+        // draft's id lets Time dismiss it, and `trusted` says whether the person pushed it themselves.
+        const payload: CommitTime = { userId, projectId: project.id, projectKey: project.key, proposalKey: r.proposalKey, day, hours: d.hours,
+          commit: `${r.proposalKey}/${day}/${d.added[0]}`, commits: d.added.length, source: "repo", draftId: d.id, trusted: own };
         out.events.push({ name: EVENTS.commitTime, payload });
         out.drafted++;
       }

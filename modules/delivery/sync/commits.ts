@@ -44,8 +44,11 @@ export function commitsByChange(root: string, at: string): Map<string, ChangeCom
   } catch {
     return undefined;
   }
+  const all = out.split(SEP).map((x) => x.replace(/^\s+/, "")).filter(Boolean);
+  // Review round 4: a walk that hit its cap may have cut a change's older commits off, so it reads as not made.
+  if (all.length >= MAX) return undefined;
   const by = new Map<string, ChangeCommit[]>();
-  for (const c of out.split(SEP).map((x) => x.replace(/^\s+/, "")).filter(Boolean)) {
+  for (const c of all) {
     const [id, email, when, ...rest] = c.split("\t");
     const message = rest.join("\t");
     const dir = changeOf(message.split("\n")[0]);

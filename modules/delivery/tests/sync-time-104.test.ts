@@ -19,7 +19,9 @@ describe.skipIf(!hasDb)("104 sync_specclaw drafts hours from commits", () => {
 
   it("AC-5, AC-7 hours go to the commit's author by verified git identity, once per day, for ended days after consent; unlinked and webhook-drafted commits are left out", async () => {
     await db.consent("2026-11-10T00:00:00Z");
-    await db.t.owner`insert into delivery.commit_draft (tenant_id, user_id, commit_id) values (${db.nimal.tenantId}, ${db.nimal.userId}, ${sha(9)})`;
+    // The webhook's `Time:` line already drafted commit 9: it's in the day's ledger as the webhook's (review round 4).
+    await db.q(sql`insert into delivery.commit_ledger (tenant_id, user_id, proposal_id, day, commits)
+      select ${db.nimal.tenantId}, ${db.nimal.userId}, id, '2026-11-12', ${JSON.stringify({ [sha(9)]: { at: at("15:00"), by: "hook" } })}::jsonb from delivery.proposal where key = 'FLT-101'`);
     const commits = [
       commit(1, "nimal@lumenlabs.test", at("09:00")), commit(2, "nimal@lumenlabs.test", at("09:40")), commit(3, "nimal@lumenlabs.test", at("10:15")),
       commit(4, "nimal@lumenlabs.test", at("10:00", "2026-11-09")),
@@ -29,7 +31,7 @@ describe.skipIf(!hasDb)("104 sync_specclaw drafts hours from commits", () => {
     ];
     expect(await db.push(fakeRepo(commits))).toMatchObject({ drafted: 1, unlinked: 1, unverified: 0 });
     expect(await db.drafts()).toEqual([
-      { userId: db.nimal.userId, projectId: expect.any(String), projectKey: "FLT", proposalKey: "FLT-101", day: "2026-11-12", hours: 1.75, commit: `FLT-101/2026-11-12/${sha(1)}`, commits: 3, source: "repo", pushedBy: expect.stringContaining(db.nimal.userId), commitIds: [sha(1), sha(2), sha(3)], trusted: true },
+      { userId: db.nimal.userId, projectId: expect.any(String), projectKey: "FLT", proposalKey: "FLT-101", day: "2026-11-12", hours: 1.75, commit: `FLT-101/2026-11-12/${sha(1)}`, commits: 3, source: "repo", draftId: expect.any(String), trusted: true },
     ]);
     expect(await db.push(fakeRepo(commits))).toMatchObject({ outcome: "unchanged", drafted: 0 });
     expect(await db.drafts()).toHaveLength(1);

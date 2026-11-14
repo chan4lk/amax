@@ -189,8 +189,10 @@ function commitsByChange(root, at) {
   } catch {
     return void 0;
   }
+  const all = out.split(SEP).map((x) => x.replace(/^\s+/, "")).filter(Boolean);
+  if (all.length >= MAX) return void 0;
   const by = /* @__PURE__ */ new Map();
-  for (const c of out.split(SEP).map((x) => x.replace(/^\s+/, "")).filter(Boolean)) {
+  for (const c of all) {
     const [id, email, when, ...rest] = c.split("	");
     const message = rest.join("	");
     const dir = changeOf(message.split("\n")[0]);

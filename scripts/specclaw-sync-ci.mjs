@@ -82,8 +82,9 @@ async function pushRef(env, fetchImpl, base, records, onDefault, out) {
     if (r.outcome === "refused") throw new Error(`${base.ref} ${base.sha.slice(0, 7)} → ${base.projectKey}: refused: ${r.reason}`);
     out.line(`${base.ref} ${base.sha.slice(0, 7)} → ${base.projectKey}: ${r.outcome}`);
     out.line(`  ${r.created} created · ${r.updated} updated · ${r.withdrawn ?? 0} withdrawn · ${r.unchanged} unchanged · ${r.skipped.length} skipped${r.ignored ? ` · ${r.ignored} not this branch's` : ""}`);
-    // 104: hours drafted from the changes' commits, and commits amax couldn't attribute (no verified git identity).
-    if (r.drafted || r.unlinked) out.line(`  ${r.drafted ?? 0} timesheet drafts · ${r.unlinked ?? 0} commits by unlinked authors`);
+    // 104: hours drafted from the changes' commits, commits amax couldn't attribute (no verified git identity), and
+    // commits it may not draft for this pusher (review round 4).
+    if (r.drafted || r.unlinked || r.unverified) out.line(`  ${r.drafted ?? 0} timesheet drafts · ${r.unlinked ?? 0} commits by unlinked authors · ${r.unverified ?? 0} commits by someone else`);
     for (const s of r.skipped) out.warn(s);
   }
 }

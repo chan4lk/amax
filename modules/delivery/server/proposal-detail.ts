@@ -110,6 +110,9 @@ async function historyOf(tx: Tx, id: string, v: Viewer, projectId: string, only?
   const ref = only?.ref ?? "";
   const audits = await tx.execute(sql`select seq, occurred_at as at, actor, on_behalf_of, action, after from core.audit_event
     where resource in ('delivery.proposal', 'delivery.task') and (resource_id = ${id} or (resource = 'delivery.task' and after->>'proposalId' = ${id}))
+      -- 104 review round 4: only the actions the history words, before the limit, so other audit rows on the proposal
+      -- (a repo draft per person and day, read through Time's slot) can't push its own lines out of the newest 100.
+      and action in (${sql.join(Object.keys(ACTION).map((a) => sql`${a}`), sql`, `)})
       and ${one(only, "audit", sql`seq::text = ${ref}`)} order by occurred_at desc, seq desc limit 100`);
   const moves = await tx.execute(sql`select id, created_at as at, payload from core.event where name = ${EVENTS.proposalPhaseChanged} and payload->>'proposalId' = ${id}
       and ${one(only, "event", sql`id::text = ${ref}`)} order by created_at desc limit 100`);

@@ -30,7 +30,7 @@ describe.skipIf(!hasDb)("104 review round 1: drafting from the sync", () => {
     ["a job drafts for nobody", () => contextFor.job(T, "test"), { drafted: 0, unverified: 2 }, []],
   ])("review-1 B6 %s", async (_, ctx, counts, who) => {
     await db.t.owner`delete from delivery.commit_day_draft`;
-    await db.t.owner`delete from delivery.commit_draft`;
+    await db.t.owner`delete from delivery.commit_ledger`;
     const r = await draft(ctx(), [commit(11, "nimal@lumenlabs.test", at("09:00", "2026-11-05")), commit(12, "ayesha@lumenlabs.test", at("09:00", "2026-11-05"))]);
     expect(r).toMatchObject(counts);
     const users = { nimal: db.nimal.userId, ayesha: db.ayesha.userId };

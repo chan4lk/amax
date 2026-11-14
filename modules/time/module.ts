@@ -7,6 +7,7 @@ import { timeFixtures } from "./fixtures";
 import { mcpTools } from "./mcp";
 import { timeOverview } from "./server/overview";
 import { commitDraft, commitTimeHandler, releaseOnDismiss } from "./suggestions";
+import { proposalHoursSchedules, proposalHoursWorkflows } from "./server/proposal-hours-jobs";
 import { proposalHoursHandlers } from "./server/proposal-hours";
 import { proposalTimeLines } from "./server/proposal-lines";
 import { PROPOSAL_TIME_SLOT } from "@amax/delivery/contracts";
@@ -57,8 +58,8 @@ export default defineModule({
     // 073 review round 1: reminders say who sent them (id and name) and carry the sender's own words; the per-project
     // switch says which PM changed it.
     { table: "time.reminder", label: "Timesheet reminders", subject: ["user_id", "sent_by"], subjectName: ["sender_name"], fields: ["message", "sent_by", "sender_name"], class: "personal", period: "P2Y", start: { at: ["sent_at"] }, action: "anonymise" },
-    // 104 review round 3: whose untrusted repo draft is waiting, and its commits, until the person decides it.
-    { table: "time.repo_draft", label: "Repo drafts pushed by someone else", subject: ["user_id"], fields: ["user_id", "commit_ids"], class: "personal", period: "P2Y", start: { at: ["created_at"] }, action: "delete" },
+    // 104 review rounds 3 and 4: whose untrusted repo draft is waiting (by Delivery's draft id), until the person decides it.
+    { table: "time.repo_draft", label: "Repo drafts pushed by someone else", subject: ["user_id"], fields: ["user_id", "draft_id"], class: "personal", period: "P2Y", start: { at: ["created_at"] }, action: "delete" },
     { table: "time.project_reminder", label: "Project reminder switches", subject: ["updated_by"], fields: ["updated_by"], class: "personal", period: "P7Y", start: { at: ["updated_at"] }, action: "anonymise" },
     // 071 review round 1: who last changed the tenant's entry rules.
     { table: "time.setting", label: "Who changed the timesheet rules", subject: ["updated_by"], fields: ["updated_by"], class: "personal", period: "P7Y", start: { at: ["updated_at"] }, action: "anonymise" },
@@ -78,8 +79,8 @@ export default defineModule({
   pageLabel,
   jobs: [],
   // 073 AC-5/AC-6: the daily and weekly reminders, per legal entity in its own time zone.
-  workflows: reminderWorkflows,
-  schedules: reminderSchedules,
+  workflows: [...reminderWorkflows, ...proposalHoursWorkflows],
+  schedules: [...reminderSchedules, ...proposalHoursSchedules],
   // 030: who hears about a week. Approvers see a submission; the person hears the decision and reminders.
   notifications: [
     { id: "time.week-submitted", event: EVENTS.weekSubmitted, category: "approvals", to: [{ approvers: "userId", projects: "projectIds", entity: "legalEntityId" }], permission: "time:approve", subject: "userId",
