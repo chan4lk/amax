@@ -3,8 +3,8 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode, type RefObject } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { announce, Mascot, PinButton, type PinRef } from "@amax/ui";
-import type { Conversation, ConversationSummary, Highlight, PendingAction } from "@amax/chat";
-import { cancelChat, confirmChat, pageContext, refreshPins, sendChat, type CardOutcome } from "../../app/actions/chat";
+import type { Answers, Conversation, ConversationSummary, Edits, Highlight, PendingAction } from "@amax/chat";
+import { cancelChat, checkCardField, confirmChat, pageContext, refreshPins, sendChat, type CardOutcome } from "../../app/actions/chat";
 import type { PageInfo } from "../../lib/page-context";
 import { pinKey, withFresh, type Pin } from "@amax/chat/pins";
 import { ChoiceCard } from "./ChoiceCard";
@@ -19,8 +19,8 @@ import { Suggestions } from "./Suggestions";
 
 type Entry =
   | { kind: "me"; text: string; highlights: Highlight[] }
-  | { kind: "amax"; text: string; tools: string[]; error?: boolean }
-  | { kind: "confirm"; action: PendingAction; state: CardOutcome["state"] | "working" | "expired"; note?: string; reveal?: CardOutcome["reveal"] };
+  | { kind: "amax"; text: string; tools: string[]; error?: boolean; answers?: Answers }
+  | { kind: "confirm"; action: PendingAction; state: CardOutcome["state"] | "working" | "expired"; note?: string; field?: string; reveal?: CardOutcome["reveal"]; open?: CardOutcome["open"] };
 
 const restoredLog = (c: Conversation): Entry[] => [
   ...c.messages.map((m): Entry => (m.role === "me" ? { kind: "me", text: m.text, highlights: [] } : { kind: "amax", text: m.text, tools: [] })),
@@ -125,7 +125,7 @@ export function Chat({ open, fresh = 0, onClose, returnFocus, signedIn, userId, 
   // Pins and intents arrive from anywhere on the page.
   useEffect(() => {
     const onEvent = (e: Event) => {
-      const d = (e as CustomEvent<{ pin?: PinRef; intent?: string; prompt?: string }>).detail;
+      const d = (e as CustomEvent<{ pin?: PinRef; intent?: string; prompt?: string; quiet?: boolean }>).detail;
       const key = d.pin ? pinKey(d.pin) : undefined;
       // An untouched Ask amax prompt belongs to the record it pinned. A pin or prompt for another record
       // replaces both, so the agent never gets the last row's pin with this row's question.
@@ -147,7 +147,10 @@ export function Chat({ open, fresh = 0, onClose, returnFocus, signedIn, userId, 
         setPins([pin]);
         announce(`${pin.label} added to chat`);
       }
-      if (d.intent) { asked.current = null; setIntent(d.intent); setText(""); setLog((l) => [...l, { kind: "amax", text: `${d.prompt ?? "New record"}: tell me the details and I'll fill it in.`, tools: [] }]); }
+      if (d.intent) {
+        asked.current = null; setIntent(d.intent); setText("");
+        if (!d.quiet) setLog((l) => [...l, { kind: "amax", text: `${d.prompt ?? "New record"}: tell me the details and I'll fill it in.`, tools: [] }]);
+      }
       else if (d.prompt) {
         asked.current = key ? { key, added } : null;
         filled.current = d.prompt;
@@ -235,15 +238,16 @@ export function Chat({ open, fresh = 0, onClose, returnFocus, signedIn, userId, 
       const copy = [...l];
       const last = copy.findLastIndex((x) => x.kind === "me");
       if (last >= 0) copy[last] = { kind: "me", text: message, highlights: r.highlights };
-      return [...copy, ...(r.reply ? [{ kind: "amax" as const, text: r.reply, tools: r.toolsRun }] : []), ...r.pending.map((action) => ({ kind: "confirm" as const, action, state: "open" as const }))];
+      const said = r.reply || r.answers ? [{ kind: "amax" as const, text: r.reply || (r.answers?.question ?? ""), tools: r.toolsRun, answers: r.answers }] : [];
+      return [...copy, ...said, ...r.pending.map((action) => ({ kind: "confirm" as const, action, state: "open" as const }))];
     });
-    announce(r.pending.some((p) => p.choice) ? "amax offered a choice for you to pick from" : r.pending.length ? "amax prepared a change for you to confirm" : "amax replied");
+    announce(r.pending.some((p) => p.choice) ? "amax offered a choice for you to pick from" : r.pending.length ? "amax prepared a change for you to confirm" : r.answers ? "amax asked a question with answers to pick from" : "amax replied");
   }
 
-  async function decide(action: PendingAction, ok: boolean, answer?: string) {
+  async function decide(action: PendingAction, ok: boolean, answer?: string, edits?: Edits) {
     if (!convo.current) return;
     // One decision per card: the buttons go away while the request is in flight.
-    setLog((l) => l.map((x) => (x.kind === "confirm" && x.action.id === action.id ? { ...x, state: "working", note: undefined } : x)));
+    setLog((l) => l.map((x) => (x.kind === "confirm" && x.action.id === action.id ? { ...x, state: "working", note: undefined, field: undefined } : x)));
     // 076: on a choice card, once one option is done or the card is cancelled, every other option is closed too (the
     // server has recorded them as not chosen or cancelled).
     const sibling = (x: Entry) => x.kind === "confirm" && !!action.choice && x.action.choice?.id === action.choice.id && x.action.id !== action.id && x.state === "open";
@@ -251,7 +255,7 @@ export function Chat({ open, fresh = 0, onClose, returnFocus, signedIn, userId, 
       : (o.state === "done" || o.state === "cancelled") && sibling(x) ? { ...x, state: "cancelled" as const, note: undefined } : x)));
     try {
       // The server says what the card is now: done, cancelled, back open to retry, or an error.
-      const o = ok ? await confirmChat(convo.current, action.id, userId, answer) : await cancelChat(convo.current, action.id, userId);
+      const o = ok ? await confirmChat(convo.current, action.id, userId, answer, edits) : await cancelChat(convo.current, action.id, userId);
       apply(o);
       announce(o.note);
       // The record this page shows was renamed (a re-tag): follow it, or the page would read "not found".
@@ -301,6 +305,12 @@ export function Chat({ open, fresh = 0, onClose, returnFocus, signedIn, userId, 
             <div key={i} className="m"><div className="b">
               {e.tools.length > 0 && <div className="tools" aria-label="Tools used">{e.tools.map((t, j) => <span key={j}>{t}</span>)}</div>}
               {e.error ? <p className="err">{e.text}</p> : <Markdown text={e.text} />}
+              {e.answers && !log.slice(i + 1).some((x) => x.kind === "me") && (
+                // 084 AC-2: quick replies; a click sends the answer as if typed, and they go once anything is sent.
+                <div className="c-answers" role="group" aria-label={e.answers.question}>
+                  {e.answers.options.map((o) => <button key={o} type="button" className="chip" disabled={busy} onClick={() => send(o)}>{o}</button>)}
+                </div>
+              )}
             </div></div>
           );
           const choice = e.action.choice;
@@ -315,11 +325,14 @@ export function Chat({ open, fresh = 0, onClose, returnFocus, signedIn, userId, 
           }
           return (
             <div key={i} className="m">
-              <ConfirmCard action={e.action} state={e.state} note={e.note} onConfirm={() => decide(e.action, true)} onCancel={() => decide(e.action, false)}
+              <ConfirmCard action={e.action} state={e.state} note={e.note} field={e.field} onConfirm={(edits) => decide(e.action, true, undefined, edits)} onCancel={() => decide(e.action, false)}
+                onCheck={(edits) => checkCardField(convo.current ?? "", e.action.id, edits, userId)}
+                onNext={(prompt) => { filled.current = prompt; setText(prompt); input.current?.focus({ preventScroll: true }); }}
                 onEdit={() => { setText("Change "); input.current?.focus({ preventScroll: true }); }}
                 secret={e.action.secret && convo.current ? <SecretConfirm conversationId={convo.current} as={userId} action={{ ...e.action, secret: e.action.secret }} onCancel={() => decide(e.action, false)}
                   onState={(o) => setLog((l) => l.map((x) => (x.kind === "confirm" && x.action.id === e.action.id ? { ...x, ...o } : x)))} /> : undefined}
-                after={e.reveal && <RevealOnce reveal={e.reveal} onDone={() => setLog((l) => l.map((x) => (x.kind === "confirm" && x.action.id === e.action.id ? { ...x, reveal: undefined } : x)))} />} />
+                after={e.reveal ? <RevealOnce reveal={e.reveal} onDone={() => setLog((l) => l.map((x) => (x.kind === "confirm" && x.action.id === e.action.id ? { ...x, reveal: undefined } : x)))} />
+                  : e.open && <p style={{ margin: "8px 0 0" }}><a className="btn sm primary" href={e.open.url}>{e.open.label} ↗</a></p>} />
             </div>
           );
         })}

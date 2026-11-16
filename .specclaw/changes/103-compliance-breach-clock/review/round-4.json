@@ -1,0 +1,66 @@
+{
+ "counts": {
+  "blocker": 0,
+  "major": 0,
+  "minor": 1
+ },
+ "escalated": [],
+ "files": [
+  "apps/mock/public/mock/index.html",
+  "apps/web/lib/privacy-fixtures.ts",
+  "modules/compliance/tests/registers.test.ts"
+ ],
+ "final": true,
+ "findings": [
+  {
+   "file": "apps/mock/public/mock/index.html",
+   "fp": "da64ecdf69f8",
+   "in_delta": true,
+   "line": 1118,
+   "message": "The 103 mock section (this copy and .specclaw/mock/index.html:1116) only describes the compliance test clock. It doesn't mention amendment 1, so the mock and change.md disagree about what 103 covers. Since amendment 1, the demo/e2e seed writes the Data retention purge log at now() - 4 days, so the 30-day card always shows 'Agent run logs 9,410'. Fix: add one sentence about the purge-log seed to the lede in both mock copies. The page is unchanged, so 'No screen changes' still holds.",
+   "original_severity": "minor",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B10",
+   "scenario": "A reader opens #103-compliance-breach-clock to see what 103 changed. The section says only the compliance test changed, but apps/web/lib/privacy-fixtures.ts also changed, and that changes what the demo's Data retention card shows after 2026-11-11.",
+   "severity": "minor"
+  }
+ ],
+ "head": "35c8157b65c3da9c3fb0f5557b422896c9c5986e",
+ "impact": [
+  "apps/web/app/(app)/settings/api/LimitTable.tsx",
+  "apps/web/app/(app)/settings/api/format.ts",
+  "apps/web/components/agents/DecideTable.tsx",
+  "apps/web/components/shell/SessionWatch.tsx",
+  "apps/web/lib/admin/api.ts",
+  "apps/web/lib/admin/tool.ts",
+  "apps/web/lib/agents-fixtures.ts",
+  "apps/web/proxy.ts",
+  "apps/web/scripts/seed-demo.ts",
+  "apps/web/tests/admin/limits.test.ts",
+  "apps/web/tests/admin/proxy-wiring.test.ts",
+  "apps/web/tests/e2e/api-seed.ts",
+  "modules/delivery/suggestions.ts",
+  "modules/helpdesk/contracts.ts",
+  "modules/helpdesk/db/migrations/0001_helpdesk.sql",
+  "modules/helpdesk/fixtures/data.ts",
+  "modules/helpdesk/fixtures/index.ts",
+  "modules/helpdesk/mcp.ts",
+  "modules/helpdesk/module.ts",
+  "modules/helpdesk/server/handlers.ts"
+ ],
+ "model": "opus",
+ "passes": [
+  "review",
+  "design"
+ ],
+ "prompt_chars": 55342,
+ "round": 4,
+ "since": null,
+ "status": "clean",
+ "system_chars": 43158,
+ "tier": "review",
+ "tools": "Read,Grep,Glob",
+ "ts_end": 1794495519,
+ "ts_start": 1794495467
+}

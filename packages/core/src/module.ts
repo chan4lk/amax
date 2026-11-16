@@ -74,7 +74,8 @@ export type NotificationRule = {
 export type SharedFixtures = {
   tenant: { id: string; name: string };
   today: string;
-  entities: { id: string; key: string; name: string; country: string; baseCurrency: string; headcount: number }[];
+  /** `timezone` (109): the entity's own zone (workflows.entity_zone), where its country has no default. */
+  entities: { id: string; key: string; name: string; country: string; baseCurrency: string; headcount: number; timezone?: string }[];
   departments: Record<string, number>;
   people: {
     key: string; name: string; initials: string; title: string; entity: string; roles: string[];
@@ -100,8 +101,23 @@ export type PinSuggestion = { tool: string; suggest: (viewer: never, args: Recor
  * ("Log 1.5 h") and `tone: "danger"` marks a destructive one. `done` is the receipt once confirmed, in the past tense
  * ("Logged 1.5 h · Fleet Tracker, Tue Oct 27"). Without them a card keeps the plain layout, "Add it" and "Done: {title}."
  */
-export type CardLook = { kind?: string; figure?: string; subject?: string; detail?: string; who?: string; confirm?: string; tone?: "danger"; done?: string };
-export type ToolCard = { title: string; lines: CardLine[]; look?: CardLook };
+/** `next` (107): once done, a quick reply that fills the message box with the next thing to ask ("Add your team?"). */
+export type CardLook = { kind?: string; figure?: string; subject?: string; detail?: string; who?: string; confirm?: string; tone?: "danger"; done?: string; next?: { label: string; prompt: string } };
+/**
+ * 106: fields a person edits on the confirm card before pressing its button; the edited values are the tool's input,
+ * checked again at confirm. A text field may `follow` another (a key from a name's initials) until it is typed in; chips
+ * pick one value and may offer `other` (a text field); an option's `short` names it in the button label (107: a name for an
+ * employee number). `optional` fields sit in a section that starts collapsed when
+ * empty. `confirm` labels the button from the values, `{field}` replaced, with `unless` when its field is empty. A text
+ * field with `rangeFrom` (109) is a range's end month: the label names it with its start as one range (monthRange: "Mar–May",
+ * or "Mar 2027–Jan 2028" across years), so the label follows edits.
+ */
+export type CardField =
+  | { name: string; label: string; kind: "text"; value?: string; hint?: string; upper?: boolean; follow?: string; rangeFrom?: string }
+  | { name: string; label: string; kind: "chips"; value?: string; options: { value: string; label: string; short?: string }[]; other?: string; required?: boolean };
+/** `note` (107): the tool's note for the starting input (its `note` hook), shown until an edit's check says otherwise. */
+export type CardForm = { fields: CardField[]; note?: string; optional?: { label: string; fields: string[] }; confirm?: { label: string; unless?: { field: string; label: string } } };
+export type ToolCard = { title: string; lines: CardLine[]; look?: CardLook; form?: CardForm };
 
 export type McpToolDef = {
   name: string;
@@ -119,6 +135,13 @@ export type McpToolDef = {
    * part of `input`, so the model can neither see nor fill it; `run` gets it as `secret`.
    */
   secretInput?: { label: string };
+  /**
+   * 106: a looser input chat may propose a form card with, so fields nobody has said yet are left for the person to fill
+   * on the card. Only a tool whose card has a `form` sets it; the full `input` is still checked at confirm and over MCP.
+   */
+  draft?: z.ZodType;
+  /** 107: a line the form card shows for the input as edited (HR: "Links to Priya's sign-in"); never blocks. */
+  note?: (viewer: never, input: never) => Promise<string | undefined>;
   run: (viewer: never, input: never, source: "mcp" | "chat" | "api", secret?: string) => Promise<unknown>;
   /**
    * A write tool's one service, the defineService result it calls (043 AC-1); a list when the input
@@ -285,6 +308,12 @@ export type ModuleManifest = {
   menu?: "rail" | "profile";
   /** A control the module adds to the top bar for the signed-in viewer (030's bell). */
   topBar?: ComponentType<{ viewer: unknown }>;
+  /**
+   * 081 review round 1: what this module fills in another module's named slot. The slot's owner declares its name and
+   * type in its contracts and reads it with `provided()`; the provider imports only those contracts, so the graph keeps
+   * its direction. A slot no installed module fills reads as empty, which is how a switched-off module looks.
+   */
+  provides?: Record<string, unknown>;
   /** `payloads`: each emitted event's fields with their 002 class or "plain" (declarePayload). Outgoing
    * webhooks send a declared plain field, mask a classified one and mask any field not declared (035, review 058). */
   events?: {

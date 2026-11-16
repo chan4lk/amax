@@ -1,0 +1,108 @@
+{
+ "counts": {
+  "blocker": 1,
+  "major": 0,
+  "minor": 3
+ },
+ "escalated": [],
+ "files": [
+  "apps/mock/public/mock/index.html",
+  "packages/testing/tests/change-numbers.test.ts",
+  "packages/testing/tests/review-gate-moves.test.ts",
+  "scripts/check-review-gate.mjs",
+  "scripts/review-gate/moves.mjs",
+  "scripts/review-gate/rules.mjs"
+ ],
+ "final": false,
+ "findings": [
+  {
+   "file": "scripts/review-gate/rules.mjs",
+   "fp": "70ad569e209a",
+   "in_delta": true,
+   "line": 38,
+   "message": "A fork PR can pass the review gate with no review at all. The pure-move skip uses `continue` and never sets `ok = false`, yet the moved folder still counts in `changes`. That keeps the `changes.length === 0 && needsProposal(files)` guard at line 47 from firing. So a fork PR only has to rename one existing change folder and leave its files alone, and it can then carry any code change with no specclaw change being judged. This breaks the AGENTS.md rule that a PR from a fork must carry a finished loop for every change it touches. It is the same kind of hole as the earlier `judgeCovered` lesson. Fix: don't count a moved folder as a change. Run the no-change-dir check on the changes that were actually judged. If every touched change is a move and the PR changes files outside `.specclaw/`, fail with 'code changed with no specclaw change'. Or allow the move skip only when every PR file is under `.specclaw/` or the mock, or is a commit named after a change that was judged. Add a fixture case for move plus code change that must exit 1.",
+   "original_severity": "blocker",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B6",
+   "scenario": "A fork PR renames `.specclaw/changes/archive/050-x/` to `archive/102-x/` with every file the same except the name, and also edits `modules/hr/server/person.ts`. The gate run with `--fork true` prints `102-x scope=move skip \u2014 moved from 050-x` and exits 0, so the code change merges with no review evidence.",
+   "severity": "blocker"
+  },
+  {
+   "file": "packages/testing/tests/review-gate-moves.test.ts",
+   "fp": "57dd4ad869c3",
+   "in_delta": true,
+   "line": 20,
+   "message": "The move test covers only one active-folder case. It never runs the archive path, where `folderAt` falls back to `.specclaw/changes/archive/<name>`. That is the path for `101-marketing-site`, one of the three moves this change makes. It also has no case where the old folder is gone and the new one has an extra or missing file (the size check), and no case where the move comes with a code change outside `.specclaw/` (see the blocker). Add those rows to the table.",
+   "original_severity": "minor",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B2",
+   "scenario": "If `folderAt` broke for archive paths, `101-marketing-site` would fall back to being judged and fail its 20 passes from before the cap, and this test would still pass.",
+   "severity": "minor"
+  },
+  {
+   "file": "scripts/review-gate/moves.mjs",
+   "fp": "7b7cd856c438",
+   "in_delta": true,
+   "line": 1,
+   "message": "The change-number pattern is now written in three places, and the copies can disagree. `NUMBERED` in moves.mjs is `/^(\\d{3,})-(.+)$/`, the AC-1 test uses `/^\\d{3,}-/`, and `CHANGE_DIR` in rules.mjs takes exactly `\\d{3}`. A folder numbered 1000 or above would be compared by moves.mjs and the AC-1 test but would never be touched by `touchedChangeDirs`. This can't bite until change 1000, so it's minor. Share one pattern.",
+   "original_severity": "minor",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B4",
+   "scenario": "A PR adds `.specclaw/changes/1000-x/`. `touchedChangeDirs` doesn't match it, so the gate never judges it.",
+   "severity": "minor"
+  },
+  {
+   "file": "scripts/check-review-gate.mjs",
+   "fp": "d9ba93b372b7",
+   "in_delta": true,
+   "line": 67,
+   "message": "`repo.movedFrom` runs `dirsAt(forkPoint)` and `dirsAt(head)` again for every touched change, and `folderAt` runs `git show` on every file of the old and new folder. Those folders include every review round JSON. Compute the two directory lists once, outside the closure.",
+   "original_severity": "minor",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B10",
+   "scenario": "With N touched change folders, `git ls-tree` runs 2N times instead of 2.",
+   "severity": "minor"
+  }
+ ],
+ "head": "25f9d7e22b0d9c26f397520a755c356f23b25325",
+ "impact": [
+  ".github/actions/setup/action.yml",
+  "apps/mock/app/globals.css",
+  "apps/web/app/(app)/layout.tsx",
+  "apps/web/app/(app)/overview.css",
+  "apps/web/app/(app)/settings/retention/retention.css",
+  "apps/web/app/(public)/welcome/welcome.css",
+  "apps/web/app/layout.tsx",
+  "apps/web/app/signin/page.tsx",
+  "apps/web/components/marketing/ThemeToggle.tsx",
+  "apps/web/components/shell/theme.ts",
+  "apps/web/lib/profile.ts",
+  "apps/web/lib/registry.ts",
+  "apps/web/tests/e2e/delivery-visual.spec.ts",
+  "apps/web/tests/e2e/marketing.spec.ts",
+  "apps/web/tests/e2e/shell.spec.ts",
+  "modules/delivery/ui/delivery.css",
+  "modules/learning/tests/e2e/diff.ts",
+  "modules/presales/tests/e2e/diff.ts",
+  "packages/auth/src/viewer.ts",
+  "packages/ui/src/styles/index.css"
+ ],
+ "model": "opus",
+ "passes": [
+  "review",
+  "design"
+ ],
+ "prompt_chars": 65510,
+ "round": 1,
+ "since": null,
+ "status": "open",
+ "system_chars": 43039,
+ "tier": "review",
+ "tools": "Read,Grep,Glob",
+ "ts_end": 1794327873,
+ "ts_start": 1794327749
+}

@@ -18,3 +18,5 @@ export { TopBar } from "./components/TopBar";
 export { Masked } from "./components/Masked";
 export { IntentButton, openChat, PinButton, type PinRef } from "./components/PinButton";
 export { facet } from "./pins";
+export { ago } from "./age";
+export { Since } from "./components/Since";

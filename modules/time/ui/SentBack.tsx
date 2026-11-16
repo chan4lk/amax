@@ -1,7 +1,6 @@
-import { PinButton } from "@amax/ui";
+import { PinButton, Since } from "@amax/ui";
 import type { MyWeek } from "../server/my";
 import { AskButton } from "./AskButton";
-import { Since } from "./Since";
 import "./request.css";
 
 /**

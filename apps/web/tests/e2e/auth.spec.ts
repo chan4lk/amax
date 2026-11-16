@@ -66,3 +66,36 @@ test("password sign-in (hosted, no identity provider): wrong password refused, r
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
   await expect(page.getByRole("button", { name: /Ops Admin, Admin, profile menu/ })).toBeVisible();
 });
+
+// 083 (AC-1 to AC-5): the profile menu closes like 001's mock: outside, on a choice, on Tab out, on Escape and the toggle.
+test("083 the profile menu closes on a click outside, a choice, Tab out, Escape, and a second click on the name", async ({ page }) => {
+  await signInAs(page, "nimal@lumenlabs.test");
+  const me = page.getByRole("button", { name: /Nimal Silva, Engineer, profile menu/ });
+  const menu = page.getByRole("menu", { name: "Profile" });
+  await me.click();
+  await expect(menu).toBeVisible();
+  const { violations } = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa"]).analyze();
+  expect(violations.map((v) => v.id)).toEqual([]);
+  await page.locator("main h1").first().click();
+  await expect(menu).toHaveCount(0);
+
+  await me.click();
+  await menu.getByRole("menuitemradio", { name: "Dark" }).click();
+  await expect(menu).toHaveCount(0);
+  await expect(me).toBeFocused();
+  await me.click();
+  await menu.getByRole("menuitemradio", { name: "System" }).click();
+
+  await me.click();
+  for (let i = 0; i < 20 && (await menu.count()); i++) await page.keyboard.press("Tab");
+  await expect(menu).toHaveCount(0);
+  await expect(me).not.toBeFocused();
+
+  await me.click();
+  await page.keyboard.press("Escape");
+  await expect(menu).toHaveCount(0);
+  await expect(me).toBeFocused();
+  await me.click();
+  await me.click();
+  await expect(menu).toHaveCount(0);
+});

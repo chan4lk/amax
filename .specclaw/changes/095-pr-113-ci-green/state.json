@@ -1,0 +1,10 @@
+{
+  "change": "095-pr-113-ci-green",
+  "phase": "verify",
+  "branch": "",
+  "phases": {
+    "proposal": {"status":"approved","at":"2026-11-10T12:52:15Z"},
+    "tasks": {"status":"done","at":"2026-11-10T12:53:54Z"},
+    "verify": {"status":"done","at":"2026-11-10T13:22:48Z"}
+  }
+}

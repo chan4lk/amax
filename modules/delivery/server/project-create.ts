@@ -16,7 +16,7 @@ export async function ensureEnvironments(tx: Tx, tenantId: string, projectId: st
   }
 }
 
-const projectInput = z.object({
+export const projectInput = z.object({
   key: z.string().regex(/^[A-Z][A-Z0-9]{1,9}$/, "2–10 capitals or digits, e.g. CON"),
   name: z.string().min(1),
   client: z.string().min(1),

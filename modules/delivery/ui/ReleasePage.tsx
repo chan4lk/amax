@@ -1,6 +1,8 @@
 import { can } from "@amax/auth";
 import type { ScreenProps } from "@amax/core";
 import { facet, PinButton } from "@amax/ui";
+import { projectHref, proposalHref } from "../contracts";
+import { ProjectTabs } from "./ProjectSections";
 import { deploymentPin, historyPin, proposalPin } from "../pins";
 import { getProject, getRelease, listEnvironments } from "../server/queries";
 import { AskButton } from "./AskButton";
@@ -21,13 +23,18 @@ export async function ReleasePage({ viewer: raw, params }: ScreenProps) {
   const included = release.proposals.filter((p) => p.included);
   return (
     <>
-      <nav className="crumb" aria-label="Breadcrumb"><a href="/delivery/releases">Releases</a><span>/</span><a href={`/delivery/p/${release.projectKey}`}>{release.projectName}</a><span>/</span>{release.version}</nav>
+      {/* 081 amendment 5 (AC-54): the trail follows the project. */}
+      <nav className="crumb" aria-label="Breadcrumb"><a href="/delivery">Projects</a><span>/</span><a href={projectHref(release.projectKey)}>{release.projectName}</a><span>/</span><a href={projectHref(release.projectKey, "releases")}>Releases</a><span>/</span>{release.version}</nav>
       <div className="row head"><div><h1>{release.projectName} {release.version}</h1><p className="lede">{included.length} proposals. Released means it reached {envs.find((e) => e.isProd)?.name ?? "a Prod environment (this project has none)"}. Changes happen in chat.</p></div></div>
+      {/* AC-55: the project's tabs stay, Releases current. */}
+      <ProjectTabs projectKey={release.projectKey} current="releases" />
       <div className="cols even" style={{ marginBottom: 28 }}>
         <div className="card pinnable">
           <div className="card-head"><h2>Tag and proposals</h2>{pin("proposals")}</div>
-          <ul aria-label="Proposals in this release" style={{ listStyle: "none", padding: 0, display: "grid", gap: 6, margin: "14px 0", maxHeight: 280, overflow: "auto" }}>
-            {included.map((p) => <li key={p.key} className="pinnable"><b>{p.key}</b> {p.title} <PhaseChip phase={p.phase} /><PinButton pin={proposalPin(p)} /></li>)}
+          {/* 081 amendment 10 (AC-92 to AC-94): the tag first, then aligned rows with no scroll bar of their own. */}
+          <p className="rel-tag"><span className="k">Tag</span><span className="chip">{release.version}</span><span className="muted">{included.length} {included.length === 1 ? "proposal" : "proposals"}</span></p>
+          <ul className="rel-props" aria-label="Proposals in this release">
+            {included.map((p) => <li key={p.key} className="pinnable"><a href={proposalHref(p.key)}><b>{p.key}</b><span>{p.title}</span></a><PhaseChip phase={p.phase} /><PinButton pin={proposalPin(p)} /></li>)}
             {included.length === 0 && <li className="muted">No proposals yet.</li>}
           </ul>
           {canEdit && <div className="actions">

@@ -1,0 +1,71 @@
+{
+ "counts": {
+  "blocker": 0,
+  "major": 0,
+  "minor": 1
+ },
+ "escalated": [],
+ "files": [
+  "apps/web/playwright.auth.config.ts",
+  "apps/web/playwright.config.ts",
+  "apps/web/tests/e2e/admin.spec.ts",
+  "apps/web/tests/e2e/git-accounts.spec.ts",
+  "modules/allocations/tests/no-hr-107.test.ts",
+  "modules/allocations/tests/setup.ts"
+ ],
+ "final": true,
+ "findings": [
+  {
+   "class": "other",
+   "file": "apps/web/tests/e2e/git-accounts.spec.ts",
+   "fp": "d17d50544eb5",
+   "in_delta": true,
+   "line": 35,
+   "message": "The comment explains `mode: \"serial\"` by saying 'the e2e config runs files fully parallel', but that is no longer true. This same diff moves git-accounts.spec.ts out of playwright.config.ts (it is now in `testIgnore`) and into playwright.auth.config.ts's `writes` project. That config sets `workers: 1` and does not set `fullyParallel`, so this file's tests already run one after another in one worker, with one fake GitHub. What serial mode still does here is skip the 108 test when the 112 AC5 test fails, which makes sense because AC5 can leave the account connected. Fix: rewrite the comment to give that reason (a failed AC5 can leave @kasun-dias connected, so the next test would see a false failure), or delete the line if that skip isn't wanted.",
+   "original_severity": "minor",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B11",
+   "scenario": "A reader trusts the comment and believes the auth suite runs files fully parallel with more than one worker. Its config says `workers: 1` and does not set fullyParallel.",
+   "severity": "minor",
+   "unclassified": false
+  }
+ ],
+ "head": "122d236f9785a214f2c62ab98c275e99d6540c5d",
+ "impact": [
+  ".github/workflows/ci.yml",
+  "apps/mock/package.json",
+  "apps/web/scripts/dev.ts",
+  "apps/web/tests/dev-tick.test.ts",
+  "apps/web/tests/tick.test.ts",
+  "deploy/ci/drill.yaml",
+  "deploy/helm/amax/templates/deployment.yaml",
+  "deploy/helm/amax/templates/ingress.yaml",
+  "deploy/helm/amax/templates/service.yaml",
+  "deploy/helm/amax/templates/worker.yaml",
+  "deploy/helm/amax/values.yaml",
+  "modules/career/tests/e2e/playwright.config.ts",
+  "modules/compliance/tests/e2e/playwright.config.ts",
+  "modules/expenses/tests/e2e/playwright.config.ts",
+  "modules/experience/tests/e2e/playwright.config.ts",
+  "modules/finance/tests/e2e/playwright.config.ts",
+  "modules/git-accounts/tests/setup.ts",
+  "modules/helpdesk/server/identity.ts",
+  "modules/helpdesk/tests/e2e/playwright.config.ts",
+  "modules/inbox-agent/server/excerpt.ts"
+ ],
+ "model": "opus",
+ "passes": [
+  "review",
+  "design"
+ ],
+ "prompt_chars": 56923,
+ "round": 2,
+ "since": null,
+ "status": "clean",
+ "system_chars": 44279,
+ "tier": "review",
+ "tools": "Read,Grep,Glob",
+ "ts_end": 1794819264,
+ "ts_start": 1794819189
+}

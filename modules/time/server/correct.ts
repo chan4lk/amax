@@ -9,6 +9,7 @@ import { dayLabel } from "../week";
 import { cardFields, cardMismatch, refuse } from "./card";
 import { fixedBy, guardFixable, lockedEntry, type EntryRow, type FixedBy } from "./entry";
 import { projectNames } from "./read";
+import { proposalOf } from "./proposal-ref";
 import { guardDayTotal, Hours } from "./guards";
 import { allocationRefusal, dateRefusal } from "./rules";
 import { actorId, by, keyOf, type WeekRow } from "./weeks";
@@ -19,9 +20,10 @@ export const Changes = z.object({
   billable: z.boolean().optional(),
   note: z.string().max(500).nullable().optional(),
   projectKey: z.string().min(1).optional(),
+  proposalKey: z.string().min(1).nullable().optional(),
 });
 type Change = z.infer<typeof Changes>;
-const changes = Changes.extend({ entryId: z.uuid(), reason, ...cardFields }).refine((a) => a.hours !== undefined || a.billable !== undefined || a.note !== undefined || a.projectKey !== undefined, "say what to change: hours, billable, note or project");
+const changes = Changes.extend({ entryId: z.uuid(), reason, ...cardFields }).refine((a) => a.hours !== undefined || a.billable !== undefined || a.note !== undefined || a.projectKey !== undefined || a.proposalKey !== undefined, "say what to change: hours, billable, note, project or proposal");
 
 type Who = FixedBy & { requestId?: string };
 
@@ -37,17 +39,21 @@ type Target = { week: WeekRow; entry: EntryRow; lockedChange?: boolean };
 export async function writeCorrection(tx: Tx, ctx: ServiceContext, { week, entry, lockedChange = false }: Target, a: Change, whoFor: (projectId: string) => Promise<Who>) {
   const project = a.projectKey ? await getProjectRef(tx, a.projectKey) : null;
   if (a.projectKey && !project) throw new ToolError(`no project ${a.projectKey}`, "not_found");
-  const next = { hours: a.hours ?? entry.hours, billable: a.billable ?? entry.billable, note: a.note === undefined ? entry.note : a.note, projectId: project?.id ?? entry.project_id };
+  const projectId = project?.id ?? entry.project_id;
+  // 081 AC-3: the entry keeps its proposal while it stays on its project; a move clears it; proposalKey (null clears) wins.
+  const named = a.proposalKey ? await proposalOf(tx, a.proposalKey, project ?? (await getProjectRef(tx, entry.project_id))!) : null;
+  const proposalId = a.proposalKey !== undefined ? (named?.id ?? null) : projectId === entry.project_id ? entry.proposal_id : null;
+  const next = { hours: a.hours ?? entry.hours, billable: a.billable ?? entry.billable, note: a.note === undefined ? entry.note : a.note, projectId, proposalId };
   const who = await whoFor(next.projectId);
   const moved = next.projectId !== entry.project_id ? await allocationRefusal(tx, ctx.tenantId, entry.user_id, next.projectId, entry.day) : null;
   if (moved) throw new ToolError(moved, "invalid_input");
   await guardDayTotal(tx, entry.user_id, entry.day, next.hours, entry.id);
   const [{ revision }] = await tx.execute(sql`update time.entry set hours = ${next.hours}, billable = ${next.billable}, note = ${next.note}, project_id = ${next.projectId},
-    revision = revision + 1 where id = ${entry.id} returning revision`);
+    proposal_id = ${next.proposalId}, revision = revision + 1 where id = ${entry.id} returning revision`);
   const before = { hours: entry.hours, billable: entry.billable, projectId: entry.project_id };
   const payload: EntryCorrected = { entryId: entry.id, weekId: week.id, userId: entry.user_id, projectId: next.projectId, day: entry.day, hours: next.hours, billable: next.billable, revision: Number(revision), before, lockedChange, week: keyOf(week), dayLabel: dayLabel(entry.day), ...who };
   return { result: { id: entry.id, week: keyOf(week), day: entry.day, hours: next.hours, revision: Number(revision) }, resourceId: entry.id,
-    before: { ...before, note: entry.note }, after: { ...next, reason: who.reason }, events: [{ name: EVENTS.entryCorrected, payload }] };
+    before: { ...before, note: entry.note, proposalId: entry.proposal_id, userId: entry.user_id, day: entry.day }, after: { ...next, reason: who.reason, userId: entry.user_id, day: entry.day, previousProposalId: entry.proposal_id }, events: [{ name: EVENTS.entryCorrected, payload }] };
 }
 
 /** The soft delete itself, shared by delete_time_entry and an applied change request. */
@@ -55,7 +61,7 @@ export async function writeDelete(tx: Tx, ctx: ServiceContext, { week, entry, lo
   const [{ revision }] = await tx.execute(sql`update time.entry set deleted_at = now(), deleted_by = ${by(ctx)}, revision = revision + 1 where id = ${entry.id} returning revision`);
   const payload: EntryDeleted = { entryId: entry.id, weekId: week.id, userId: entry.user_id, projectId: entry.project_id, day: entry.day, hours: entry.hours, revision: Number(revision), lockedChange, week: keyOf(week), dayLabel: dayLabel(entry.day), ...who };
   return { result: { id: entry.id, week: keyOf(week), day: entry.day, deleted: true }, resourceId: entry.id,
-    before: { hours: entry.hours, billable: entry.billable, projectId: entry.project_id, day: entry.day }, after: { deleted: true, reason: who.reason }, events: [{ name: EVENTS.entryDeleted, payload }] };
+    before: { hours: entry.hours, billable: entry.billable, projectId: entry.project_id, day: entry.day, proposalId: entry.proposal_id, userId: entry.user_id }, after: { deleted: true, reason: who.reason, hours: entry.hours, day: entry.day, userId: entry.user_id, proposalId: entry.proposal_id }, events: [{ name: EVENTS.entryDeleted, payload }] };
 }
 
 /** 071 AC-11: the owner's own change keeps to the date window; a PM or Admin fix with a reason is exempt. */

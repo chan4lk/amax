@@ -5,6 +5,7 @@ export const CONNECTORS = {
   "msgraph-write": { name: "Microsoft Graph, write", usedFor: "Approved access changes only", noun: "secret", logo: "E", color: "#2F6FEB" },
   "azure-devops": { name: "Azure DevOps", usedFor: "Commits, pipelines, webhooks", noun: "token", logo: "D", color: "#0078D4" },
   github: { name: "GitHub", usedFor: "Commits, pull requests, webhooks", noun: "token", logo: "G", color: "#24292F" },
+  "github-oauth": { name: "GitHub accounts app", usedFor: "People connecting their GitHub accounts (client id:client secret)", noun: "secret", logo: "G", color: "#24292F" },
   "stp-gateway": { name: "STP gateway", usedFor: "Single Touch Payroll lodgement", noun: "key", logo: "S", color: "#00843D" },
   xero: { name: "Xero", usedFor: "Payroll journals, invoices", noun: "secret", logo: "X", color: "#13B5EA" },
   keyflow: { name: "Keyflow", usedFor: "Two-way people and goals sync", noun: "key", logo: "K", color: "linear-gradient(135deg,#7B61FF,#2FCB8C)" },

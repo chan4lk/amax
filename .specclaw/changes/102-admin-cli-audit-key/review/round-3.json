@@ -1,0 +1,93 @@
+{
+ "counts": {
+  "blocker": 0,
+  "major": 1,
+  "minor": 2
+ },
+ "escalated": [],
+ "files": [
+  "README.md",
+  "apps/mock/public/mock/index.html",
+  "packages/auth/bin/admin.ts",
+  "packages/auth/tests/admin-cli-102.test.ts"
+ ],
+ "final": true,
+ "findings": [
+  {
+   "file": "README.md",
+   "fp": "0afa1a142e02",
+   "in_delta": true,
+   "line": 84,
+   "message": "The README and the CLI header (packages/auth/bin/admin.ts:7-9) say only user-deactivate and principal-add need AUDIT_HASH_KEY. That is no longer the whole story. loadEnv() now parses the full environment for every command, so a malformed AUDIT_HASH_KEY (or any other invalid variable, such as a short ANTHROPIC_API_KEY or AMAX_KMS set without its companion variables) stops tenant-add, user-add and scim-token too. Failing closed is correct here. Fix: say in the docs that the CLI checks the whole environment the same way the app does at boot, so a set-but-invalid key stops every command.",
+   "original_severity": "minor",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B6",
+   "scenario": "AUDIT_HASH_KEY=short-key pnpm --filter @amax/auth admin user-add ... \u2192 exits with 'AUDIT_HASH_KEY: at least 32 characters', but the README says user-add does not need the key",
+   "severity": "minor"
+  },
+  {
+   "file": "packages/auth/tests/admin-cli-102.test.ts",
+   "fp": "ecfb2b9013be",
+   "in_delta": true,
+   "line": 61,
+   "message": "AC-3 checks that a non-audited command still runs only when the key is unset (null). It never pins what happens to a non-audited command when the key is empty or too short, which is the behaviour change described in the finding above. Also, AC-1 only checks that the audit row count is above zero, not that a principal-create action was written. Add a row asserting scim-token or user-add with the 'short-key' value, and check the audited action name in AC-1.",
+   "original_severity": "minor",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B2",
+   "scenario": "Later edit swaps loadEnv back to raw process.env for non-audited commands \u2192 short key silently accepted by tenant-add; no test fails",
+   "severity": "minor"
+  },
+  {
+   "file": "packages/auth/bin/admin.ts",
+   "fp": "895f6600a606",
+   "in_delta": true,
+   "line": 35,
+   "message": "[design] The CLI only checks that the audit key is at least 32 characters long. It never checks that this is the deployment's key. It then writes to an append-only chain, and `appendAudit` stores `actor_key`, `resource_id_key`, `before_key` and `after_key` as HMACs under that key (core/src/audit.ts:80). If an operator types any other key that is long enough, the CLI writes rows that can never be verified or erased. Nothing flags this, and the rows can't be removed because `core.audit_event` is append-only. The header comment says the key must be 'the app's value', but nothing enforces that. Fix: before `configureRuntime`, read the tenant's most recent `chain_v = 2` audit row. Recompute `keyed(actor, auditKey)` and compare it with the stored `actor_key`. If they differ, refuse with 'AUDIT_HASH_KEY is not this deployment's key' and write nothing. Skip the check only when the tenant has no v2 rows. Add a variant row to the AC-3 table for 'wrong key with valid length': the command must exit non-zero, the audit count must stay the same, and the chain must still verify with KEY.",
+   "original_severity": "major",
+   "pass": "design",
+   "pre_existing": false,
+   "rule": "B6",
+   "scenario": "The tenant already has audit rows written by the app under key K. The operator runs `AUDIT_HASH_KEY=$(printf 'x%.0s' {1..32}) admin principal-add --tenant T ...`. The command exits 0, prints the token and appends a row whose actor_key is HMAC('xxx\u2026', 'user:<owner>'). After that, `verifyAuditChain(tx, T, K)` returns ok:false for this tenant permanently, and 032 erasure can't match that row's keyed values.",
+   "severity": "major"
+  }
+ ],
+ "head": "9faae1438a34d23e75e326a54cdbddfcc3fe54f4",
+ "impact": [
+  "apps/web/lib/rate-wiring.ts",
+  "apps/web/lib/server.ts",
+  "apps/web/scripts/backups.ts",
+  "apps/web/scripts/dev-seed.ts",
+  "apps/web/tests/admin/fixture.ts",
+  "apps/web/tests/e2e/api-seed.ts",
+  "apps/web/tests/e2e/global-auth.ts",
+  "apps/web/tests/e2e/proposal-agent.ts",
+  "apps/web/tests/e2e/secrets-seed.ts",
+  "modules/allocations/tests/setup.ts",
+  "modules/career/tests/db.ts",
+  "modules/compliance/server/evidence.ts",
+  "modules/compliance/tests/db.ts",
+  "modules/delivery/sync/bin.ts",
+  "modules/delivery/tests/chat-043.test.ts",
+  "modules/delivery/tests/chat-first.test.ts",
+  "modules/delivery/tests/chat.test.ts",
+  "modules/delivery/tests/create-project-contract.test.ts",
+  "modules/delivery/tests/create-project-surfaces.test.ts",
+  "modules/delivery/tests/delivery.test.ts"
+ ],
+ "model": "opus",
+ "passes": [
+  "review",
+  "design"
+ ],
+ "prompt_chars": 59104,
+ "round": 3,
+ "since": null,
+ "status": "open",
+ "system_chars": 43074,
+ "tier": "review",
+ "tools": "Read,Grep,Glob",
+ "ts_end": 1794490787,
+ "ts_start": 1794490693
+}

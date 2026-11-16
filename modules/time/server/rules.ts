@@ -43,6 +43,13 @@ export async function localToday(tx: Tx, userId: string) {
   return new Intl.DateTimeFormat("en-CA", { timeZone: zone, year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
 }
 
+/**
+ * 085, 104 AC-15 (amendment 2): the week a screen or read tool opens on when none is asked for: the viewer's current
+ * ISO week by their local today. One rule for My timesheet, Team time, the Overview's time card and the hours trend; it
+ * used to be the latest week with any timesheet, which opened an old week once nobody had logged for a while.
+ */
+export const currentWeek = async (tx: Tx, userId: string) => isoWeekOf(new Date(`${await localToday(tx, userId)}T12:00:00Z`));
+
 /** AC-11: why the owner can't change this day (outside the back-dating limit, or in the future), or null. */
 export async function dateRefusal(tx: Tx, userId: string, day: string): Promise<string | null> {
   const s = await settingsOf(tx);

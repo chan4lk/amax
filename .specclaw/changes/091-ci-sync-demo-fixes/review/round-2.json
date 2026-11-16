@@ -1,0 +1,102 @@
+{
+ "counts": {
+  "blocker": 1,
+  "major": 0,
+  "minor": 2
+ },
+ "escalated": [],
+ "files": [
+  "modules/delivery/README.md",
+  "modules/delivery/server/owner.ts",
+  "modules/delivery/server/push.ts",
+  "modules/delivery/server/services.ts",
+  "modules/delivery/sync/authors.ts",
+  "modules/delivery/sync/bin.ts",
+  "modules/delivery/sync/import.ts",
+  "modules/delivery/tests/authors-091.test.ts",
+  "modules/delivery/tests/owner-091.test.ts",
+  "packages/testing/tests/specclaw-sync-ci.test.ts",
+  "plugins/amax/scripts/read-specclaw.mjs",
+  "plugins/amax/scripts/src/read-specclaw.ts",
+  "scripts/specclaw-sync-ci.mjs"
+ ],
+ "final": false,
+ "findings": [
+  {
+   "file": "modules/delivery/sync/import.ts",
+   "fp": "677a74c861f1",
+   "in_delta": true,
+   "line": 27,
+   "message": "This round fixes only the `meta` copy, so it is an instance fix. The previous finding also named the trace copy, and that one is still there. The plugin, CI and the self-sync's payload still send each record's raw `owner` (the Owner line) and `author` (the git author email) in `records[]`. Both transports write a tool call's raw args to the append-only `core.trace_event` before the tool runs: `packages/mcp/src/server.ts:41` and `packages/api/src/rest.ts:49` (the `/api/v1/tools/sync_specclaw` route CI uses). So every sync still persists the email of every change author, including committers who are not people in amax, in a store that erasure can't find by subject and the purge never deletes. The README line this diff edits now says the email is 'never stored', and the new test checks only `delivery.proposal.meta`, so the gap is hidden. Fix: keep `owner` and `author` out of the traced args for sync_specclaw (redact these keys at the trace step, or hash the email client-side and match it on the server against a keyed hash of git identities and work emails). Then extend the 'never stored' test to look in `core.trace_event` after a real `sync_specclaw` call over MCP and over REST.",
+   "original_severity": "blocker",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B1 / module-standard (personal data classified + retention) / B8",
+   "scenario": "CI runs sync_specclaw for a repo where change 120 was added by stranger@example.test, who is not an amax user. Query: select args::text from core.trace_event where tool='sync_specclaw'. Result: the row contains \"author\":\"stranger@example.test\". The row is kept forever, and no erasure request can find it.",
+   "severity": "blocker"
+  },
+  {
+   "file": "modules/delivery/sync/authors.ts",
+   "fp": "8854b92d9fac",
+   "in_delta": true,
+   "line": 18,
+   "message": "The shallow-clone check is written twice: inline in `authorsOf` (line 18) and again as `isShallow` (line 33). Both copies treat a failure as shallow today, but a later edit to one won't reach the other. Have `authorsOf` call `isShallow(root)`.",
+   "original_severity": "minor",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B4",
+   "scenario": "",
+   "severity": "minor"
+  },
+  {
+   "file": "modules/delivery/sync/authors.ts",
+   "fp": "d29b921cf620",
+   "in_delta": true,
+   "line": 25,
+   "message": "When `git log` succeeds but finds no commit that added the change.md, the author is `null` ('the repo names nobody'), and the sync then clears the stored owner. The self-sync (`bin.ts`) never checks that the working tree it reads matches `--sha`. So a folder that is in the tree but not committed at that sha reads as 'nobody', not as 'unknown'. Return `undefined` when the path isn't in the tree at `at` (for example, check first with `git cat-file -e <at>:<path>`).",
+   "original_severity": "minor",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B3",
+   "scenario": "The self-sync runs with --repo on a checkout whose change 130 folder isn't committed at --sha, while FLT-130 is owned by Nimal. git log returns nothing, so author is null and Nimal is cleared as owner.",
+   "severity": "minor"
+  }
+ ],
+ "head": "df134aeaa8d03f4727e6bb08290a5805eadd29a3",
+ "impact": [
+  ".claude-plugin/marketplace.json",
+  "apps/mock/public/mock/index.html",
+  "apps/web/app/(app)/settings/api/ApiTickets.tsx",
+  "apps/web/app/(app)/settings/api/CredentialTable.tsx",
+  "apps/web/lib/admin/api.ts",
+  "apps/web/lib/page-context.ts",
+  "apps/web/lib/registry.ts",
+  "apps/web/tests/admin/api-reveal.test.ts",
+  "apps/web/tests/admin/fixture.ts",
+  "apps/web/tests/admin/hardening-053.test.ts",
+  "apps/web/tests/admin/it-admin.test.ts",
+  "apps/web/tests/admin/privacy.test.ts",
+  "apps/web/tests/admin/proxy-wiring.test.ts",
+  "apps/web/tests/admin/review-052.test.ts",
+  "apps/web/tests/admin/secret.test.ts",
+  "apps/web/tests/admin/tools.test.ts",
+  "apps/web/tests/dev-seed.test.ts",
+  "apps/web/tests/e2e/audit.spec.ts",
+  "apps/web/tests/e2e/delivery.spec.ts",
+  "apps/web/tests/e2e/global-auth.ts"
+ ],
+ "model": "opus",
+ "passes": [
+  "review",
+  "design"
+ ],
+ "prompt_chars": 97645,
+ "round": 2,
+ "since": "9aab6ebc",
+ "status": "open",
+ "system_chars": 43107,
+ "tier": "review",
+ "tools": "Read,Grep,Glob",
+ "ts_end": 1794284635,
+ "ts_start": 1794284469
+}

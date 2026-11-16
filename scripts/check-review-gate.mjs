@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { spawnSync } from "node:child_process";
+import { movedFrom } from "./review-gate/moves.mjs";
 import { gate, touchedChangeDirs } from "./review-gate/rules.mjs";
 
 const args = process.argv.slice(2);
@@ -56,7 +57,15 @@ const commit = (sha) => {
     merge: parents.split(" ").length > 1,
   };
 };
+const forkPoint = must("merge-base", base, head).trim();
+const dirsAt = (ref) => lines(must("ls-tree", "--name-only", ref, ".specclaw/changes/", ".specclaw/changes/archive/")).map((p) => p.split("/").at(-1));
+const folderAt = (ref, name) => {
+  const dir = [`.specclaw/changes/${name}`, `.specclaw/changes/archive/${name}`].find((d) => lines(must("ls-tree", "--name-only", ref, `${d}/`)).length);
+  return new Map(dir ? lines(must("ls-tree", "-r", "--name-only", ref, `${dir}/`)).map((p) => [p.slice(dir.length + 1), must("show", `${ref}:${p}`)]) : []);
+};
+const dirs = { baseDirs: dirsAt(forkPoint), headDirs: dirsAt(head), filesAt: (side, n) => folderAt(side === "base" ? forkPoint : head, n) };
 const repo = {
+  movedFrom: (name) => movedFrom(name, dirs),
   isAncestor: (sha, of = head) => ancestor(sha, of),
   inBase,
   history: (name) => lines(must("rev-list", `${base}..${head}`, "--", `.specclaw/changes/${name}`, `.specclaw/changes/archive/${name}`)),

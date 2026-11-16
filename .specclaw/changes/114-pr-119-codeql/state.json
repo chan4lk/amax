@@ -1,0 +1,10 @@
+{
+  "change": "114-pr-119-codeql",
+  "phase": "verify",
+  "branch": "",
+  "phases": {
+    "proposal": {"status":"approved","at":"2026-11-16T09:18:20Z"},
+    "tasks": {"status":"done","at":"2026-11-16T09:18:21Z"},
+    "verify": {"status":"done","at":"2026-11-16T09:28:18Z"}
+  }
+}

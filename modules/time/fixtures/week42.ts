@@ -16,6 +16,9 @@ export const SHEETS: Sheet[] = [
     days: [[0, "CON", 7.6], [1, "CON", 6.9], [1, "HRI", 0.7], [2, "HRI", 5.8], [2, "FLT", 1.8], [3, "FLT", 2.2]] },
 ];
 
+/** 081: whose Contoso hours went to which proposal (their own, as owner in Delivery's fixtures), so approving their week shows on it. */
+export const PROPOSAL_OF: Record<string, Record<string, string>> = { nimal: { CON: "CON-014" }, kasun: { CON: "CON-011" }, ayesha: { CON: "CON-012" } };
+
 const tenths = (h: number) => Math.round(h * 10);
 
 export function splitByAgent(sheet: Sheet) {

@@ -15,7 +15,6 @@ import { CARD_DAYS, cancelAction, chatTurn, confirmAction, NotPendingError, type
 import { loadFixtures, lumen } from "@amax/testing";
 import delivery from "../module";
 import { chatIntents } from "../chat";
-import { managedProjectIds } from "../contracts";
 import { ctxFor } from "../server/context";
 
 const T = lumen.tenant.id;
@@ -89,7 +88,7 @@ describe.skipIf(!hasDb)("005 chat engine with delivery (Postgres, scripted model
     const out = await chatTurn(app, registry, liam, { text: "list projects" });
     expect(out.reply).toContain("invalid call to list_projects");
     expect(out.reply).not.toContain("Contoso");
-    expect(refused.calls[0].tools?.map((x) => x.name)).toEqual(["whoami", "search", "offer_choices"]);
+    expect(refused.calls[0].tools?.map((x) => x.name)).toEqual(["whoami", "search", "offer_choices", "offer_answers"]);
   });
 
   it("AC-4 pins are fetched with the user's permissions and sent as quoted data", async () => {

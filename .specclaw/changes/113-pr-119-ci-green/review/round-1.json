@@ -1,0 +1,67 @@
+{
+ "counts": {
+  "blocker": 0,
+  "major": 0,
+  "minor": 1
+ },
+ "escalated": [],
+ "files": [
+  "modules/allocations/tests/no-hr-107.test.ts",
+  "modules/allocations/tests/setup.ts"
+ ],
+ "final": true,
+ "findings": [
+  {
+   "class": "other",
+   "file": "modules/allocations/tests/no-hr-107.test.ts",
+   "fp": "b56ceae4b24b",
+   "in_delta": true,
+   "line": 14,
+   "message": "The new comment says HR is loaded 'never through another module's internals (graph rule R1)', but `installed(\"hr\")` still loads `@amax/hr/module` at runtime. It only builds the template string `import(`@amax/${id}/module`)` from `setup.ts`, and `scripts/graph/rules.mjs` only checks plain string import specifiers. The test does exactly what it did before; R1 just can't see it now. That works here because allocations' `setup.ts` already loads its dependency manifests this way, and that line predates this change. Fix: reword the comment to say the manifest is loaded the way the app's registry loads installed modules, and that R1 only applies to static imports. Don't present this as a fix for the boundary itself.",
+   "original_severity": "minor",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B1",
+   "scenario": "A reader trusts the comment and copies `installed(\"<other>\")` into a module's non-test code to read another module's internals. `npm run check:graph` still passes, because the scanner skips template-literal import specifiers.",
+   "severity": "minor",
+   "unclassified": false
+  }
+ ],
+ "head": "b18da227c801fae83137bfe83dea064c6c22fdd2",
+ "impact": [
+  "apps/mock/public/mock/index.html",
+  "apps/web/app/(app)/[module]/[[...path]]/page.tsx",
+  "apps/web/app/(app)/operations/[screen]/page.tsx",
+  "apps/web/app/(app)/page.tsx",
+  "apps/web/app/(app)/settings/integrations/page.tsx",
+  "apps/web/app/(app)/settings/retention/RetentionTable.tsx",
+  "apps/web/app/actions/chat.ts",
+  "apps/web/app/api/git/github/callback/route.ts",
+  "apps/web/app/api/webhooks/[tenant]/[provider]/route.ts",
+  "apps/web/app/healthz/route.ts",
+  "apps/web/components/workflows/SchedulesCard.tsx",
+  "apps/web/lib/admin/status.ts",
+  "apps/web/lib/overview.ts",
+  "apps/web/lib/page-context.ts",
+  "apps/web/lib/privacy-sources.ts",
+  "apps/web/lib/registry.ts",
+  "apps/web/lib/server.ts",
+  "apps/web/scripts/seed-demo.ts",
+  "apps/web/scripts/temporal-worker.ts",
+  "apps/web/tests/add-card-confirm-110.test.ts"
+ ],
+ "model": "opus",
+ "passes": [
+  "review",
+  "design"
+ ],
+ "prompt_chars": 52446,
+ "round": 1,
+ "since": null,
+ "status": "clean",
+ "system_chars": 44296,
+ "tier": "review",
+ "tools": "Read,Grep,Glob",
+ "ts_end": 1794817124,
+ "ts_start": 1794817067
+}

@@ -1,0 +1,102 @@
+{
+ "counts": {
+  "blocker": 0,
+  "major": 1,
+  "minor": 2
+ },
+ "escalated": [],
+ "files": [
+  "modules/delivery/server/agent-first.ts",
+  "modules/delivery/server/push.ts",
+  "modules/delivery/server/queries.ts",
+  "modules/delivery/server/services.ts",
+  "modules/delivery/sync/duplicates.ts",
+  "modules/delivery/sync/import.ts",
+  "modules/delivery/tests/attention-a11.test.ts",
+  "modules/delivery/tests/authors-091.test.ts",
+  "modules/delivery/tests/board-092.test.ts",
+  "modules/delivery/tests/owner-092.test.ts",
+  "modules/delivery/tests/readiness-081.test.ts",
+  "modules/delivery/ui/ProposalsPage.tsx",
+  "modules/delivery/ui/released.ts"
+ ],
+ "final": false,
+ "findings": [
+  {
+   "file": "modules/delivery/server/queries.ts",
+   "fp": "6ae3e14cab7e",
+   "in_delta": true,
+   "line": 65,
+   "message": "The new `in_prod` subquery works out \"a live Prod deployment\" again from whichever environment is Prod today (`e.is_prod and d.status = 'deployed'`). The repo already stores that fact once, when the deployment is written: `delivery.deployment.released` (migration 0005, set in services.ts:185). Migration 0005 says it exists so that a change to which environment is Prod can't alter what released a proposal. The two rules disagree as soon as Prod moves to another environment. The previous round's finding was also the class \"what decides In Prod\", and this fix answers it with a second copy of the rule. Fix: `exists (select 1 from delivery.deployment d where d.release_id = p.release_id and d.released and d.voided_at is null)`, and add a board-092 case that re-marks Prod after the deployment.",
+   "original_severity": "major",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B4",
+   "scenario": "CON v2.4.0 is deployed to Prod (released=true) and its proposals go Released. An admin then marks UAT as Prod with upsertEnvironment, which unmarks the old Prod. The board's card drops from \"In Prod \u00b7 v2.4.0\" to \"Released\". The other way round: a release that was only deployed to UAT (released=false) reads \"In Prod\" once UAT is marked Prod, although no Prod deployment released it.",
+   "severity": "major"
+  },
+  {
+   "file": "modules/delivery/server/services.ts",
+   "fp": "ba1aa1a203af",
+   "in_delta": true,
+   "line": 313,
+   "message": "The 092 AC-1 comment still says \"`found` was read before, without a lock\". This diff now reads `found` with `for update`. The race test's comment (owner-092.test.ts:55, \"The sync reads the row before that commits\") is out of date the same way: the sync now waits at that read. Update both so the comments describe the code.",
+   "original_severity": "minor",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B1",
+   "scenario": "",
+   "severity": "minor"
+  },
+  {
+   "file": "modules/delivery/tests/authors-091.test.ts",
+   "fp": "b392da05d012",
+   "in_delta": true,
+   "line": 45,
+   "message": "The new merge-commit case checks only that `authorsOf` returns undefined. The previous finding also asked for an end-to-end check that a push of such a record keeps the stored owner instead of clearing it. Nothing here drives that path for the file-present, empty-log case. Add a push assertion next to it, or point to an existing test that covers undefined \u2192 owner kept.",
+   "original_severity": "minor",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B2",
+   "scenario": "",
+   "severity": "minor"
+  }
+ ],
+ "head": "9f98209270bf0a920102976292d8394631ab0b3c",
+ "impact": [
+  ".claude/settings.json",
+  ".github/workflows/ci.yml",
+  "apps/mock/public/mock/index.html",
+  "apps/web/lib/page-context.ts",
+  "apps/web/lib/registry.ts",
+  "apps/web/tests/e2e/audit.spec.ts",
+  "apps/web/tests/e2e/chat.spec.ts",
+  "apps/web/tests/e2e/delivery-visual.spec.ts",
+  "apps/web/tests/e2e/delivery.spec.ts",
+  "apps/web/tests/e2e/global-auth.ts",
+  "apps/web/tests/e2e/owner-a6.ts",
+  "apps/web/tests/e2e/proposal-agent.ts",
+  "modules/allocations/server/team.ts",
+  "modules/allocations/tests/team.test.ts",
+  "modules/delivery/chat-suggestions.ts",
+  "modules/delivery/chat.ts",
+  "modules/delivery/server/pin-offers.ts",
+  "modules/delivery/server/proposal-card.ts",
+  "modules/delivery/tests/agent-first-093.test.ts",
+  "modules/delivery/tests/sync-push.test.ts"
+ ],
+ "model": "opus",
+ "passes": [
+  "review",
+  "design"
+ ],
+ "prompt_chars": 73143,
+ "round": 2,
+ "since": "60fb9920",
+ "status": "open",
+ "system_chars": 43121,
+ "tier": "review",
+ "tools": "Read,Grep,Glob",
+ "ts_end": 1794296460,
+ "ts_start": 1794296354
+}

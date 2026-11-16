@@ -1,0 +1,69 @@
+{
+ "counts": {
+  "blocker": 0,
+  "major": 0,
+  "minor": 1
+ },
+ "escalated": [],
+ "files": [
+  "modules/delivery/server/proposal-detail.ts",
+  "modules/delivery/server/proposal-hours.ts",
+  "modules/delivery/tests/proposal-detail.test.ts",
+  "modules/time/server/proposal-lines.ts",
+  "modules/time/tests/proposal-hours.test.ts",
+  "modules/time/tests/proposal-time.test.ts"
+ ],
+ "final": false,
+ "findings": [
+  {
+   "file": "modules/delivery/server/proposal-detail.ts",
+   "fp": "8bdeff9e1a28",
+   "in_delta": true,
+   "line": 58,
+   "message": "When Time is switched off, the refusal reuses `invalid(...)`, which carries `code: \"invalid_input\"` and `retryable: false`. Both signals say the caller's input is wrong and that retrying won't help. Neither is true here: the line id is valid, and the same read works again once Time is back. Chat's pin path only shows the message, so it isn't hurt. An MCP client, though, sees an input error for what is really 'unavailable'. Fix: add a distinct refusal in `refusal.ts`, for example code `unavailable` with retryable true, and match on that code in the review-2 table.",
+   "original_severity": "minor",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B3",
+   "scenario": "Time is off (`AMAX_MODULES_DISABLED=time`). An MCP agent calls get_proposal_event { proposalId, line: \"time:<id>\" } and gets code invalid_input with retryable false. It treats its own arguments as bad and drops the pin, though the line exists and reads fine once Time is back on.",
+   "severity": "minor"
+  }
+ ],
+ "head": "0bbdd63c031836226bfedd711cb16dc3416047be",
+ "impact": [
+  "apps/mock/public/mock/index.html",
+  "apps/web/app/(app)/settings/ai/usage/UsageFilters.tsx",
+  "apps/web/lib/privacy-fixtures.ts",
+  "apps/web/lib/server.ts",
+  "apps/web/scripts/seed-demo.ts",
+  "apps/web/tests/admin/privacy.test.ts",
+  "apps/web/tests/pin-refs.test.ts",
+  "modules/delivery/db/migrations/0001_delivery.sql",
+  "modules/inbox-agent/fixtures/index.ts",
+  "modules/inbox-agent/server/graph.ts",
+  "modules/inbox-agent/server/reader.ts",
+  "modules/inbox-agent/server/record.ts",
+  "modules/inbox-agent/server/sandbox.ts",
+  "modules/inbox-agent/server/scan.ts",
+  "modules/inbox-agent/server/views.ts",
+  "modules/inbox-agent/tests/e2e/inbox-agent.spec.ts",
+  "modules/inbox-agent/tests/scan.test.ts",
+  "modules/inbox-agent/tests/standard.test.ts",
+  "modules/inbox-agent/tests/triage.test.ts",
+  "modules/inbox-agent/ui/InboxPage.tsx"
+ ],
+ "model": "opus",
+ "passes": [
+  "review",
+  "design"
+ ],
+ "prompt_chars": 59446,
+ "round": 5,
+ "since": "c48088de",
+ "status": "clean",
+ "system_chars": 43017,
+ "tier": "review",
+ "tools": "Read,Grep,Glob",
+ "ts_end": 1794054401,
+ "ts_start": 1794054330
+}

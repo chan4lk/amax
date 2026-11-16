@@ -27,7 +27,7 @@ function PersonRows({ p, months }: { p: GridPerson; months: GridData["months"] }
       {p.lines.map((l, k) => (
         <tr key={`${p.personId}-${l.label}`} className="pinnable">
           {k === 0 ? <td><div className="who"><span className={`av sm ${av(p.name)}`} aria-hidden="true">{p.initials}</span>{p.name}</div></td> : <td className="muted indent">{p.name}</td>}
-          <td>{l.label}{l.manages && <small> Manages it</small>}</td>
+          <td>{l.label}{l.manages && <small> Manages it</small>}{l.standing && <> <span className="chip info">until further notice</span></>}</td>
           {months.map((m, i) => <Cell key={m.month} pct={l.percents[i]} forecast={m.forecast} bench={k === 0 && p.totals[i] === 0 && p.capacity[i] > 0} />)}
           <td className="h"><PinButton pin={pin(`${p.name}, ${l.label}`, l)} /></td>
         </tr>

@@ -3,11 +3,16 @@
 //   pnpm --filter @amax/auth admin user-add --tenant <id> --email a@b.c --name "A B" --roles Admin,PM [--password ...]
 //   pnpm --filter @amax/auth admin user-deactivate --tenant <id> --email a@b.c
 //   pnpm --filter @amax/auth admin scim-token --tenant <id>
-// Without --password a strong one is generated and printed once.
+//   pnpm --filter @amax/auth admin principal-add --tenant <id> --email <owner> --name <name> --roles <scopes>
+// Without --password a strong one is generated and printed once. user-deactivate and principal-add write to the
+// audit chain, so they also need AUDIT_HASH_KEY (the app's value) and refuse a missing or different key. Every
+// command checks the whole environment with core's loadEnv, as the app does at boot, so any invalid variable stops it.
 import { randomBytes, randomUUID } from "node:crypto";
 import { parseArgs } from "node:util";
 import { sql } from "drizzle-orm";
 import { createDb, withTenant } from "@amax/db";
+import { loadEnv } from "@amax/core/env";
+import { configureRuntime, keyed } from "@amax/core/server";
 import { upsertPasswordUser } from "../src/password";
 import { revokeUser } from "../src/revoke";
 import { createScimToken } from "../src/scim";
@@ -15,7 +20,8 @@ import { createPrincipal } from "../src/principals";
 import { viewerForUser } from "../src/session";
 import { isRole } from "../src/roles";
 
-const url = process.env.DATABASE_MIGRATE_URL;
+const env = loadEnv();
+const url = env.DATABASE_MIGRATE_URL;
 if (!url) throw new Error("set DATABASE_MIGRATE_URL (the schema owner)");
 const [cmd, ...rest] = process.argv.slice(2);
 const { values, positionals } = parseArgs({
@@ -23,10 +29,20 @@ const { values, positionals } = parseArgs({
   allowPositionals: true,
   options: { tenant: { type: "string" }, email: { type: "string" }, name: { type: "string" }, roles: { type: "string" }, password: { type: "string" } },
 });
+const auditKey = env.AUDIT_HASH_KEY;
+const audited = cmd === "principal-add" || cmd === "user-deactivate";
+if (!auditKey && audited) throw new Error("set AUDIT_HASH_KEY (the deployment's audit key)");
 const { db, client } = createDb(url, { max: 1 });
+if (auditKey) configureRuntime({ db, auditKey });
 const need = (k: keyof typeof values) => values[k] ?? (() => { throw new Error(`--${k} is required`); })();
+// A wrong key would append rows no one can verify or erase, so it must reproduce the deployment's latest keyed actor.
+async function deploymentKey() {
+  const [r] = await db.execute(sql`select actor, actor_key from core.latest_keyed_actor()`);
+  if (r && keyed(r.actor, auditKey) !== r.actor_key) throw new Error("AUDIT_HASH_KEY is not this deployment's key");
+}
 
 try {
+  if (audited) await deploymentKey();
   if (cmd === "tenant-add") {
     const id = randomUUID();
     const name = positionals[0] ?? (() => { throw new Error("tenant name is required"); })();

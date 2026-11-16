@@ -69,6 +69,13 @@ jobs:
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           FORK: ${{ github.event.pull_request.head.repo.full_name != github.repository }}
         run: node scripts/check-review-gate.mjs --base "$BASE_SHA" --head "$HEAD_SHA" --fork "$FORK"
+      # 089: a new specclaw change may not reuse a number; amax keys its proposal by it.
+      - name: Change numbers are unique
+        if: always()
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: node scripts/check-change-numbers.mjs --base "$BASE_SHA" --head "$HEAD_SHA"
 
   vercel:
     runs-on: ubuntu-latest

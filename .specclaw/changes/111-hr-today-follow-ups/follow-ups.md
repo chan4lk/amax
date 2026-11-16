@@ -1,0 +1,6 @@
+# Follow-ups
+
+Deferred by the review loop: minors and pre-existing findings.
+
+- [minor B12] `modules/hr/server/zones.ts:15` entityToday reads the entity's zone twice. The first query (entityZoneSet) checks that a zone is set. The second query (entityDay) works out the date, and if it finds no zone it falls back to 'UTC'. If the zone is removed between the two queries, a write gets UTC's date without any warning, and the no-zone refusal is skipped. Fix: use one query that returns both the zone and the day, then throw noZone when the zone is null. Write paths would then never reach entityDay's UTC fallback. (round 1) <!-- fp:33fdfb3b0b32 class:other -->
+- [minor B2] `modules/hr/tests/hr-today-110.test.ts:78` The new '111 AC1 one date engine' test also passes against the code from before this change. The old Intl.DateTimeFormat path gave '2026-11-16' for both LK and AU at EVENING, so the test shows that the dates agree, not that the second date engine is gone. To actually test the change, use a case where the two engines would differ: compare entityToday with entityDay while only the JS clock is faked and Intl is given a zone that disagrees, or assert that zones.ts no longer formats with Intl. Otherwise drop the claim from the test name. (round 1) <!-- fp:a7103a58173a class:other -->

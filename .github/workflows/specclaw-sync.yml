@@ -1,17 +1,30 @@
 name: specclaw sync
 
-# 039: after changes to .specclaw on main, import amax's own specs into an amax deployment's AMX
-# project. Runs only when the target's secrets are configured; a failed sync never blocks a merge.
+# 039, 089: after changes to .specclaw on main, push the repo's specclaw state to the linked amax project through the
+# sync_specclaw tool (POST /api/v1/tools/sync_specclaw), as an API credential acting for the project's PM. With none of
+# its secrets set it passes with a notice that nothing was synced; with only some, with no changes read, or when a push
+# is refused or fails, it fails. It runs after the merge, so a failed sync never blocks one.
+#
+# Secrets: AMAX_URL (e.g. https://amaxerp.com), AMAX_SYNC_API_KEY (create_api_credential with tools ["sync_specclaw"],
+# scope delivery:write, acting for the PM), AMAX_SYNC_ACT_FOR (that PM's user id).
+#
+# A push that would withdraw more than half of the proposals is held and says how many. If those folders really were
+# deleted, run this workflow by hand with confirm_withdraw set to that number.
 on:
   push:
     branches: [main]
     paths: [".specclaw/**"]
   workflow_dispatch:
+    inputs:
+      confirm_withdraw:
+        description: "Confirm a held withdrawal: the number of proposals the hold named"
+        required: false
+        default: ""
 
 permissions:
   contents: read
 
-# One sync at a time: overlapping runs would duplicate audit rows and phase_changed events.
+# One sync at a time: overlapping runs would race on the same proposals.
 concurrency:
   group: specclaw-sync
   cancel-in-progress: false
@@ -19,28 +32,15 @@ concurrency:
 jobs:
   sync:
     runs-on: ubuntu-latest
-    continue-on-error: true
-    env:
-      DATABASE_URL: ${{ secrets.AMAX_SYNC_DATABASE_URL }}
-      AMAX_SYNC_TOKEN: ${{ secrets.AMAX_SYNC_TOKEN }}
-      AUDIT_HASH_KEY: ${{ secrets.AMAX_SYNC_AUDIT_HASH_KEY }}
     steps:
-      - name: Skip when no target is configured
-        id: gate
-        run: echo "run=${{ env.DATABASE_URL != '' && env.AMAX_SYNC_TOKEN != '' }}" >> "$GITHUB_OUTPUT"
       - uses: actions/checkout@v4
-        if: steps.gate.outputs.run == 'true'
-        with: { fetch-depth: 0 }
-      - uses: ./.github/actions/setup
-        if: steps.gate.outputs.run == 'true'
-      - name: Import specs (main + specclaw/* branches)
-        if: steps.gate.outputs.run == 'true'
-        run: |
-          overlays=()
-          for b in $(git branch -r --format='%(refname:short)' | grep '^origin/specclaw/'); do
-            # A branch without .specclaw is skipped, not fatal.
-            git cat-file -e "$b:.specclaw" 2>/dev/null || continue
-            d=$(mktemp -d); git archive "$b" .specclaw | tar -x -C "$d"
-            overlays+=(--overlay "$d=${b#origin/}@$(git rev-parse --short=8 "$b")")
-          done
-          pnpm --filter @amax/delivery sync:specclaw --repo "$GITHUB_WORKSPACE" "${overlays[@]}" --sha "${GITHUB_SHA::8}"
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Push specclaw to amax (main, then each specclaw/* branch)
+        env:
+          AMAX_URL: ${{ secrets.AMAX_URL }}
+          AMAX_SYNC_API_KEY: ${{ secrets.AMAX_SYNC_API_KEY }}
+          AMAX_SYNC_ACT_FOR: ${{ secrets.AMAX_SYNC_ACT_FOR }}
+          AMAX_CONFIRM_WITHDRAW: ${{ inputs.confirm_withdraw }}
+        run: node scripts/specclaw-sync-ci.mjs

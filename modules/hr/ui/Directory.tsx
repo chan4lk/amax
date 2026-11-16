@@ -3,7 +3,7 @@ import { personPin } from "../pins";
 import type { DirectoryRow } from "../server/queries";
 import { avClass, countryName, statusChip, todayLabel } from "./parts";
 
-export function Directory({ rows, total, today, allHref }: { rows: DirectoryRow[]; total: number; today: string; allHref?: string }) {
+export function Directory({ rows, total, allHref }: { rows: DirectoryRow[]; total: number; allHref?: string }) {
   return (
     <div className="card flush">
       <div className="card-head">
@@ -16,7 +16,7 @@ export function Directory({ rows, total, today, allHref }: { rows: DirectoryRow[
           <thead><tr><th>Person</th><th>Role</th><th>Department</th><th>Entity</th><th>Manager</th><th>Status</th><th>Today</th><th className="num"><span className="sr">Actions</span></th></tr></thead>
           <tbody>
             {rows.map((p) => {
-              const [tone, label] = statusChip(p, today);
+              const [tone, label] = statusChip(p, p.asOf);
               const now = todayLabel(p);
               return (
                 <tr key={p.id} className="pinnable">

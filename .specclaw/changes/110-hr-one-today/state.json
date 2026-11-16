@@ -1,0 +1,10 @@
+{
+  "change": "110-hr-one-today",
+  "phase": "verify",
+  "branch": "",
+  "phases": {
+    "proposal": {"status":"approved","at":"2026-11-15T16:46:25Z"},
+    "tasks": {"status":"done","at":"2026-11-15T16:49:29Z"},
+    "verify": {"status":"done","at":"2026-11-15T17:57:27Z"}
+  }
+}

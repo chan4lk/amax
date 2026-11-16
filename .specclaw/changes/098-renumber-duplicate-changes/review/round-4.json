@@ -1,0 +1,121 @@
+{
+ "counts": {
+  "blocker": 0,
+  "major": 1,
+  "minor": 2
+ },
+ "escalated": [],
+ "files": [
+  "apps/mock/public/mock/index.html",
+  "packages/testing/tests/change-numbers.test.ts",
+  "packages/testing/tests/review-gate-moves.test.ts",
+  "scripts/check-review-gate.mjs",
+  "scripts/review-gate/moves.mjs",
+  "scripts/review-gate/rules.mjs"
+ ],
+ "final": true,
+ "findings": [
+  {
+   "file": "apps/mock/public/mock/index.html",
+   "fp": "8531e9196dad",
+   "in_delta": false,
+   "line": 1008,
+   "message": "The renumber changed the section ids but left the old numbers in the labels. The mock's banner comments still read `075 Team time status band` (line 1008), `074 Dev demo data` (line 1025) and `062 Marketing site` (line 3202). The marketing tests are still titled `062 AC\u2026` (apps/web/tests/marketing-areas.test.ts, marketing-confirm.test.ts, marketing-demo.test.ts, site-origin.test.ts, baseurl.test.ts, e2e/landing.spec.ts, e2e/marketing-seo.spec.ts). 062 is now only `062-specclaw-sync-plugin`, so these labels point AC traceability at the wrong change. Fix: rename the comments to 100/099/101 and the marketing test titles to `101 AC\u2026`.",
+   "original_severity": "minor",
+   "pass": "review",
+   "pre_existing": true,
+   "rule": "B1",
+   "scenario": "Grep for `062 AC-3` to trace the marketing claims test \u2192 it lands beside the archived 062-specclaw-sync-plugin, not 101-marketing-site",
+   "severity": "minor"
+  },
+  {
+   "file": "scripts/check-review-gate.mjs",
+   "fp": "14a002723c0b",
+   "in_delta": true,
+   "line": 61,
+   "message": "Two pieces of logic are now written twice. (1) `dirsAt` repeats the `ls-tree .specclaw/changes/ .specclaw/changes/archive/` listing that `changeFolders` in scripts/check-change-numbers.mjs:18 already does, without its `NUMBERED` filter or its Set dedupe. (2) The number regex now exists in four places that disagree: `NUMBERED` in moves.mjs:1 and check-change-numbers.mjs:10 (`\\d{3,}`), `CHANGE_DIR` in rules.mjs:4 (exactly `\\d{3}-`), and the inline `/^\\d{3,}-/` plus its own `byNumber` reduce in change-numbers.test.ts:40-41. Fix: export `changeFolders`, `NUMBERED` and `byNumber` from one module and import them in moves.mjs, check-review-gate.mjs and the test.",
+   "original_severity": "minor",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B4",
+   "scenario": "Folder `1000-x` \u2192 moves.mjs and the 098 test treat it as numbered, but touchedChangeDirs never sees it, so the gate never judges it",
+   "severity": "minor"
+  },
+  {
+   "file": ".specclaw/changes/073-time-workflow-enhancements/change.md",
+   "fp": "50ca6b72355f",
+   "in_delta": false,
+   "line": 327,
+   "message": "099 and 100 still declare `**Review:** covered-by 073-time-workflow-enhancements`, but 073's `## Verify` names only `074-dev-demo-data` and `075-team-time-status-band`. The pure-move skip passes this PR. Any later fork PR that edits 099 or 100 will fail coverProblem with \"073's ## Verify doesn't name 099-dev-demo-data\". The decision was deliberate, so this is a records note only. Record the old\u2192new mapping next to 073's line, or note in 098's Verify that later edits to 099/100 need their own loop.",
+   "original_severity": "minor",
+   "pass": "review",
+   "pre_existing": true,
+   "rule": "B10",
+   "scenario": "A fork PR fixes a typo in 099-dev-demo-data/change.md \u2192 the gate fails: 073's Verify doesn't name 099-dev-demo-data",
+   "severity": "minor"
+  },
+  {
+   "file": "scripts/review-gate/moves.mjs",
+   "fp": "46de176e551c",
+   "in_delta": true,
+   "line": 6,
+   "message": "The move skip only covers the PR that does the renumbering. It does not cover later PRs that touch the renumbered folders. 099-dev-demo-data and 100-team-time-status-band both still say `**Review:** covered-by 073-time-workflow-enhancements`. But 073's `## Verify` (073/change.md:327) still names the old 074-dev-demo-data and 075-team-time-status-band, and commit 25f9d7e2 deliberately left it that way. `coverProblem` (covered.mjs:13) needs the cover's Verify to name the covered change by its current name. So the next fork PR that touches 099 or 100 fails the gate, and nothing that PR can do will fix it. That includes the archive move: `movedFrom` returns null because the basename is already in `baseDirs`. Fix: in this change, add the new numbers to 073's Verify (for example '074-dev-demo-data (now 099-dev-demo-data)'). Or make `coverProblem` accept the folder's recorded old name. Then add a gate test where a later fork PR archives a renumbered covered-by folder.",
+   "original_severity": "major",
+   "pass": "design",
+   "pre_existing": false,
+   "rule": "B1",
+   "scenario": "Merge 098. Then a fork PR archives .specclaw/changes/099-dev-demo-data to archive/099-dev-demo-data (the files are unchanged). The gate judges 099 as covered-by 073, and it fails with \"073-time-workflow-enhancements's ## Verify doesn't name 099-dev-demo-data\". The PR is blocked even though 073's loop reviewed this change.",
+   "severity": "major"
+  },
+  {
+   "file": "scripts/review-gate/moves.mjs",
+   "fp": "ada8879a9a91",
+   "in_delta": true,
+   "line": 1,
+   "message": "`NUMBERED` (`^(\\d{3,})-`) is another copy of the change-folder pattern, and it disagrees with `CHANGE_DIR` in rules.mjs (`\\d{3}-`) and `OWNER` in covered.mjs (`\\d{3}-`). The new AC-1 test in change-numbers.test.ts adds yet another grouping by number (`/^\\d{3,}-/`) instead of reusing check-change-numbers.mjs. Once folder numbers reach 1000, these copies disagree about which folders are change folders. Move the folder pattern into one shared helper.",
+   "original_severity": "minor",
+   "pass": "design",
+   "pre_existing": false,
+   "rule": "B4",
+   "scenario": "A folder named 1000-x: moves.mjs treats it as a numbered change folder, but touchedChangeDirs never matches it. Its edits are then never judged as a change.",
+   "severity": "minor"
+  }
+ ],
+ "head": "e1ed67d68eb5935c786e24b4512e166ea9eab576",
+ "impact": [
+  ".github/actions/setup/action.yml",
+  "apps/mock/app/globals.css",
+  "apps/web/app/(app)/layout.tsx",
+  "apps/web/app/(app)/overview.css",
+  "apps/web/app/(app)/settings/retention/retention.css",
+  "apps/web/app/(public)/welcome/welcome.css",
+  "apps/web/app/layout.tsx",
+  "apps/web/app/signin/page.tsx",
+  "apps/web/components/marketing/ThemeToggle.tsx",
+  "apps/web/components/shell/theme.ts",
+  "apps/web/lib/profile.ts",
+  "apps/web/lib/registry.ts",
+  "apps/web/tests/e2e/delivery-visual.spec.ts",
+  "apps/web/tests/e2e/marketing.spec.ts",
+  "apps/web/tests/e2e/shell.spec.ts",
+  "modules/delivery/ui/delivery.css",
+  "modules/learning/tests/e2e/diff.ts",
+  "modules/presales/tests/e2e/diff.ts",
+  "packages/auth/src/viewer.ts",
+  "packages/ui/src/styles/index.css"
+ ],
+ "model": "opus",
+ "passes": [
+  "review",
+  "design"
+ ],
+ "prompt_chars": 67509,
+ "round": 4,
+ "since": null,
+ "status": "open",
+ "system_chars": 43059,
+ "tier": "review",
+ "tools": "Read,Grep,Glob",
+ "ts_end": 1794328838,
+ "ts_start": 1794328666
+}

@@ -7,7 +7,8 @@ import { weekAnomalies } from "./anomalies";
 import { capacityOf } from "./capacity";
 import type { WeekRow } from "./weeks";
 import { chainFor, entitiesOf, seesWeek } from "./chain";
-import { entrySums, hoursOf, latestWeek, projectNames, read, round1, type DayHours } from "./read";
+import { entrySums, hoursOf, projectNames, read, round1, type DayHours } from "./read";
+import { currentWeek } from "./rules";
 
 export type TeamRow = {
   weekId: string; userId: string; personName: string; note: string | null; status: WeekStatus; rejectComment: string | null;
@@ -23,7 +24,8 @@ export type TeamWeek = { week: IsoWeek; key: string; days: string[]; rows: TeamR
 
 export const teamWeek = (v: Viewer, wanted?: IsoWeek) =>
   read(v, async (tx): Promise<TeamWeek> => {
-    const w = wanted ?? (await latestWeek(tx));
+    // 104 AC-15: no week asked for is the viewer's current week, as My timesheet opens, not the latest week with a timesheet.
+    const w = wanted ?? (await currentWeek(tx, v.userId));
     const weeks = await tx.execute(sql`select * from time.week where iso_year = ${w.year} and iso_week = ${w.week} order by created_at, person_name`);
     const sums = await entrySums(tx, w);
     const days = shownDays(w, sums.map((s) => s.day));

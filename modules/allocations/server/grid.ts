@@ -6,8 +6,10 @@ import { contextFor } from "@amax/core/server";
 import { listAllocations } from "../contracts";
 import { fteIn, isForecast, windowMonths } from "./months";
 import { readAlloc } from "./read";
+import { standingSlots } from "./standing";
 
-export type GridLine = { projectId: string | null; label: string; manages: boolean; percents: (number | null)[] };
+/** `standing` (107): on this project until further notice. */
+export type GridLine = { projectId: string | null; label: string; manages: boolean; percents: (number | null)[]; standing: boolean };
 export type GridPerson = { personId: string; employeeNo: string; name: string; initials: string; lines: GridLine[]; totals: number[]; capacity: number[] };
 /** `hidden`: people in this view the viewer's hr access doesn't reach; their rows are left out, and the screen says so. */
 export type Grid = { months: { month: string; forecast: boolean }[]; people: GridPerson[]; scope: "managed" | "projects" | "everyone"; hidden: number };
@@ -25,7 +27,7 @@ async function peopleIn(tx: Tx, v: Viewer, months: string[], everyone: boolean) 
 
 export async function gridIn(tx: Tx, v: Viewer, months: string[], today: Date, everyone = false): Promise<Grid> {
   const { scope, ids, rows } = await peopleIn(tx, v, months, everyone);
-  const [people, inHr, periods, projects] = await Promise.all([listPeople(tx, v, { ids }), listPeople(tx, contextFor.job(v.tenantId, "allocations.grid"), { ids }), listEmploymentPeriods(tx, v, ids), listProjectRefs(tx)]);
+  const [people, inHr, periods, projects, standing] = await Promise.all([listPeople(tx, v, { ids }), listPeople(tx, contextFor.job(v.tenantId, "allocations.grid"), { ids }), listEmploymentPeriods(tx, v, ids), listProjectRefs(tx), standingSlots(tx)]);
   return {
     scope, hidden: inHr.length - people.length, months: months.map((month) => ({ month, forecast: isForecast(month, today) })),
     people: people.map((p): GridPerson => {
@@ -36,6 +38,7 @@ export async function gridIn(tx: Tx, v: Viewer, months: string[], today: Date, e
         return {
           projectId: project?.id ?? null, label: project?.name ?? key.replace(/^work:/, ""), manages: !!project && !!p.userId && project.managerUserId === p.userId,
           percents: months.map((m) => mine.find((a) => (a.projectId ?? `work:${a.work}`) === key && a.month === m)?.percent ?? null),
+          standing: standing.has(`${p.id}:${key}`),
         };
       }).sort((a, b) => Number(b.percents[0] ?? 0) - Number(a.percents[0] ?? 0) || a.label.localeCompare(b.label));
       return {

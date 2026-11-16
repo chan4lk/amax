@@ -5,9 +5,9 @@ import { z } from "zod";
 import { AiDisabledError, aiConfigured } from "@amax/ai";
 import { logError } from "@amax/core/server";
 import { currentViewer } from "@amax/auth";
-import { cancelAction, chatTurn, confirmAction, resolvePins, type ChatTurn, type Pin } from "@amax/chat";
+import { cancelAction, chatTurn, checkCardEdits, confirmAction, resolvePins, type ChatTurn, type FieldCheck, type Pin } from "@amax/chat";
 import { myChatUsage } from "../../lib/chat-usage";
-import { doneOutcome, outcomeOf, type CardOutcome } from "../../lib/chat-outcome";
+import { checkFailure, doneOutcome, outcomeOf, type CardOutcome } from "../../lib/chat-outcome";
 import { pageInfo, type PageInfo, type PinnedArgs } from "../../lib/page-context";
 import { installed } from "../../lib/registry";
 import { sameUser, SignedInElsewhere } from "../../lib/same-user";
@@ -49,14 +49,18 @@ export async function pageContext(path: string, as?: string, pins: PinnedArgs[] 
   }
 }
 
+/** 106: a form card's fields as the person left them: a few short strings. */
+const editsSchema = z.record(z.string().max(60), z.string().max(500)).refine((e) => Object.keys(e).length <= 20).optional();
+
 /** `answer` (076 amendment 1): what the person typed on a choice card for its `ask` field (a reason, say). */
-export async function confirmChat(conversationId: string, actionId: string, as?: string, answer?: string): Promise<CardOutcome> {
+export async function confirmChat(conversationId: string, actionId: string, as?: string, answer?: string, edits?: Record<string, string>): Promise<CardOutcome> {
   let done: { title: string; result: unknown; receipt?: string };
   try {
     const typed = z.string().max(2000).optional().parse(answer);
+    const fields = editsSchema.parse(edits);
     const viewer = await currentViewer();
     sameUser(viewer, as);
-    const { action, result } = await confirmAction(getDb()!, toolRegistry(), viewer, conversationId, actionId, typed === undefined ? {} : { answer: typed });
+    const { action, result } = await confirmAction(getDb()!, toolRegistry(), viewer, conversationId, actionId, { ...(typed === undefined ? {} : { answer: typed }), ...(fields ? { edits: fields } : {}) });
     done = { title: action.title, result, receipt: action.look?.done };
   } catch (e) {
     return outcomeOf(e);
@@ -64,6 +68,18 @@ export async function confirmChat(conversationId: string, actionId: string, as?:
   // The write has committed: nothing after this may turn the card into an error (057).
   try { revalidatePath("/", "layout"); } catch (e) { logError("chat.revalidate", e); }
   return doneOutcome(done.title, done.result, done.receipt);
+}
+
+/** 106: one form card's fields checked while they are edited; nothing is written. */
+export async function checkCardField(conversationId: string, actionId: string, edits: Record<string, string>, as?: string): Promise<FieldCheck> {
+  try {
+    const fields = editsSchema.parse(edits) ?? {};
+    const viewer = await currentViewer();
+    sameUser(viewer, as);
+    return await checkCardEdits(getDb()!, toolRegistry(), viewer, z.string().uuid().parse(conversationId), z.string().uuid().parse(actionId), fields);
+  } catch (e) {
+    return checkFailure(e);
+  }
 }
 
 const pinList = z.array(z.object({ label: z.string().max(200), tool: z.string().max(80), args: z.record(z.string(), z.unknown()), facet: z.string().max(200).optional(), unavailable: z.literal(true).optional() })).max(8);

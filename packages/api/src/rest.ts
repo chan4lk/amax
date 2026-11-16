@@ -22,6 +22,8 @@ function failure(e: unknown): Response {
   if (e instanceof ValidationError) return json(400, { error: "invalid_input", message: e.message });
   const code = (e as { code?: unknown } | null)?.code;
   if (code === "not_found" || code === "invalid_input") return json(code === "not_found" ? 404 : 400, { error: code, message: (e as Error).message });
+  // 087 review round 1: the part of amax that answers is switched off; worth retrying later, never a conflict.
+  if (code === "unavailable") return json(503, { error: "unavailable", message: (e as Error).message }, { "retry-after": "60" });
   // 060 AC-6: a domain refusal (PrivacyError and the like declare retryable = false) is the caller's to
   // act on, with its message, not a server failure.
   return json(409, { error: "refused", message: e.message });

@@ -39,9 +39,9 @@ that change's final round. Use it only when that loop actually reviewed this cha
 checks that the covering change's `## Verify` names this change, that its final pass ran on this PR's branch
 (not in the base) after this change's commits, and that this change has no review rounds of its own. Every
 PR commit after that final pass must touch only `.specclaw/`, be a merge, or name (`specclaw(<NNN-slug>)` or
-`[specclaw] <NNN-slug>` subject) either the covering change or another change in the PR whose own final pass
-came after it. So a covered change is trusted exactly as far as its cover. The named change can't be
-`covered-by` in turn.
+`[specclaw] <NNN-slug>` subject) either the covering change or another change in the PR whose final pass
+came after it; for a change that is itself `covered-by`, that's its cover's final pass. So a covered change is trusted
+exactly as far as its cover. The change a `covered-by` line names can't be `covered-by` in turn.
 
 ## Core rules
 

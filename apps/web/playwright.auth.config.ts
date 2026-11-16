@@ -16,7 +16,7 @@ export default defineConfig({
     { name: "visual", testMatch: /(delivery|api)-visual\.spec\.ts/ },
     { name: "amx", testMatch: /amx\.setup\.ts/, dependencies: ["visual"] },
     { name: "screens", testMatch: /(auth|landing|delivery|sections|ai|mcp|pins|secrets|workflows|notifications|suggestions|overview)\.spec\.ts/, dependencies: ["amx"] },
-    { name: "writes", testMatch: /(chat|chat-first|releases|admin|ai-usage|api)\.spec\.ts/, dependencies: ["screens"] },
+    { name: "writes", testMatch: /(chat|chat-first|releases|admin|ai-usage|api|set-up-project(-fields)?|project-team|git-accounts)\.spec\.ts/, dependencies: ["screens"] },
     { name: "audit", testMatch: /audit\.spec\.ts/, dependencies: ["writes"] },
     // 032: the privacy spec erases the demo erasure request's person, so it runs last.
     { name: "privacy", testMatch: /retention(-visual)?\.spec\.ts/, dependencies: ["audit"] },
@@ -46,6 +46,10 @@ export default defineConfig({
       // The whole suite signs in as a handful of demo users; 035's own tests set low limits explicitly.
       AMAX_RATE_PAGE_USER: "100000",
       AMAX_KMS_KEY_FILE: join(tmpdir(), `amax-e2e-kms-${process.env.E2E_DB ?? "amax_e2e"}.key`),
+      // 108: GitHub's return comes back to this server, from the fake GitHub git-accounts.spec starts.
+      AMAX_BASE_URL: `http://localhost:${port}`,
+      AMAX_GITHUB_URL: `http://127.0.0.1:${process.env.E2E_GITHUB_PORT ?? 3599}`,
+      AMAX_GITHUB_API_URL: `http://127.0.0.1:${process.env.E2E_GITHUB_PORT ?? 3599}`,
       // 034: what the Backups screen shows of the host's PITR, as in its mock; snapshots and exports on a temp dir.
       AMAX_PITR: "cnpg",
       AMAX_PITR_RPO_MINUTES: "5",

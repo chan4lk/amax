@@ -12,7 +12,8 @@ export type Allocation = { id: string; personId: string; projectId: string | nul
 
 export const EVENTS = { allocationSet: "allocations.allocation.set", monthCopied: "allocations.month.copied" } as const;
 /** Emitted for every allocate call: the months written, and percent 0 when the rows were removed. */
-export type AllocationSet = { personId: string; projectId: string | null; work: string | null; months: string[]; percent: number; by: string };
+/** `standing` (107): set or ended until further notice; `months` are the ones written ahead (none when it ended). */
+export type AllocationSet = { personId: string; projectId: string | null; work: string | null; months: string[]; percent: number; by: string; standing?: boolean };
 /** The audited Copy to next month bulk action. */
 export type MonthCopied = { team: string; from: string; to: string; rows: number; by: string };
 

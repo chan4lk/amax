@@ -1,0 +1,10 @@
+{
+  "change": "091-ci-sync-demo-fixes",
+  "phase": "verify",
+  "branch": "",
+  "phases": {
+    "proposal": {"status":"approved","at":"2026-11-10T03:19:37Z"},
+    "tasks": {"status":"done","at":"2026-11-10T03:21:22Z"},
+    "verify": {"status":"done","at":"2026-11-10T05:00:12Z"}
+  }
+}

@@ -7,7 +7,7 @@ import { entityOf, inEntity, type Entity } from "./chain";
 import { projectNames } from "./read";
 import { actorId, keyOf, type WeekRow } from "./weeks";
 
-export type EntryRow = { id: string; week_id: string; user_id: string; project_id: string; day: string; hours: number; billable: boolean; note: string | null; revision: number };
+export type EntryRow = { id: string; week_id: string; user_id: string; project_id: string; proposal_id: string | null; day: string; hours: number; billable: boolean; note: string | null; revision: number };
 
 /** 070 AC-14: the owner, a PM who approves the project (Admins included), or nobody; 071 AC-4: in the owner's entity. */
 export const mayFix = (v: Viewer, ownerUserId: string, projectId: string, entity: Entity) => ownerUserId === v.userId ? can(v, "time:log", { ownerUserId })
@@ -47,7 +47,7 @@ export async function lockedEntry(tx: Tx, ctx: ServiceContext, entryId: string):
 
 /** One live entry, locked for update; null when it doesn't exist or is deleted. */
 export async function liveEntry(tx: Tx, entryId: string): Promise<EntryRow | null> {
-  const [e] = await tx.execute(sql`select id, week_id, user_id, project_id, to_char(day, 'YYYY-MM-DD') as day, hours, billable, note, revision
+  const [e] = await tx.execute(sql`select id, week_id, user_id, project_id, proposal_id, to_char(day, 'YYYY-MM-DD') as day, hours, billable, note, revision
     from time.entry where id = ${entryId} and deleted_at is null for update`);
   return e ? { ...(e as unknown as EntryRow), hours: Number(e.hours), revision: Number(e.revision) } : null;
 }

@@ -13,6 +13,7 @@ const addNote = defineService({
   run: async (_tx, input) => {
     if (input.text === "refuse") throw Object.assign(new Error("notes about this are refused (fictional rule)"), { retryable: false });
     if (input.text === "crash") throw new Error("internal detail that must not leak");
+    if (input.text === "unavailable") throw Object.assign(new Error("the module that answers this is switched off (fictional)"), { retryable: true, code: "unavailable" });
     return { result: { saved: input.text }, resourceId: "note-1", after: input };
   },
 });

@@ -4,16 +4,31 @@ import { PROJECT_SECTIONS, projectHref } from "@amax/delivery/contracts";
 import { Card, EmptyState, PinButton } from "@amax/ui";
 import { monthLabel } from "../server/months";
 import { teamFor, type ProjectTeam } from "../server/team";
+import { AskButton } from "./AskButton";
 
-function Header({ projectKey, name }: { projectKey: string; name: string }) {
+function Header({ team, canAdd }: { team: ProjectTeam; canAdd: boolean }) {
+  const { key, name } = team.project;
+  const pin = { label: `${name} team`, tool: "get_project_team", args: { projectKey: key } };
   return (
     <>
-      <nav className="crumb" aria-label="Breadcrumb"><a href="/delivery">Projects</a><span>/</span><a href={projectHref(projectKey)}>{name}</a><span>/</span>Team</nav>
-      <h1>{name}</h1>
+      <nav className="crumb" aria-label="Breadcrumb"><a href="/delivery">Projects</a><span>/</span><a href={projectHref(key)}>{name}</a><span>/</span>Team</nav>
+      <div className="row head"><h1>{name}</h1>
+        {canAdd && <div className="actions"><AskButton className="btn sm primary" label={`Ask amax · Add someone to ${key}`} prompt={`Add someone to ${key}`} pin={pin} /></div>}</div>
       <nav className="tabs" aria-label="Sections">
-        {PROJECT_SECTIONS.map((s) => <a key={s.path} className="btn sm" href={projectHref(projectKey, s.path)} aria-current={s.path === "team" ? "page" : undefined}>{s.label}</a>)}
+        {PROJECT_SECTIONS.map((s) => <a key={s.path} className="btn sm" href={projectHref(key, s.path)} aria-current={s.path === "team" ? "page" : undefined}>{s.label}</a>)}
       </nav>
     </>
+  );
+}
+
+function ManagerLine({ team }: { team: ProjectTeam }) {
+  const { project, manager } = team;
+  return (
+    <div className="card pinnable team-pm">
+      <div className="card-head"><h2>PM: {manager?.name ?? "nobody yet"}</h2>
+        {manager?.inactive && <span className="chip warn">Account deactivated · needs a new PM</span>}
+        <PinButton inline pin={{ label: `${project.name} PM`, tool: "get_project", args: { projectId: project.id } }} /></div>
+    </div>
   );
 }
 
@@ -30,7 +45,7 @@ function TeamTable({ team }: { team: ProjectTeam }) {
             <tbody>
               {people.map((p) => (
                 <tr key={p.personId} className="pinnable">
-                  <td data-label="Person">{p.name}</td>
+                  <td data-label="Person">{p.name}{p.standing && <> <span className="chip info">until further notice</span></>}</td>
                   <td data-label="Role">{p.role}</td>
                   {p.percents.map((n, i) => <td key={months[i]} data-label={monthLabel(months[i])} className="num">{n === null ? <span className="muted">–</span> : `${n}%`}{i === months.length - 1 && <PinButton pin={{ label: `${p.name} on ${project.name}`, tool: "get_project_team", args: { projectKey: project.key, person: p.employeeNo } }} />}</td>)}
                 </tr>
@@ -50,5 +65,6 @@ export async function ProjectTeamPage({ viewer: raw, params }: ScreenProps) {
   if (!can(viewer, "allocations:read")) return <><h1>Team</h1><Card><EmptyState icon="people" title="Allocations aren't open to your role" hint="Ask a PM or HR for who is on this project." /></Card></>;
   const team = await teamFor(viewer, params.key);
   if (!team) return <><h1>Project not found</h1><p className="lede">No project with the key {params.key}.</p></>;
-  return <><Header projectKey={team.project.key} name={team.project.name} /><TeamTable team={team} /></>;
+  const canAdd = can(viewer, "allocations:allocate", { projectId: team.project.id });
+  return <><Header team={team} canAdd={canAdd} /><ManagerLine team={team} /><TeamTable team={team} /></>;
 }

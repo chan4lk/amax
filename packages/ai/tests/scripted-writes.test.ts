@@ -41,3 +41,47 @@ describe("057 the scripted model matches only the person's own words, not pinned
     expect(r.toolCalls.map((c) => c.name)).toEqual([tool]);
   });
 });
+
+// 081 amendment 2: the e2e chat model takes a proposal's pin suggestions and an agent suggestion's decision as chat
+// writes, by the ids in the prompt, so the browser tests confirm both flows through to the write.
+describe("081 scripted proposal suggestions and suggestion decisions", () => {
+  it.each([
+    ["move a hand-made -H key", "Move CON-H004 to verified", [["move_proposal", { key: "CON-H004", to: "verified" }]]],
+    ["add a task", "Add a task to CON-017: Draft the template", [["add_proposal_task", { key: "CON-017", title: "Draft the template" }]]],
+    ["make me the owner", `Make me (user id ${A}) the owner of CON-016`, [["update_proposal", { key: "CON-016", ownerUserId: A }]]],
+    ["accept", `Accept the suggestion "Move CON-H004 to Verified" (suggestion id ${B})`, [["accept_agent_suggestion", { id: B }]]],
+    ["dismiss", `Dismiss the suggestion "Make Maya Fernando the owner of CON-016" (suggestion id ${C})`, [["dismiss_agent_suggestion", { id: C }]]],
+    ["undo", `Undo the suggestion "Move CON-H004 to Verified" (suggestion id ${B})`, [["undo_agent_suggestion", { id: B }]]],
+  ])("%s", (_n, ask, want) => expect(calls(ask)).toEqual(want));
+
+  it.each([
+    ["an empty task title", "Add a task to CON-017: "],
+    ["a suggestion with no id", `Accept the suggestion "Move CON-H004 to Verified"`],
+    ["owner without an id", "Make me the owner of CON-016"],
+  ])("does nothing for %s", (_n, ask) => expect(scriptedWrite(ask) ?? []).toEqual([]));
+});
+
+// 081 amendment 3: every Delivery pin's offer, as the e2e chat model takes it.
+describe("081 scripted Delivery pin offers", () => {
+  it.each([
+    ["new proposal in a project", "Add a proposal to Contoso Portal (CON): Dunning emails", [["create_proposal", { projectKey: "CON", title: "Dunning emails" }]]],
+    ["081 amendment 6 new proposal with an owner", `Add a proposal to Contoso Portal (CON): Dunning emails, owned by Nimal Silva (user id ${A})`, [["create_proposal", { projectKey: "CON", title: "Dunning emails", ownerUserId: A }]]],
+    ["084 a question with quick replies", "Ask which project for Export invoices", [["offer_answers", { question: "Which project is it for?", answers: ["CON · Contoso Portal", "FLT · Fleet Tracker"] }]]],
+    ["081 amendment 6 someone else as owner", `Make Kasun Dias (user id ${A}) the owner of CON-018`, [["update_proposal", { key: "CON-018", ownerUserId: A }]]],
+    ["next release", "Create release v2.6.0 of CON", [["create_release", { projectKey: "CON", version: "v2.6.0" }]]],
+    ["mark a task done", "Mark T2 of CON-014 done", [["mark_task_done", { key: "CON-014", task: "T2" }]]],
+    ["reopen a task (amendment 5)", "Reopen T1 of CON-018", [["reopen_task", { key: "CON-018", task: "T1" }]]],
+    ["withdraw, with the reason typed on (amendment 4)", "Withdraw CON-018. Reason: not needed any more", [["withdraw_proposal", { key: "CON-018", reason: "not needed any more" }]]],
+    ["link a repo with its branch", "Link FLT's repo to https://github.com/example/fleet-tracker on main", [["link_project_repo", { projectKey: "FLT", repoUrl: "https://github.com/example/fleet-tracker", defaultBranch: "main" }]]],
+    ["relink without a branch", "Link CON's repo to https://github.com/example/contoso-portal", [["link_project_repo", { projectKey: "CON", repoUrl: "https://github.com/example/contoso-portal" }]]],
+    ["unlink", "Unlink CON's repo", [["unlink_project_repo", { projectKey: "CON" }]]],
+    ["new project", "Create a project: Atlas Portal (ATL) for Example Co, t&m", [["create_project", { name: "Atlas Portal", key: "ATL", client: "Example Co", billing: "t&m" }]]],
+  ])("%s", (_n, ask, want) => expect(calls(ask)).toEqual(want));
+
+  it.each([
+    ["a release with no version", "Create release of CON"],
+    ["a task without a number", "Mark T of CON-014 done"],
+    ["a link with no url", "Link FLT's repo to "],
+    ["a project with no billing", "Create a project: Atlas (ATL) for Example Co"],
+  ])("does nothing for %s", (_n, ask) => expect(scriptedWrite(ask) ?? []).toEqual([]));
+});

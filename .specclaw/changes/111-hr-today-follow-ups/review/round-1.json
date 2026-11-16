@@ -1,0 +1,85 @@
+{
+ "counts": {
+  "blocker": 0,
+  "major": 0,
+  "minor": 2
+ },
+ "escalated": [],
+ "files": [
+  "apps/web/tests/add-card-confirm-110.test.ts",
+  "modules/hr/README.md",
+  "modules/hr/server/services.ts",
+  "modules/hr/server/zones.ts",
+  "modules/hr/tests/hr-today-110.test.ts"
+ ],
+ "final": true,
+ "findings": [
+  {
+   "class": "other",
+   "file": "modules/hr/server/zones.ts",
+   "fp": "33fdfb3b0b32",
+   "in_delta": true,
+   "line": 15,
+   "message": "entityToday reads the entity's zone twice. The first query (entityZoneSet) checks that a zone is set. The second query (entityDay) works out the date, and if it finds no zone it falls back to 'UTC'. If the zone is removed between the two queries, a write gets UTC's date without any warning, and the no-zone refusal is skipped. Fix: use one query that returns both the zone and the day, then throw noZone when the zone is null. Write paths would then never reach entityDay's UTC fallback.",
+   "original_severity": "minor",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B12",
+   "scenario": "Inside a READ COMMITTED transaction, entityZoneSet returns 'Asia/Colombo'. Another session then deletes workflows.entity_zone for an entity whose country has no default zone. entityDay now returns UTC's 2026-11-15 at 20:00Z, so record_leaver decides status by UTC instead of refusing.",
+   "severity": "minor",
+   "unclassified": false
+  },
+  {
+   "class": "other",
+   "file": "modules/hr/tests/hr-today-110.test.ts",
+   "fp": "a7103a58173a",
+   "in_delta": true,
+   "line": 78,
+   "message": "The new '111 AC1 one date engine' test also passes against the code from before this change. The old Intl.DateTimeFormat path gave '2026-11-16' for both LK and AU at EVENING, so the test shows that the dates agree, not that the second date engine is gone. To actually test the change, use a case where the two engines would differ: compare entityToday with entityDay while only the JS clock is faked and Intl is given a zone that disagrees, or assert that zones.ts no longer formats with Intl. Otherwise drop the claim from the test name.",
+   "original_severity": "minor",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B2",
+   "scenario": "Revert zones.ts to the Intl version \u2192 the test stays green.",
+   "severity": "minor",
+   "unclassified": false
+  }
+ ],
+ "head": "bb60472984b70f8304827b0f3d67965868f10d95",
+ "impact": [
+  "apps/web/app/(app)/settings/workflows/page.tsx",
+  "apps/web/components/chat/form-values.ts",
+  "apps/web/components/workflows/SchedulesCard.tsx",
+  "apps/web/lib/admin/status.ts",
+  "apps/web/lib/admin/workflows.ts",
+  "apps/web/tests/admin/fixture.ts",
+  "apps/web/tests/admin/tools.test.ts",
+  "apps/web/tests/e2e/admin.spec.ts",
+  "apps/web/tests/e2e/notifications.spec.ts",
+  "modules/delivery/contracts.ts",
+  "modules/delivery/server/commit-time.ts",
+  "modules/hr/fixtures/index.ts",
+  "modules/hr/server/change.ts",
+  "modules/it-access/server/read.ts",
+  "modules/onboarding/server/queries.ts",
+  "modules/payroll/server/changes.ts",
+  "modules/payroll/server/read.ts",
+  "modules/payroll/server/view.ts",
+  "modules/recruitment/server/read.ts",
+  "modules/recruitment/server/rows.ts"
+ ],
+ "model": "opus",
+ "passes": [
+  "review",
+  "design"
+ ],
+ "prompt_chars": 61090,
+ "round": 1,
+ "since": null,
+ "status": "clean",
+ "system_chars": 43763,
+ "tier": "review",
+ "tools": "Read,Grep,Glob",
+ "ts_end": 1794797005,
+ "ts_start": 1794796930
+}

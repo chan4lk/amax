@@ -11,17 +11,17 @@ const PROJECTS = [
   { key: "HRI", color: "pink", sprint: "Kanban", start: null, end: null, done: 14, total: 17, health: "on-track", risk: null, margin: 41.0, next: "v0.9.3, Nov 6" },
 ];
 
-type P = { key: string; title: string; phase: string; done?: number; total?: number; hours?: number; est?: number; owner?: string; agent?: string; release?: string; releasedAt?: string };
+type P = { key: string; title: string; phase: string; done?: number; total?: number; est?: number; owner?: string; agent?: string; release?: string; releasedAt?: string };
 
 const NAMED: P[] = [
-  { key: "CON-014", title: "Invoice export to PDF", phase: "building", done: 3, total: 5, hours: 7.5, owner: "Nimal Silva", agent: "Claude for Nimal", release: "CON v2.5.0" },
-  { key: "CON-012", title: "SSO token refresh", phase: "verified", done: 4, total: 4, hours: 9, owner: "Ayesha Rahman", agent: "specclaw", release: "CON v2.4.0" },
-  { key: "CON-010", title: "Email digest", phase: "verified", done: 6, total: 6, hours: 14, owner: "Kasun Dias", agent: "specclaw", release: "CON v2.4.0" },
-  { key: "CON-009", title: "Reports v2", phase: "released", done: 8, total: 8, hours: 22.5, owner: "Nimal Silva", release: "CON v2.3.0", releasedAt: "2026-09-30T10:00:00Z" },
-  { key: "FLT-015", title: "Bulk upload", phase: "proposed", hours: 0.5, owner: "Kasun Dias" },
+  { key: "CON-014", title: "Invoice export to PDF", phase: "building", done: 3, total: 5, owner: "Nimal Silva", agent: "Claude for Nimal", release: "CON v2.5.0" },
+  { key: "CON-012", title: "SSO token refresh", phase: "verified", done: 4, total: 4, owner: "Ayesha Rahman", agent: "specclaw", release: "CON v2.4.0" },
+  { key: "CON-010", title: "Email digest", phase: "verified", done: 6, total: 6, owner: "Kasun Dias", agent: "specclaw", release: "CON v2.4.0" },
+  { key: "CON-009", title: "Reports v2", phase: "released", done: 8, total: 8, owner: "Nimal Silva", release: "CON v2.3.0", releasedAt: "2026-09-30T10:00:00Z" },
+  { key: "FLT-015", title: "Bulk upload", phase: "proposed", owner: "Kasun Dias" },
   { key: "CON-016", title: "Audit trail on approvals", phase: "proposed", est: 6, owner: "Ayesha Rahman" },
   { key: "CON-017", title: "CSV import for clients", phase: "proposed", est: 4, owner: "Nimal Silva", agent: "Claude for Nimal" },
-  { key: "CON-011", title: "Global search", phase: "building", done: 1, total: 5, hours: 2, owner: "Kasun Dias", release: "CON v2.5.0" },
+  { key: "CON-011", title: "Global search", phase: "building", done: 1, total: 5, owner: "Kasun Dias", release: "CON v2.5.0" },
   { key: "CON-013", title: "Dark mode", phase: "planned", done: 0, total: 3, owner: "Kasun Dias", release: "CON v2.5.0" },
 ];
 
@@ -38,17 +38,17 @@ function fillers(): P[] {
     for (const [phase, count] of phases) for (let i = 0; i < count; i++) {
       const total = phase === "planned" ? 3 : phase === "building" ? 5 : phase === "verified" ? 4 : 0;
       const done = phase === "building" ? 1 + (i % 3) : phase === "verified" ? total : 0;
-      out.push({ key: `${project}-${String(n++).padStart(3, "0")}`, title: TITLES[t++ % TITLES.length], phase, done, total, hours: done * 2.5, ...extra,
+      out.push({ key: `${project}-${String(n++).padStart(3, "0")}`, title: TITLES[t++ % TITLES.length], phase, done, total, ...extra,
         ...(phase === "verified" && project === "FLT" ? { release: "FLT v1.8.0" } : {}) });
     }
   };
   add("FLT", 20, [["proposed", 1], ["planned", 2], ["building", 8], ["verified", 5]], { owner: "Nimal Silva" });
   add("HRI", 1, [["proposed", 2], ["planned", 1], ["building", 8], ["verified", 2]], { owner: "Ayesha Rahman" });
-  for (let i = 0; i < 4; i++) out.push({ key: `HRI-1${String(i).padStart(2, "0")}`, title: TITLES[(t++) % TITLES.length], phase: "released", done: 3, total: 3, hours: 6, owner: "Ayesha Rahman", release: "HRI v0.9.2", releasedAt: "2026-10-01T09:00:00Z" });
+  for (let i = 0; i < 4; i++) out.push({ key: `HRI-1${String(i).padStart(2, "0")}`, title: TITLES[(t++) % TITLES.length], phase: "released", done: 3, total: 3, owner: "Ayesha Rahman", release: "HRI v0.9.2", releasedAt: "2026-10-01T09:00:00Z" });
   // Every released proposal has a release with a deployed Prod behind it (review round 2).
   const next: Record<string, number> = { FLT: 5, HRI: 90 };
   for (const r of SHIPPED) for (let i = 0; i < r.n; i++)
-    out.push({ key: `${r.project}-${String(next[r.project]++).padStart(3, "0")}`, title: r.title ?? TITLES[(t++) % TITLES.length], phase: "released", done: r.title ? 1 : 3, total: r.title ? 1 : 3, hours: r.title ? 1.5 : 6,
+    out.push({ key: `${r.project}-${String(next[r.project]++).padStart(3, "0")}`, title: r.title ?? TITLES[(t++) % TITLES.length], phase: "released", done: r.title ? 1 : 3, total: r.title ? 1 : 3,
       owner: r.project === "FLT" ? "Nimal Silva" : "Ayesha Rahman", release: `${r.project} ${r.version}`, releasedAt: `${r.day}T14:00:00Z` });
   return out;
 }
@@ -118,11 +118,16 @@ export const deliveryFixtures: FixtureSeed = async ({ tx, tenantId, shared }) =>
   }
   for (const [i, p] of [...NAMED, ...fillers()].entries()) {
     const project = p.key.split("-")[0];
-    await tx.execute(sql`insert into delivery.proposal (tenant_id, project_id, key, title, phase, tasks_done, tasks_total, hours, estimate_hours, owner_name, agent, release_id, released_at, updated_at)
-      values (${tenantId}, ${ids[project]}, ${p.key}, ${p.title}, ${p.phase}, ${p.done ?? 0}, ${p.total ?? 0}, ${p.hours ?? 0}, ${p.est ?? null}, ${p.owner ?? null}, ${p.agent ?? null},
-        ${p.release ? releaseIds[p.release] : null}, ${p.releasedAt ?? null}, ${new Date(Date.UTC(2026, 9, 16, 12, 0, 0) - i * 60_000).toISOString()})
+    // 081 (demo prep): made on fixtures' Sep 14, before any fixture release (Sep 30) and the Oct 16 update, not on the
+    // day the fixtures load, so a proposal's page never reads "made Nov 5, updated Oct 16".
+    await tx.execute(sql`insert into delivery.proposal (tenant_id, project_id, key, title, phase, tasks_done, tasks_total, estimate_hours, owner_name, agent, release_id, released_at, updated_at, created_at)
+      values (${tenantId}, ${ids[project]}, ${p.key}, ${p.title}, ${p.phase}, ${p.done ?? 0}, ${p.total ?? 0}, ${p.est ?? null}, ${p.owner ?? null}, ${p.agent ?? null},
+        ${p.release ? releaseIds[p.release] : null}, ${p.releasedAt ?? null}, ${new Date(Date.UTC(2026, 9, 16, 12, 0, 0) - i * 60_000).toISOString()},
+        ${new Date(Date.UTC(2026, 8, 14, 12, 0, 0) - i * 60_000).toISOString()})
       on conflict (tenant_id, key) do nothing`);
   }
+  // 081: the fixture owners are people (fixtures.md), so their proposals name them by id too.
+  await tx.execute(sql`update delivery.proposal p set owner_user_id = u.id from auth.user u where u.name = p.owner_name and p.owner_user_id is null`);
   // 008 AC-4: the mock's Agent activity feed (fictional people, as in fixtures.md).
   const nimal = await userId(tx, "nimal"), ayesha = await userId(tx, "ayesha");
   const FEED = [
@@ -145,6 +150,16 @@ export const deliveryFixtures: FixtureSeed = async ({ tx, tenantId, shared }) =>
       values (${tenantId}, ${proposal.id}, ${`T${Math.floor(i / Math.max(1, building.length)) + 1}`}, ${`Fixture task ${i + 1}`}, true, ${new Date(Date.UTC(2026, 9, 1 + (i % 15), 10)).toISOString()}, ${by})
       on conflict (proposal_id, ref) do nothing`);
   }
+  // 081 amendment 4: a hand-made proposal's rows are topped up with open tasks to the total its counters claim (after its
+  // done ones), so its pin can offer "Mark T<n> done" and its page lists them. Counters stay as fixtures.md has them.
+  await tx.execute(sql`insert into delivery.task (tenant_id, proposal_id, ref, title)
+    select p.tenant_id, p.id, 'T' || (coalesce(m.top, 0) + g), 'Open fixture task ' || g
+    from delivery.proposal p
+    left join lateral (select max(substring(t.ref from 2)::int) as top, count(*)::int as n from delivery.task t where t.proposal_id = p.id) m on true
+    cross join lateral generate_series(1, p.tasks_total - coalesce(m.n, 0)) g
+    where p.tenant_id = ${tenantId} and p.source is null and p.phase in ('proposed', 'planned', 'building') and p.tasks_total > p.tasks_done
+      and not exists (select 1 from delivery.task t where t.proposal_id = p.id and not t.done)
+    on conflict (proposal_id, ref) do nothing`);
   // 062: Contoso syncs from its (fictional) repo; the mock's Repo sync card, one push applied and two refused.
   await tx.execute(sql`update delivery.project set repo_url = 'github.com/example/contoso-portal', repo_default_ref = 'main' where id = ${ids.CON} and repo_url is null`);
   const kasun = kasunId;

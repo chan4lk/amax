@@ -1,0 +1,102 @@
+{
+ "counts": {
+  "blocker": 0,
+  "major": 2,
+  "minor": 0
+ },
+ "escalated": [],
+ "files": [
+  "apps/web/app/actions/chat.ts",
+  "apps/web/components/chat/CardForm.tsx",
+  "apps/web/components/chat/FormChips.tsx",
+  "apps/web/components/chat/FormConfirm.tsx",
+  "apps/web/components/chat/form-values.ts",
+  "apps/web/lib/chat-outcome.ts",
+  "apps/web/tests/card-form-106.test.ts",
+  "apps/web/tests/e2e/set-up-project.spec.ts",
+  "modules/delivery/server/repo-sync.ts",
+  "modules/delivery/server/set-up-project-card.ts",
+  "modules/delivery/server/set-up-project.ts",
+  "modules/delivery/server/write-cards.ts",
+  "modules/delivery/tests/set-up-project-r1-106.test.ts",
+  "packages/chat/src/engine.ts",
+  "packages/chat/tests/card-reword.test.ts"
+ ],
+ "final": false,
+ "findings": [
+  {
+   "class": "other",
+   "file": "apps/web/components/chat/FormConfirm.tsx",
+   "fp": "a27f151dc0a1",
+   "in_delta": true,
+   "line": 47,
+   "message": "Last round's fix only covered the retry note that arrives through `note`. A failed live check is the same kind of passing failure, and it still locks the button. `checkFailure` (apps/web/lib/chat-outcome.ts) says 'anything else is a passing failure to try again' and returns `{ message: \"Couldn't check that just now.\" }` with no field. The client's own `.catch` at FormConfirm.tsx:34 returns the same message. Both go into `check`, and `blocked = \u2026 || Boolean(check?.message)` then disables the confirm button. The only way to clear it is to edit a field, because only an edit runs the check again. Fix: return transient check failures with a flag (or as a notice) that shows the message without blocking the button. Keep blocking for real refusals (schema or propose check, a card no longer open). Also make the client `.catch` use the same rule instead of a second copy of the message.",
+   "original_severity": "major",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B1",
+   "scenario": "The person changes Key to NWP. The live check's DB call times out, so checkCardField returns {message: \"Couldn't check that just now.\"}. The button stays disabled even though nothing is wrong with the input, and the card can't be confirmed without retyping a field.",
+   "severity": "major",
+   "unclassified": false
+  },
+  {
+   "class": "other",
+   "file": "apps/web/tests/card-form-106.test.ts",
+   "fp": "f28ebb66f1cb",
+   "in_delta": true,
+   "line": 26,
+   "message": "This variant table for the FormChips fix only calls `edited()`, which already trimmed before this round. It passes with or without the fix, so it proves nothing about the defect: the input drew `value.trim()` and used the \" \" sentinel. Only the e2e covers that, for one case ('Northwind Traders'). Fix: add a component-level test that renders FormChips or FormConfirm, types several multi-word values key by key (including a trailing space mid-typing and a value equal to a listed option), and checks the input's shown value. It must fail when the old `value.trim()` and sentinel are put back.",
+   "original_severity": "major",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B2",
+   "scenario": "Put back `value={value.trim()}` and `onChange(e.target.value || \" \")` in FormChips.tsx. All three rows of the 'typed client of several words' table still pass.",
+   "severity": "major",
+   "unclassified": false
+  }
+ ],
+ "fix_proof": {
+  "base": "c3a3a4d7e838e05e266560936fd32a5509fa8aca",
+  "mode": "warn",
+  "reason": "no review.test_command configured, so no test could prove the fix",
+  "status": "not_proven",
+  "tests": []
+ },
+ "head": "b1fb9c7f271b18164cc36d96cbbd4f53ad370ae7",
+ "impact": [
+  ".github/workflows/ci.yml",
+  "apps/mock/public/mock/index.html",
+  "apps/web/app/(app)/settings/audit/format.ts",
+  "apps/web/app/(app)/settings/backups/format.ts",
+  "apps/web/app/actions/chat-history.ts",
+  "apps/web/app/oauth/authorize/page.tsx",
+  "apps/web/app/oauth/token/route.ts",
+  "apps/web/app/signin/page.tsx",
+  "apps/web/components/chat/Chat.tsx",
+  "apps/web/components/chat/ChoiceCard.tsx",
+  "apps/web/components/chat/ConfirmCard.tsx",
+  "apps/web/components/chat/History.tsx",
+  "apps/web/components/workflows/RunsCard.tsx",
+  "apps/web/lib/backup-workflows.ts",
+  "apps/web/lib/oauth-http.ts",
+  "apps/web/lib/tick.ts",
+  "apps/web/scripts/backups.ts",
+  "modules/presales/server/update.ts",
+  "modules/recruitment/ui/Card.tsx",
+  "modules/recruitment/ui/parts.tsx"
+ ],
+ "model": "opus",
+ "passes": [
+  "review",
+  "design"
+ ],
+ "prompt_chars": 85316,
+ "round": 2,
+ "since": "c3a3a4d7",
+ "status": "open",
+ "system_chars": 43779,
+ "tier": "review",
+ "tools": "Read,Grep,Glob",
+ "ts_end": 1794730988,
+ "ts_start": 1794730867
+}

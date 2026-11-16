@@ -17,7 +17,7 @@ export function ProjectTabs({ projectKey, current }: { projectKey: string; curre
   );
 }
 
-export async function ProjectSectionPage({ viewer: raw, params, section, title, children }: ScreenProps & { section: ProjectSection; title: string; children: (p: { id: string; key: string; name: string }) => ReactNode }) {
+export async function ProjectSectionPage({ viewer: raw, params, section, title, children }: ScreenProps & { section: ProjectSection; title: string; children: (p: { id: string; key: string; name: string; repoUrl?: string | null; agentFirst?: boolean }) => ReactNode }) {
   const viewer = needViewer(raw);
   if (!viewer) return <><h1>Project</h1><SignInFirst /></>;
   const data = await getProject(viewer, params.key);

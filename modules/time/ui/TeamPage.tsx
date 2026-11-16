@@ -1,4 +1,6 @@
 import type { ScreenProps } from "@amax/core";
+import { redirect } from "next/navigation";
+import { reviewsTime } from "../server/landing";
 import { Card, EmptyState } from "@amax/ui";
 import { openToReview } from "../server/requests-read";
 import { teamGrid } from "../server/grid";
@@ -13,6 +15,9 @@ import { WeekChart } from "./WeekChart";
 export async function TeamPage({ viewer: raw, params, searchParams = {} }: ScreenProps) {
   const viewer = viewerOrNull(raw);
   if (!viewer) return <div className="time"><h1>Team time</h1><SignInFirst /></div>;
+  // 085: Time opens your own week first when you review nobody's time. A week link, or the Team tab (?view=team), still
+  // opens Team time.
+  if (!params.week && searchParams.view !== "team" && !reviewsTime(viewer)) redirect("/time/my");
   // 073 amendment 1: the grid's filters and sort live in the URL (read-only controls).
   const query = { project: searchParams.project, team: searchParams.team, status: searchParams.status, sort: searchParams.sort, dir: searchParams.dir };
   const [t, requests] = await Promise.all([teamGrid(viewer, weekParam(params.week), query), openToReview(viewer)]);

@@ -1,5 +1,5 @@
 import { withTenant } from "@amax/db";
-import { findGitIdentity, personByEmail, type GitProvider } from "@amax/auth/git-identity";
+import { findGitIdentity, isVerifiedEmailOf, personByEmail, type GitProvider } from "@amax/auth/git-identity";
 import type { InboundEvent } from "@amax/core";
 import { contextFor, getRuntime, logError } from "@amax/core/server";
 import { suggestLink } from "../suggestions";
@@ -38,7 +38,16 @@ export const closedTasks = (message: string) => [...message.matchAll(/\b([A-Z][A
 /** Who a commit is attributed to: only a verified commit or a verified email for the identity counts. */
 export async function authorOf(tenantId: string, provider: GitProvider, c: Commit) {
   return withTenant(getRuntime().db, tenantId, async (tx) => {
+    // 112 AC-1: a reused login never credits its earlier holder. The commit's verified email decides, except against a
+    // connected login held by someone else, where nobody is credited.
+    const byEmail = c.email ? await findGitIdentity(tx, provider, { login: null, email: c.email }) : null;
+    const holder = byEmail?.emailVerified ? byEmail : null;
     const id = await findGitIdentity(tx, provider, { login: c.login, email: c.email });
+    // Final pass 4 (the product owner's rule): when the login's connected holder and the email's holder are different
+    // people, nobody is credited and the conflict is left for an Admin; an older login (no account id) yields to the email.
+    if (holder && holder.userId !== id?.userId) return { userId: id?.providerUserId ? null : holder.userId, candidate: null };
+    // A connected identity (it carries the provider's account id) credits a commit only for one of its verified emails.
+    if (id?.providerUserId) return { userId: (await isVerifiedEmailOf(tx, id.userId, provider, c.email)) ? id.userId : null, candidate: null };
     const emailOk = Boolean(id?.emailVerified && id.email && c.email && id.email.toLowerCase() === c.email.toLowerCase());
     if (id && (c.verified || emailOk)) return { userId: id.userId, candidate: null };
     return { userId: null, candidate: id ? null : await personByEmail(tx, c.email) };
@@ -59,10 +68,11 @@ export async function ingestPush(e: InboundEvent) {
     const tasks = closedTasks(c.message);
     for (const t of tasks) await markTaskDone(ctx, { ...t, commit: c.id }).catch((err: unknown) => logError(`delivery.ingest ${t.key} ${t.task}`, err));
     // 008 AC-3: "Time: 1.5h" drafts hours for the first proposal the commit names, if the person's entity allows it.
+    // 104 review round 2: the commit's instant, so the draft takes the author's own day and the consent period's start.
     const hours = hoursOf(c.message);
-    const day = c.at.slice(0, 10);
-    if (hours && tasks[0] && /^\d{4}-\d{2}-\d{2}$/.test(day)) {
-      await draftCommitTime(ctx, { userId: who.userId, key: tasks[0].key, day, hours, commit: c.id }).catch((err: unknown) => logError(`delivery.ingest time ${c.id}`, err));
+    const at = Number.isFinite(Date.parse(c.at)) ? new Date(c.at).toISOString() : null;
+    if (hours && tasks[0] && at) {
+      await draftCommitTime(ctx, { userId: who.userId, key: tasks[0].key, at, hours, commit: c.id }).catch((err: unknown) => logError(`delivery.ingest time ${c.id}`, err));
     }
   }
 }

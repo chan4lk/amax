@@ -1,0 +1,10 @@
+{
+  "change": "094-sync-repo-dates-and-owner-parser",
+  "phase": "verify",
+  "branch": "",
+  "phases": {
+    "proposal": {"status":"approved","at":"2026-11-10T09:13:10Z"},
+    "tasks": {"status":"done","at":"2026-11-10T09:13:11Z"},
+    "verify": {"status":"done","at":"2026-11-10T12:27:15Z"}
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "change": "115-log-keeps-spaces",
+  "phase": "verify",
+  "branch": "",
+  "phases": {
+    "proposal": {"status":"approved","at":"2026-11-16T09:41:16Z"},
+    "tasks": {"status":"done","at":"2026-11-16T09:41:17Z"},
+    "verify": {"status":"done","at":"2026-11-16T09:52:16Z"}
+  }
+}

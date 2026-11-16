@@ -30,4 +30,10 @@ describe("070 amendment 4: the page chat is on", () => {
     expect(await pageInfo(mods, registry, viewer, "/nowhere/at/all")).toBeNull();
     expect(await pageInfo(mods, registry, viewer, "/")).toBeNull();
   });
+
+  it("081 a pin's offer and the page's suggestion with the same label show once, the pin's, so chat never repeats a step", async () => {
+    const withPin = [{ ...mods[0], pinSuggestions: [{ tool: "read", suggest: async () => [{ label: "Submit", prompt: "Submit from the pin", tool: "submit" }] }] }] as unknown as ModuleManifest[];
+    expect((await pageInfo(withPin, registry, viewer, "/time/my/2026-W41", [{ tool: "read", args: {} }]))?.suggestions)
+      .toEqual([{ label: "Submit", prompt: "Submit from the pin" }, { label: "Read", prompt: "Read" }, { label: "Fourth", prompt: "Fourth" }]);
+  });
 });

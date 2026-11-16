@@ -14,6 +14,7 @@ export function scriptedProvider() {
       const r = last.content[0];
       if (r.isError) return { text: `I couldn't do that: ${r.content}` };
       if (r.content.includes("awaiting_confirmation")) return { text: "Here's what I'll add. Check it and confirm." };
+      if (r.content.includes("awaiting_answer")) return { text: "Which project is it for?" };
       const body = r.content.replace(/^<data[^>]*>\n|\n<\/data>$/g, "");
       const n = (() => { try { const v = JSON.parse(body); return Array.isArray(v) ? v.length : 1; } catch { return 0; } })();
       return { text: `I found ${n} result${n === 1 ? "" : "s"}.` };

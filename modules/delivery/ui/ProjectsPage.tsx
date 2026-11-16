@@ -45,7 +45,7 @@ export async function ProjectsPage({ viewer: raw, searchParams = {} }: ScreenPro
       <div dangerouslySetInnerHTML={{ __html: ART_SPRITE }} />
       <div className="row head">
         <div><h1>Projects</h1><p className="lede">{lede}</p></div>
-        <div className="actions"><ClientFilter clients={clients} current={searchParams.client} /><IntentButton intent="delivery.new-project" label="New project" /></div>
+        <div className="actions"><ClientFilter clients={clients} current={searchParams.client} /><IntentButton intent="delivery.new-project" label="New project" quiet /></div>
       </div>
       <div className="tickets four">
         <Ticket tone="info" label={`${status === "active" ? "Active" : "Closed"} projects`} value={String(projects.length)} note={`For ${count(shownClients, "client")}`} art={art("rocket")} />

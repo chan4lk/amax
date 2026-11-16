@@ -1,0 +1,63 @@
+{
+ "counts": {
+  "blocker": 0,
+  "major": 0,
+  "minor": 1
+ },
+ "escalated": [],
+ "files": [
+  "apps/mock/public/mock/index.html",
+  "apps/web/tests/e2e/delivery.spec.ts"
+ ],
+ "final": false,
+ "findings": [
+  {
+   "file": "apps/web/tests/e2e/delivery.spec.ts",
+   "fp": "c900390c5696",
+   "in_delta": true,
+   "line": 94,
+   "message": "The test checks only the first row for each project. The comment says all of AMX's released rows come from the repo's archive and say so (092). But a wrong 'Prod' chip on any AMX row after the first would still pass. The CON check is also only good while CON-009 is the fixtures' only CON release. Fix: read every 'Shipped to' cell in the filtered table, for example with allTextContents(). Then assert that each AMX row says 'Released \u00b7 from repo' and each CON row says 'Prod'.",
+   "original_severity": "minor",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B1",
+   "scenario": "A regression makes releasedLabel return 'In Prod' for a synced AMX proposal that is not first in the sorted list. /delivery/proposals/released?project=AMX still shows 'Released \u00b7 from repo' in row 1, so the test stays green.",
+   "severity": "minor"
+  }
+ ],
+ "head": "35467abf8ae2089076f48c33169e6d9fbeea531d",
+ "impact": [
+  "apps/web/lib/registry.ts",
+  "apps/web/tests/e2e/delivery-visual.spec.ts",
+  "apps/web/tests/marketing-queue.test.ts",
+  "modules/delivery/db/migrations/0009_weekly_stats.sql",
+  "modules/delivery/db/migrations/0010_clock_pin_shipped_source.sql",
+  "modules/delivery/mcp.ts",
+  "modules/delivery/server/lifecycle.ts",
+  "modules/delivery/server/overview.ts",
+  "modules/delivery/server/queries.ts",
+  "modules/delivery/server/services.ts",
+  "modules/delivery/tests/attention-a11.test.ts",
+  "modules/delivery/tests/board-092.test.ts",
+  "modules/delivery/tests/delivery.test.ts",
+  "modules/delivery/tests/proposal-metrics.test.ts",
+  "modules/delivery/tests/releases.test.ts",
+  "modules/delivery/tests/repo-dates-094.test.ts",
+  "modules/delivery/tests/sync-import.test.ts",
+  "modules/delivery/ui/ProposalsPage.tsx"
+ ],
+ "model": "opus",
+ "passes": [
+  "review",
+  "design"
+ ],
+ "prompt_chars": 53463,
+ "round": 1,
+ "since": null,
+ "status": "clean",
+ "system_chars": 43098,
+ "tier": "review",
+ "tools": "Read,Grep,Glob",
+ "ts_end": 1794322740,
+ "ts_start": 1794322670
+}

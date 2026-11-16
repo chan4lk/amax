@@ -1,0 +1,66 @@
+{
+ "counts": {
+  "blocker": 0,
+  "major": 1,
+  "minor": 0
+ },
+ "escalated": [],
+ "files": [
+  "README.md",
+  "packages/auth/bin/admin.ts",
+  "packages/auth/tests/admin-cli-102.test.ts"
+ ],
+ "final": false,
+ "findings": [
+  {
+   "file": "packages/auth/bin/admin.ts",
+   "fp": "b7cb646a91b1",
+   "in_delta": true,
+   "line": 40,
+   "message": "This fixes the instance, not the class. `AUDIT_HASH_KEY` covers the whole deployment, but `deploymentKey` only checks the target tenant's rows, and it skips the check when that tenant has no keyed v2 row yet. Your own documented setup always reaches that case: `tenant-add` and `user-add` write no audit rows, so the first `principal-add` on a new tenant meets an empty chain and writes under whatever key the operator typed. AC-1 in the test runs this exact path with no check. Fix: compare against the latest keyed v2 row anywhere in the deployment. The CLI runs as the schema owner, so it can read `core.audit_event` across tenants, or across `core.trace_event`. Refuse when the deployment has keyed rows and none of them reproduces. Only skip when the whole deployment has no keyed rows. Add a variant to the AC-3 table: a fresh tenant in a deployment that already has rows, plus the wrong key. The command must exit non-zero and write nothing.",
+   "original_severity": "major",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B1",
+   "scenario": "An existing deployment uses key K. The operator runs `tenant-add Acme`, then `user-add --tenant <acme> ...`, then `principal-add --tenant <acme> ...` with `AUDIT_HASH_KEY=\"w\".repeat(32)`. Acme has no v2 rows, so the check is skipped and the command exits 0. It appends `auth.principal.create` with `actor_key` set to HMAC(w-key). Later `verifyAuditChain(acme, K)` reports value mismatch at seq 1. That row can't be verified or erased, because the table is append-only.",
+   "severity": "major"
+  }
+ ],
+ "head": "2fc07e42bdda3b0f661af8f142a104cb54d845f9",
+ "impact": [
+  "apps/mock/public/mock/index.html",
+  "apps/web/lib/rate-wiring.ts",
+  "apps/web/lib/server.ts",
+  "apps/web/scripts/backups.ts",
+  "apps/web/scripts/dev-seed.ts",
+  "apps/web/tests/admin/fixture.ts",
+  "apps/web/tests/e2e/api-seed.ts",
+  "apps/web/tests/e2e/global-auth.ts",
+  "apps/web/tests/e2e/proposal-agent.ts",
+  "apps/web/tests/e2e/secrets-seed.ts",
+  "modules/allocations/tests/setup.ts",
+  "modules/career/tests/db.ts",
+  "modules/compliance/server/evidence.ts",
+  "modules/compliance/tests/db.ts",
+  "modules/delivery/sync/bin.ts",
+  "modules/delivery/tests/chat-043.test.ts",
+  "modules/delivery/tests/chat-first.test.ts",
+  "modules/delivery/tests/chat.test.ts",
+  "modules/delivery/tests/create-project-contract.test.ts",
+  "modules/delivery/tests/create-project-surfaces.test.ts"
+ ],
+ "model": "opus",
+ "passes": [
+  "review",
+  "design"
+ ],
+ "prompt_chars": 58759,
+ "round": 4,
+ "since": "9faae143",
+ "status": "open",
+ "system_chars": 43061,
+ "tier": "review",
+ "tools": "Read,Grep,Glob",
+ "ts_end": 1794491238,
+ "ts_start": 1794491166
+}

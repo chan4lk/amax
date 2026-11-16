@@ -19,6 +19,7 @@ export const privacyFixtures = (sources: PrivacySource[]): FixtureSeed => async 
   const [logged] = await tx.execute(sql`select 1 from privacy.purge_log limit 1`);
   if (logged) return;
   for (const [rule, label, n] of [["workflows.run.input", "Agent run logs", 9410], ["workflows.step.result", "Agent run steps", 1284], ["chat.conversation.messages", "amax chat conversations", 63]] as const) {
-    await tx.execute(sql`insert into privacy.purge_log (tenant_id, at, rule, label, class, action, n) values (${tenantId}, '2026-10-12T01:00:00Z', ${rule}, ${label}, 'personal', 'delete', ${n})`);
+    // 103: dated from today (4 days before, as Oct 12 was to the fixtures' day), so the 30-day purge card always shows it.
+    await tx.execute(sql`insert into privacy.purge_log (tenant_id, at, rule, label, class, action, n) values (${tenantId}, now() - interval '4 days', ${rule}, ${label}, 'personal', 'delete', ${n})`);
   }
 };

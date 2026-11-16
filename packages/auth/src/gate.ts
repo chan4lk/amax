@@ -3,6 +3,8 @@
 const PUBLIC = [/^\/signin(\/|$)/, /^\/api\/auth(\/|$)/, /^\/healthz$/, /^\/api\/jobs\/tick$/, /^\/api\/scim(\/|$)/,
   // 004: MCP and its OAuth endpoints authenticate with bearer tokens / PKCE, not the web session.
   /^\/api\/mcp$/, /^\/\.well-known\//, /^\/oauth\/(token|register|revoke)$/,
+  // 112 AC-5: GitHub's return checks the session itself; signed out, it sends the person to sign in by way of Git accounts.
+  /^\/api\/git\/github\/callback$/,
   // 035: the REST API authenticates every call with an API key or a client-credentials token.
   /^\/api\/v1(\/|$)/,
   // 062: the public marketing page, shown to signed-out visitors at /.

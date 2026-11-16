@@ -1,0 +1,12 @@
+{
+  "change": "103-compliance-breach-clock",
+  "phase": "verify",
+  "branch": "",
+  "size": "bounded",
+  "phases": {
+    "proposal": {"status":"approved","at":"2026-11-12T14:12:39Z"},
+    "tasks": {"status":"done","at":"2026-11-12T14:12:53Z"},
+    "build": {"status":"done","at":"2026-11-12T14:13:35Z"},
+    "verify": {"status":"done","at":"2026-11-12T14:23:31Z","verdict":"PASS"}
+  }
+}

@@ -1,0 +1,86 @@
+{
+ "counts": {
+  "blocker": 0,
+  "major": 1,
+  "minor": 0
+ },
+ "escalated": [
+  "c020d88f8710"
+ ],
+ "files": [
+  "apps/web/app/api/git/github/callback/route.ts",
+  "apps/web/tests/e2e/git-accounts.spec.ts",
+  "docs/architecture.md",
+  "modules/delivery/server/ingest.ts",
+  "modules/delivery/tests/ingest-112.test.ts",
+  "modules/git-accounts/db/migrations/0002_connect_result.sql",
+  "modules/git-accounts/module.ts",
+  "modules/git-accounts/server/callback.ts",
+  "modules/git-accounts/server/connect.ts",
+  "modules/git-accounts/server/read.ts",
+  "modules/git-accounts/tests/result-112.test.ts",
+  "modules/git-accounts/tests/setup.ts",
+  "modules/git-accounts/ui/GitAccountsPage.tsx",
+  "modules/git-accounts/ui/ResultNote.tsx",
+  "modules/git-accounts/ui/ResumeReturn.tsx",
+  "packages/auth/src/gate.ts",
+  "packages/auth/src/git-identity.ts",
+  "packages/core/src/server.ts",
+  "packages/core/src/slots.ts"
+ ],
+ "final": true,
+ "findings": [
+  {
+   "class": "other",
+   "file": "modules/delivery/server/ingest.ts",
+   "fp": "c020d88f8710",
+   "in_delta": true,
+   "line": 44,
+   "message": "When the commit's email and its login belong to different people, the new email-first branch always credits whoever holds the email. It does not check `c.verified` and never considers the conflict. `setGitHubIdentities` skips an email that someone else holds and tells the person to \"ask an Admin\". Until an Admin settles that, a person whose GitHub has verified the email can have their own GitHub-signed commits credited to the old holder. The old holder may be a row linked before 108 through a delivery link suggestion. Fix: when the email holder is not the identity matched by login, and that identity is a connected one, credit nobody (`userId: null`), so the conflict comes up for an Admin. Do not hand the commit to either person. Add that case to the table in ingest-112.test.ts.",
+   "original_severity": "major",
+   "pass": "design",
+   "pre_existing": false,
+   "rule": "B1",
+   "scenario": "Before 108, Kasun's row holds a@lumen.test, verified through an accepted link suggestion. Later Nimal connects GitHub as @nimal-gh. GitHub has verified a@lumen.test on Nimal's account, but the connect skips it as \"linked to another person\". Nimal pushes a GitHub-signed commit (login nimal-gh, email a@lumen.test, verified=true). authorOf returns Kasun, so Kasun is drafted time for Nimal's work. Before this diff the commit was credited to Nimal.",
+   "severity": "major",
+   "unclassified": false
+  }
+ ],
+ "head": "e7028680e268d13e4afc5453fe4915796951febd",
+ "impact": [
+  "apps/web/app/(app)/layout.tsx",
+  "apps/web/app/(app)/operations/[screen]/page.tsx",
+  "apps/web/app/(app)/settings/ai/page.tsx",
+  "apps/web/app/(app)/settings/ai/usage/page.tsx",
+  "apps/web/app/(app)/settings/api/page.tsx",
+  "apps/web/app/(app)/settings/audit/page.tsx",
+  "apps/web/app/(app)/settings/backups/page.tsx",
+  "apps/web/app/(app)/settings/integrations/page.tsx",
+  "apps/web/app/(app)/settings/keys/page.tsx",
+  "apps/web/app/(app)/settings/page.tsx",
+  "apps/web/app/(app)/settings/retention/page.tsx",
+  "apps/web/app/(app)/settings/workflows/page.tsx",
+  "apps/web/app/(app)/suggestions/page.tsx",
+  "apps/web/app/(public)/welcome/page.tsx",
+  "apps/web/app/.well-known/oauth-authorization-server/route.ts",
+  "apps/web/app/.well-known/oauth-protected-resource/[[...path]]/route.ts",
+  "apps/web/app/api/backups/export/[id]/route.ts",
+  "apps/web/app/api/jobs/tick/route.ts",
+  "apps/web/app/api/mcp/route.ts",
+  "apps/web/app/api/scim/v2/Users/[id]/route.ts"
+ ],
+ "model": "opus",
+ "passes": [
+  "review",
+  "design"
+ ],
+ "prompt_chars": 92448,
+ "round": 4,
+ "since": null,
+ "status": "escalate",
+ "system_chars": 44172,
+ "tier": "review",
+ "tools": "Read,Grep,Glob",
+ "ts_end": 1794814687,
+ "ts_start": 1794814496
+}

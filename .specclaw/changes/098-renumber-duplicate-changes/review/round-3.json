@@ -1,0 +1,91 @@
+{
+ "counts": {
+  "blocker": 0,
+  "major": 1,
+  "minor": 1
+ },
+ "escalated": [],
+ "files": [
+  "packages/testing/tests/review-gate-moves.test.ts",
+  "scripts/review-gate/moves.mjs"
+ ],
+ "final": false,
+ "findings": [
+  {
+   "file": "packages/testing/tests/review-gate-moves.test.ts",
+   "fp": "cb93f87db0e1",
+   "in_delta": true,
+   "line": 19,
+   "message": "The fix adds two guards in movedFrom (`olds.length !== 1` and `news.length !== 1`), but only the named case is tested: one removed folder copied to two new numbers, which hits the `news` guard. Nothing tests the `olds` side of the one-to-one pairing, so deleting `olds.length !== 1 ||` leaves every row of the table green. Add variant rows to the table: (a) two removed folders with the same slug and one new folder that matches one of them must be judged (fail); (b) a removed folder that comes back as an archived copy plus a renumbered active copy, e.g. gone('074-demo') + folder('074-demo', {archived:true}) + folder('099-demo'), must be judged.",
+   "original_severity": "major",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B2",
+   "scenario": "Base has 074-demo and 080-demo, both with slug 'demo'. A fork PR deletes both and adds 099-demo, identical to 074-demo apart from the name. Without the `olds` guard, `[old] = olds` picks 074-demo, 099-demo is skipped as a move, and the gate exits 0. Every test still passes, so the guard is unproven.",
+   "severity": "major"
+  },
+  {
+   "file": "scripts/review-gate/moves.mjs",
+   "fp": "6a27a11f6b1f",
+   "in_delta": true,
+   "line": 5,
+   "message": "Line 5 still works out the slug inline with `NUMBERED.exec(name)?.[2]`, and line 7 now defines `slugOf` to do the same thing. Define `slugOf` once and use it on line 5 too.",
+   "original_severity": "minor",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B4",
+   "scenario": "",
+   "severity": "minor"
+  },
+  {
+   "file": ".specclaw/changes/098-renumber-duplicate-changes/change.md",
+   "fp": "c7e4c23996ff",
+   "in_delta": false,
+   "line": 53,
+   "message": "AC-7 still defines a move as 'the old folder is gone, the new one has the same slug, and every file matches'. It says nothing about the one-to-one pairing the code now needs: exactly one removed folder and exactly one new folder with that slug. A reader of AC-7 would expect each of two identical copies to be skipped. Amend AC-7 to state the pairing.",
+   "original_severity": "minor",
+   "pass": "review",
+   "pre_existing": true,
+   "rule": "docs",
+   "scenario": "",
+   "severity": "minor"
+  }
+ ],
+ "head": "41602dbf41ac90a43fa2c086c97d0e02f52cbebb",
+ "impact": [
+  ".claude/settings.json",
+  "apps/mock/public/mock/index.html",
+  "apps/web/app/(app)/operations/[screen]/page.tsx",
+  "apps/web/app/(app)/settings/backups/format.ts",
+  "apps/web/app/(app)/settings/keys/format.ts",
+  "apps/web/lib/operations.ts",
+  "apps/web/lib/registry.ts",
+  "modules/compliance/server/policies.ts",
+  "modules/delivery/module.ts",
+  "modules/delivery/pin-suggestions.ts",
+  "modules/delivery/server/push.ts",
+  "modules/experience/tests/collect.test.ts",
+  "modules/experience/tests/standard.test.ts",
+  "modules/helpdesk/tests/standard.test.ts",
+  "modules/keyflow/server/plan.ts",
+  "packages/ai/src/types.ts",
+  "packages/db/tests/template.test.ts",
+  "packages/ui/src/components/Chip.tsx",
+  "scripts/check-review-gate.mjs",
+  "scripts/review-gate/rules.mjs"
+ ],
+ "model": "opus",
+ "passes": [
+  "review",
+  "design"
+ ],
+ "prompt_chars": 51878,
+ "round": 3,
+ "since": "f14218060c",
+ "status": "open",
+ "system_chars": 43078,
+ "tier": "review",
+ "tools": "Read,Grep,Glob",
+ "ts_end": 1794328333,
+ "ts_start": 1794328195
+}

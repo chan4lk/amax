@@ -1,0 +1,10 @@
+{
+  "change": "090-e2e-amx-duplicate-numbers",
+  "phase": "verify",
+  "branch": "",
+  "phases": {
+    "proposal": {"status":"approved","at":"2026-11-10T02:30:26Z"},
+    "tasks": {"status":"done","at":"2026-11-10T02:30:27Z"},
+    "verify": {"status":"done","at":"2026-11-10T02:37:55Z"}
+  }
+}
