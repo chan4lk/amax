@@ -8,5 +8,5 @@ import "./notifications.css";
 export async function Bell({ viewer }: { viewer: unknown }) {
   const v = viewer as Viewer | null;
   if (!v) return <button className="iconbtn" type="button" aria-label="Notifications"><Icon name="bell" /></button>;
-  return <BellMenu initial={await inbox(v)} now={Date.now()} />;
+  return <BellMenu initial={await inbox(v, 20, true)} now={Date.now()} />;
 }

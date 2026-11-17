@@ -1,0 +1,8 @@
+{
+  "change": "102-preset-clean-up",
+  "phase": "verify",
+  "branch": "",
+  "phases": {
+    "verify": {"status":"done","at":"2026-11-17T09:30:12Z"}
+  }
+}

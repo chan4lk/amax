@@ -71,6 +71,10 @@ export type NotificationRule = {
   href?: string;
 };
 
+/** When `event` fires, unread notifications made by these rules whose own event carried the same
+ * values in every `match` field are marked read: what they were about is fixed. */
+export type NotificationClear = { id: string; event: string; rules: string[]; match: string[] };
+
 export type SharedFixtures = {
   tenant: { id: string; name: string };
   today: string;
@@ -263,6 +267,8 @@ export type ModuleManifest = {
   /** Contributes results to the built-in `search` tool. */
   search?: (viewer: never, query: string) => Promise<SearchHit[]>;
   chatIntents?: unknown[];
+  /** Rules for amax's replies while the person is on this module's pages: added to the shared instructions there and nowhere else. */
+  chatRules?: string;
   /**
    * What chat offers on this module's pages (070 amendment 4): shown only when the viewer may use `tool` and
    * `when` (if any) passes for the page's route params. A suggestion fills the message box; it never sends.
@@ -281,6 +287,7 @@ export type ModuleManifest = {
   suggestions?: readonly unknown[];
   /** Notification rules for the events this module emits (030). */
   notifications?: NotificationRule[];
+  notificationClears?: NotificationClear[];
   /** Where the module's root screen is reached: the rail (default) or the profile menu (030's preferences). */
   menu?: "rail" | "profile";
   /** A control the module adds to the top bar for the signed-in viewer (030's bell). */

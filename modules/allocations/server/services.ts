@@ -3,15 +3,16 @@ import { z } from "zod";
 import type { Tx } from "@amax/db";
 import { can, ScopeError, viewerOf } from "@amax/auth";
 import { defineService, isSystemContext, type ServiceContext } from "@amax/core/server";
-import { getProjectRef } from "@amax/delivery/contracts";
+import { getProjectRef, listProjectRefs } from "@amax/delivery/contracts";
 import { getPerson, listPeople } from "@amax/hr/contracts";
-import { EVENTS, monthOf, type AllocationSet, type MonthCopied } from "../contracts";
+import { EVENTS, monthOf, type AllocationSet, type MonthCopied, type MonthSettled } from "../contracts";
 import { teamMembers } from "./forecast";
+import { loadOf } from "./load";
 
 const month = z.string().regex(/^\d{4}-\d{2}(-\d{2})?$/, "a month, e.g. 2026-11").transform(monthOf);
 const by = (ctx: ServiceContext) => (ctx.onBehalfOf ? `${ctx.actor.id} for ${ctx.onBehalfOf}` : ctx.actor.id);
 const nextMonth = (m: string) => { const d = new Date(`${m}T00:00:00Z`); d.setUTCMonth(d.getUTCMonth() + 1); return d.toISOString().slice(0, 10); };
-const monthsBetween = (from: string, to: string) => { const out = [from]; while (out[out.length - 1] < to) out.push(nextMonth(out[out.length - 1])); return out; };
+export const monthsBetween = (from: string, to: string) => { const out = [from]; while (out[out.length - 1] < to) out.push(nextMonth(out[out.length - 1])); return out; };
 
 /** Allocating on a project needs the grant for that project (PMs: the projects they manage); other work needs an unscoped grant. */
 /** Fails closed: without a viewer only a context core issued for a job (contextFor.job) may allocate. */
@@ -23,7 +24,7 @@ const mayAllocate = (ctx: ServiceContext, projectId: string | null) => {
 export const MAX_MONTHS = 24;
 const span = (from: string, to: string) => (Number(to.slice(0, 4)) - Number(from.slice(0, 4))) * 12 + Number(to.slice(5, 7)) - Number(from.slice(5, 7)) + 1;
 
-async function personOf(tx: Tx, ctx: ServiceContext, who: string) {
+export async function personOf(tx: Tx, ctx: ServiceContext, who: string) {
   const exact = await getPerson(tx, ctx, who);
   if (exact) return exact;
   const named = (await listPeople(tx, ctx, { status: ["active", "joining"] })).filter((p) => p.name.toLowerCase() === who.trim().toLowerCase());
@@ -45,8 +46,15 @@ export const allocate = defineService({
 
 type AllocateInput = { person: string; projectKey?: string; work?: string; month: string; through?: string; percent: number };
 
+export async function projectNamed<T extends { projectKey?: string; work?: string }>(tx: Tx, input: T): Promise<T> {
+  const said = (input.projectKey ?? input.work)?.trim().toLowerCase();
+  const p = said ? (await listProjectRefs(tx)).find((x) => x.key.toLowerCase() === said || x.name.toLowerCase() === said) : undefined;
+  return p ? { ...input, projectKey: p.key, work: undefined } : input;
+}
+
 /** The allocate write inside the caller's transaction: the service, and an accepted agent suggestion (006). */
-export async function setAllocation(tx: Tx, input: AllocateInput, ctx: ServiceContext) {
+export async function setAllocation(tx: Tx, asked: AllocateInput, ctx: ServiceContext) {
+  const input = await projectNamed(tx, asked);
   const person = await personOf(tx, ctx, input.person);
   const project = input.projectKey ? await getProjectRef(tx, input.projectKey) : null;
   if (input.projectKey && !project) throw new Error(`no project ${input.projectKey}`);
@@ -58,8 +66,11 @@ export async function setAllocation(tx: Tx, input: AllocateInput, ctx: ServiceCo
   if (input.percent > 0) for (const m of months) {
     await tx.execute(sql`insert into allocations.allocation (tenant_id, person_id, project_id, work, month, percent, updated_by) values (${ctx.tenantId}, ${person.id}, ${project?.id ?? null}, ${project ? null : input.work}, ${m}, ${input.percent}, ${by(ctx)})`);
   }
-  const payload: AllocationSet = { personId: person.id, projectId: project?.id ?? null, work: project ? null : input.work!, months, percent: input.percent, by: by(ctx) };
-  return { result: { person: person.name, months, percent: input.percent }, resourceId: person.id, before: { rows: before }, after: { months, percent: input.percent, project: input.projectKey ?? input.work }, events: [{ name: EVENTS.allocationSet, payload }] };
+  const { settled, ...load } = await loadOf(tx, person.id, months);
+  const fixed = person.userId ? settled.map((m) => ({ name: EVENTS.monthSettled, payload: { personUserId: person.userId!, month: m } satisfies MonthSettled })) : [];
+  const payload: AllocationSet = { personId: person.id, projectId: project?.id ?? null, work: project ? null : input.work!, months, percent: input.percent, by: by(ctx),
+    personUserId: person.userId, project: project?.name ?? input.work!, ...load, over: load.total > 100 && input.percent > Math.max(0, ...before.map((r) => Number(r.percent))), byUser: (ctx.onBehalfOf ?? ctx.actor.id).replace(/^user:/, "") };
+  return { result: { person: person.name, months, percent: input.percent }, resourceId: person.id, before: { rows: before }, after: { months, percent: input.percent, project: input.projectKey ?? input.work }, events: [{ name: EVENTS.allocationSet, payload }, ...fixed] };
 }
 
 /** Copy to next month: each person/project row of `from` the viewer may allocate is copied into the month after, unless that slot is already planned. */

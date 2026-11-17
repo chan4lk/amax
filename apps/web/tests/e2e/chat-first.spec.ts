@@ -23,7 +23,13 @@ test("054 AC5 allocations: ask amax to copy December into January, confirm, and 
   expect(janColumn).toBeGreaterThan(1);
   const january = kasun.locator("td").nth(janColumn);
   await expect(january).toHaveText(/^0%/);
-  await askAndConfirm(page, page.getByRole("button", { name: "Ask amax to copy a month" }), { pin: "People by month",
-    prompt: /^Copy Delivery team allocations from [A-Z][a-z]+ \((2026-(09|1[0-2])|2027-01)\) to the next month$/, replace: "Copy Delivery team allocations from December (2026-12) to the next month" });
+  await expect(page.getByRole("button", { name: "Ask amax to copy a month" })).toHaveCount(0);
+  await page.keyboard.press("Control+k");
+  await page.getByLabel("Message amax").fill("Copy Delivery team allocations from December (2026-12) to the next month");
+  await page.getByRole("button", { name: "Send", exact: true }).click();
+  const card = page.getByRole("group", { name: /^Confirm:/ }).last();
+  await card.getByRole("button", { name: "Add it" }).click();
+  await expect(card).toContainText("Done:");
+  await page.reload();
   await expect(january).not.toHaveText(/^0%/);
 });

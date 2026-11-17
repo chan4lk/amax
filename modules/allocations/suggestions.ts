@@ -1,5 +1,4 @@
 import { sql } from "drizzle-orm";
-import { z } from "zod";
 import { withTenant } from "@amax/db";
 import { contextFor, getRuntime } from "@amax/core/server";
 import { defineSuggestionKind } from "@amax/agents";
@@ -8,22 +7,9 @@ import { cron, defineWorkflow, step } from "@amax/workflows";
 import { getProjectRef } from "@amax/delivery/contracts";
 import { getPerson } from "@amax/hr/contracts";
 import { monthLabel } from "./server/months";
-import { setAllocation } from "./server/services";
-
-const Rebalance = z.object({ personId: z.uuid(), projectKey: z.string().min(1), month: z.string().regex(/^\d{4}-\d{2}-01$/), percent: z.number().int().min(0).max(200) });
-type Rebalance = z.infer<typeof Rebalance>;
-
-const percentOf = async (tx: Parameters<typeof setAllocation>[0], p: Rebalance) => {
-  const project = await getProjectRef(tx, p.projectKey);
-  const [r] = project ? await tx.execute(sql`select percent from allocations.allocation where person_id = ${p.personId} and month = ${p.month}::date and project_id = ${project.id}`) : [];
-  return (r?.percent as number | undefined) ?? 0;
-};
-
-async function set(tx: Parameters<typeof setAllocation>[0], ctx: Parameters<typeof setAllocation>[2], p: Rebalance, percent: number) {
-  const was = await percentOf(tx, p);
-  const out = await setAllocation(tx, { person: p.personId, projectKey: p.projectKey, month: p.month, percent }, ctx);
-  return { applied: { was }, action: "allocations.allocation.set", resource: "allocations.allocation", resourceId: out.resourceId, before: out.before, after: out.after, events: out.events };
-}
+import { monthWords } from "./server/load";
+import { Rebalance, set } from "./suggestions-set";
+import { fixSuggested, told } from "./server/suggested";
 
 // 006: an allocation change an agent suggests. Undo restores the earlier percent until the month starts.
 export const rebalance = defineSuggestionKind<Rebalance, { was: number }>({
@@ -38,8 +24,8 @@ export const rebalance = defineSuggestionKind<Rebalance, { was: number }>({
 });
 
 const OVER = sql`select a.person_id, a.month::text as month, sum(a.percent)::int as total,
-    (array_agg(a.project_id order by a.percent desc) filter (where a.project_id is not null))[1] as project_id,
-    (array_agg(a.percent order by a.percent desc) filter (where a.project_id is not null))[1] as percent
+    (array_agg(a.project_id order by a.percent desc, a.project_id) filter (where a.project_id is not null))[1] as project_id,
+    (array_agg(a.percent order by a.percent desc, a.project_id) filter (where a.project_id is not null))[1] as percent
   from allocations.allocation a where a.month > date_trunc('month', now()) and a.month <= date_trunc('month', now()) + interval '3 months'
   group by a.person_id, a.month having sum(a.percent) > 100`;
 
@@ -52,14 +38,18 @@ export async function checkAllocations(tenantId: string) {
       const [person, project] = [await getPerson(tx, job, r.person_id as string), r.project_id ? await getProjectRef(tx, r.project_id as string) : null];
       if (!person || !project) continue;
       const to = Math.max(0, Number(r.percent) - (Number(r.total) - 100));
+      const plan = await tx.execute(sql`select project_id, work, percent from allocations.allocation where person_id = ${person.id} and month = ${r.month}::date order by percent desc`);
+      const parts = await Promise.all(plan.map(async (x) => `${x.project_id ? (await getProjectRef(tx, x.project_id as string))?.name ?? "a project" : x.work} ${x.percent}%`));
       const by = contextFor.job(tenantId, "allocations.agent-check", project.managerUserId ? `user:${project.managerUserId}` : undefined);
       const made = await createSuggestion(by, {
         kind: rebalance.kind, target: { type: "allocations.slot", id: `${person.id}:${project.id}:${r.month}`, label: `${person.name}, ${project.name}, ${monthLabel(r.month as string, "long")}` },
-        title: `Move ${person.name} to ${to}% on ${project.name} in ${monthLabel(r.month as string, "long")}`, detail: `${person.name} is planned at ${r.total}% that month.`,
+        title: `${person.name} is at ${r.total}% in ${monthWords(r.month as string)}`, detail: `${parts.join(", ")}, above 100% capacity.`,
         proposed: { personId: person.id, projectKey: project.key, month: r.month, percent: to }, confidence: 0.8, agentName: "Allocation check", scope: { projectId: project.id, legalEntityId: project.legalEntityId },
         evidence: [{ type: "record", label: `${monthLabel(r.month as string, "long")} plan`, ref: `/allocations` }],
       });
+      if (made.existing && await told(tx, made.id)) continue;
       if (!made.existing) n++;
+      await fixSuggested(by, { suggestionId: made.id, personUserId: person.userId, projectId: project.id, project: project.name, month: monthWords(r.month as string), total: Number(r.total), percent: to });
     }
     return n;
   });

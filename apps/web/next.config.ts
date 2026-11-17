@@ -8,6 +8,7 @@ const config: NextConfig = {
   outputFileTracingRoot: root,
   turbopack: { root },
   experimental: { externalDir: true },
+  serverExternalPackages: ["pdfkit"],
 };
 
 export default config;
