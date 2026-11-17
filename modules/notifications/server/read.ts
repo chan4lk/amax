@@ -16,10 +16,9 @@ function itemOf(r: Record<string, unknown>): InboxItem {
   };
 }
 
-/** The viewer's latest notifications, unread first, grouped by module (a group with unread items leads). */
-export const inbox = (viewer: Viewer, limit = 20): Promise<Inbox> => read(viewer, async (tx) => {
+export const inbox = (viewer: Viewer, limit = 20, unreadOnly = false): Promise<Inbox> => read(viewer, async (tx) => {
   const rows = await tx.execute(sql`select ${COLUMNS} from notifications.notification where user_id = ${viewer.userId}
-    order by read_at is not null, created_at desc limit ${limit}`);
+    ${unreadOnly ? sql`and read_at is null` : sql``} order by read_at is not null, created_at desc limit ${limit}`);
   const groups = new Map<string, Inbox["groups"][number]>();
   for (const item of rows.map(itemOf)) {
     const g = groups.get(item.module) ?? { module: item.module, title: item.moduleTitle, items: [] };

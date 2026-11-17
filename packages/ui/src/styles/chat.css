@@ -1,7 +1,6 @@
 /* amax chat (005): lifted from .specclaw/mock/index.html */
-.chat{position:fixed;z-index:30;top:24px;right:24px;bottom:24px;width:400px;display:flex;flex-direction:column;background:var(--frame);border-radius:32px;box-shadow:0 30px 80px -24px rgba(40,30,110,.35),0 0 0 1px var(--line);transform:translateX(calc(100% + 40px));transition:transform .28s cubic-bezier(.2,.8,.2,1);overflow:hidden}
-.chat.open{transform:none}
-/* the chat floats over the page; the page never moves or reflows */
+.chat{position:fixed;z-index:30;top:16px;right:16px;bottom:16px;width:420px;display:flex;flex-direction:column;background:var(--frame);border-radius:28px;box-shadow:0 30px 80px -20px rgba(40,30,110,.45),0 0 0 1px var(--line);transform:translateX(calc(100% + 40px));opacity:0;transition:transform .35s cubic-bezier(.2,.8,.2,1),opacity .25s;overflow:hidden}
+.chat.open{transform:none;opacity:1}
 .c-head{display:flex;align-items:center;gap:12px;padding:20px 20px 10px}
 .c-head b{font-size:16px;display:block}.c-head small{color:var(--ink-3);font-size:12.5px}
 .c-head .iconbtn{margin-left:auto;width:38px;height:38px}
@@ -33,10 +32,17 @@ mark.x{background:none;color:inherit;outline:2px dashed var(--f,#6A6681);outline
 .m.grouped>.who{display:none}
 .c-log .m.grouped{margin-bottom:-10px}
 .m .tools{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+.m .tools[hidden]{display:none}
 .m .tools span{font:600 11.5px var(--font);color:var(--violet);background:var(--violet-soft);border-radius:7px;padding:2px 8px}
 .rec{margin-top:10px;border-top:1px dashed var(--line-2);padding-top:10px;display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:13px}
 .rec dt{color:var(--ink-3)}.rec dd{margin:0;font-weight:600}
-.m .acts{display:flex;gap:8px;margin-top:12px}
+.m .acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.m .b{min-width:0;overflow-wrap:anywhere}
+.c-log .m li+li{margin-top:6px}
+.fix{margin-left:8px;vertical-align:middle}
+.c-log>.m{animation:msgIn .24s cubic-bezier(.2,.8,.2,1)}
+@keyframes msgIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.thinking{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--ink-3)}
 .dots{display:flex;gap:5px;padding:4px 2px}.dots i{width:6px;height:6px;border-radius:50%;background:var(--ink-3);animation:bob 1s infinite}.dots i:nth-child(2){animation-delay:.15s}.dots i:nth-child(3){animation-delay:.3s}
 @keyframes bob{0%,60%,100%{transform:none;opacity:.5}30%{transform:translateY(-4px);opacity:1}}
 .c-ctx{display:flex;flex-wrap:wrap;gap:6px;padding:0 20px}
@@ -85,7 +91,7 @@ body.picking .pinnable:hover{outline:2px dashed var(--violet);outline-offset:2px
 
 }
 
-@media (max-width:860px){.chat{top:0;right:0;bottom:0;width:100vw;border-radius:0}}
+@media (max-width:860px){.chat{top:0;right:0;bottom:0;width:100vw;border-radius:0}body.picking .chat.open{transform:translateY(calc(100% - 76px));box-shadow:0 -12px 30px -12px rgba(40,30,110,.35)}}
 @media (prefers-reduced-motion:reduce){.chat{transition:none}}
 .m .b p{margin:0}
 .m .err{color:var(--chip-bad)}
@@ -173,3 +179,12 @@ body.picking .pinnable:hover{outline:2px dashed var(--violet);outline-offset:2px
    scroll by wheel, trackpad, touch and keyboard. A wide table in a reply keeps its sideways bar: it's the only sign of more columns. */
 .chat :is(.c-log,.c-history,textarea){scrollbar-width:none;-ms-overflow-style:none}
 .chat :is(.c-log,.c-history,textarea)::-webkit-scrollbar{display:none;width:0;height:0}
+.m .over{color:var(--chip-bad);font-weight:700}
+.m .c-good{color:var(--chip-good);font-weight:700}.m .c-none{color:var(--chip-warn);font-weight:600}.m .c-fte{color:var(--chip-agent);font-weight:700}
+.m .b p.warn{color:var(--chip-bad);border-left:3px solid var(--chip-bad);padding-left:10px;font-weight:600}
+.filecard{display:flex;align-items:center;gap:12px;margin-top:10px;padding:12px;border-radius:14px;background:var(--card);border:1px solid var(--line)}
+.filecard-icon{flex:none;width:38px;height:46px;border-radius:8px;display:grid;place-items:center;font-size:11px;font-weight:700;background:var(--chip-bad-bg);color:var(--chip-bad)}
+.filecard.docx .filecard-icon{background:var(--violet-soft);color:var(--chip-agent)}
+.filecard-text{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.filecard-text small{color:var(--ink-3);font-size:12.5px}
+.filecard .btn svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.8}

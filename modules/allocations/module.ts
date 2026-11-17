@@ -1,6 +1,7 @@
 import { declarePayload, defineModule } from "@amax/core";
 import { chatIntents } from "./chat";
-import { EVENTS, type AllocationSet, type MonthCopied } from "./contracts";
+import { allocationRules } from "./chat-rules";
+import { EVENTS, type AllocationSet, type FixSuggested, type MonthCopied, type MonthSettled } from "./contracts";
 import { allocationsFixtures } from "./fixtures";
 import { mcpTools } from "./mcp";
 import { assignedProjectIds } from "./server/scopes";
@@ -37,15 +38,31 @@ export default defineModule({
   ],
   viewerScopes: async (tx, user) => ({ assignedProjects: await assignedProjectIds(tx, user) }),
   chatIntents,
+  chatRules: allocationRules,
   jobs: [],
   // 006: agent-suggested allocation changes, and the recurring check that makes them (off until switched on).
   suggestions: [rebalance],
   workflows: [agentCheck],
   schedules: [agentCheckSchedule],
+  notifications: [
+    { id: "allocations.over-capacity", event: EVENTS.allocationSet, when: { over: true }, category: "approvals", urgency: "urgent", to: [{ role: "PM" }],
+      permission: "allocations:allocate", scope: { projectId: "projectId" }, except: "byUser",
+      title: "{personUserId|name} is at {total}% in {month}", body: "{byUser|name} put them at {percent}% on {project}. Press Fix it on Allocations.", href: "/allocations" },
+    { id: "allocations.changed", event: EVENTS.allocationSet, when: { over: false }, category: "reminders", to: [{ role: "PM" }],
+      permission: "allocations:allocate", scope: { projectId: "projectId" }, except: "byUser",
+      title: "{byUser|name} set {personUserId|name} to {percent}% on {project}", body: "Their busiest month, {month}, is at {total}%.", href: "/allocations" },
+    { id: "allocations.fix-suggested", event: EVENTS.fixSuggested, category: "approvals", to: [{ role: "PM" }],
+      permission: "allocations:allocate", scope: { projectId: "projectId" },
+      title: "{personUserId|name} is at {total}% in {month}", body: "The Allocation check found a change. Press Take action on Allocations.", href: "/allocations" },
+  ],
+  notificationClears: [{ id: "allocations.settled", event: EVENTS.monthSettled, rules: ["allocations.over-capacity", "allocations.fix-suggested"], match: ["personUserId", "month"] }],
   // 035: outgoing webhooks send only declared fields (review 058).
   events: { emits: Object.values(EVENTS), payloads: {
-    [EVENTS.allocationSet]: declarePayload<AllocationSet>({ personId: "plain", projectId: "plain", work: "plain", months: "plain", percent: "plain", by: "plain" }),
+    [EVENTS.allocationSet]: declarePayload<AllocationSet>({ personId: "plain", projectId: "plain", work: "plain", months: "plain", percent: "plain", by: "plain",
+      personUserId: "plain", project: "plain", month: "plain", total: "plain", over: "plain", byUser: "plain" }),
     [EVENTS.monthCopied]: declarePayload<MonthCopied>({ team: "plain", from: "plain", to: "plain", rows: "plain", by: "plain" }),
+    [EVENTS.monthSettled]: declarePayload<MonthSettled>({ personUserId: "plain", month: "plain" }),
+    [EVENTS.fixSuggested]: declarePayload<FixSuggested>({ suggestionId: "plain", personUserId: "plain", projectId: "plain", project: "plain", month: "plain", total: "plain", percent: "plain" }),
   } },
   fixtures: [allocationsFixtures],
 });
