@@ -20,7 +20,7 @@
     "@playwright/test": "1.64.0",
     "@types/pngjs": "6",
     "@types/react": "19",
-    "next": "16.4.2",
+    "next": "16.4.5",
     "pixelmatch": "8.0.0",
     "pngjs": "7.0.0",
     "react": "19.2.0",
