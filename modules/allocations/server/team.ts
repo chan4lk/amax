@@ -20,7 +20,7 @@ export async function teamIn(tx: Tx, v: Viewer, projectKey: string, today: Date)
     people: people.map((p) => ({
       personId: p.id, employeeNo: p.employeeNo, name: p.name, role: p.title,
       percents: months.map((m) => rows.find((r) => r.personId === p.id && r.month === m)?.percent ?? null),
-    })).sort((a, b) => (b.percents[0] ?? 0) - (a.percents[0] ?? 0) || a.name.localeCompare(b.name)),
+    })).sort((a, b) => a.name.localeCompare(b.name)),
   };
 }
 

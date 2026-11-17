@@ -2,10 +2,20 @@ import type { ReactNode } from "react";
 
 // The model writes light markdown; render **bold**, `code`, line breaks, "- " and "1. " lists and pipe tables as React
 // elements (never HTML), so model text can't inject markup.
+const OVER_SRC = String.raw`\b(?:10[1-9]|1[1-9]\d|[2-9]\d\d)%|(?<!(?:no longer|not|isn't|aren't|nobody is|no one is) )\bover(?:-allocated| allocated)?\b|\b\d+(?:\.\d+)? FTE short\b`;
+const GOOD_SRC = String.raw`\b\d+(?:\.\d+)?(?:%| FTE| people)? (?:spare|free)\b|\bspare\b|\bfree capacity\b|\bwithin capacity\b`;
+const NONE_SRC = String.raw`\bnot planned\b|\bnothing (?:is )?planned\b`;
+const FTE_SRC = String.raw`\b\d+(?:\.\d+)? FTE\b`;
+const PAINT = new RegExp(`(${OVER_SRC}|${GOOD_SRC}|${NONE_SRC}|${FTE_SRC})`, "gi");
+const isKind = (src: string, text: string) => new RegExp(`^(?:${src})$`, "i").test(text);
+const kindOf = (text: string) => (isKind(OVER_SRC, text) ? "over" : isKind(GOOD_SRC, text) ? "c-good" : isKind(NONE_SRC, text) ? "c-none" : "c-fte");
+const WARN = /are you sure\?/i;
+const overs = (text: string, key: string): ReactNode[] =>
+  text.split(PAINT).map((p, i) => (i % 2 ? <span key={`${key}-o${i}`} className={kindOf(p)}>{p}</span> : p));
 function inline(text: string, key: string): ReactNode[] {
-  return text.split(/(\*\*[^*]+\*\*|`[^`]+`)/g).map((part, i) =>
-    part.startsWith("**") && part.endsWith("**") && part.length > 4 ? <b key={`${key}-${i}`}>{part.slice(2, -2)}</b>
-      : part.startsWith("`") && part.endsWith("`") && part.length > 2 ? <code key={`${key}-${i}`}>{part.slice(1, -1)}</code> : part);
+  return text.split(/(\*\*[^*]+\*\*|`[^`]+`)/g).flatMap((part, i): ReactNode[] =>
+    part.startsWith("**") && part.endsWith("**") && part.length > 4 ? [<b key={`${key}-${i}`}>{overs(part.slice(2, -2), `${key}-${i}`)}</b>]
+      : part.startsWith("`") && part.endsWith("`") && part.length > 2 ? [<code key={`${key}-${i}`}>{part.slice(1, -1)}</code>] : overs(part, `${key}-${i}`));
 }
 
 const isRow = (line: string) => /^\s*\|.*\|\s*$/.test(line);
@@ -29,7 +39,7 @@ function Table({ lines, at }: { lines: string[]; at: number }) {
 
 export function Markdown({ text }: { text: string }) {
   const blocks: ReactNode[] = [];
-  const lines = text.split("\n");
+  const lines = text.replace(/ of 100%/g, "").split("\n");
   let list: { ordered: boolean; items: ReactNode[] } | null = null;
   const flush = () => {
     if (!list) return;
@@ -57,7 +67,7 @@ export function Markdown({ text }: { text: string }) {
       continue;
     }
     flush();
-    if (line.trim()) blocks.push(<p key={i} style={{ margin: "0 0 6px" }}>{inline(line, `p${i}`)}</p>);
+    if (line.trim()) blocks.push(<p key={i} className={WARN.test(line) ? "warn" : undefined} style={{ margin: "0 0 6px" }}>{inline(line, `p${i}`)}</p>);
   }
   flush();
   return <>{blocks}</>;

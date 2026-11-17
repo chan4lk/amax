@@ -6,6 +6,7 @@ import { Chat } from "../chat/Chat";
 import { SessionWatch } from "./SessionWatch";
 import { LiveRegion, MoreSheet, Rail, TopBar, type LinkLike, type NavItem } from "@amax/ui";
 import { ProfileMenu, type MenuLink, type Profile } from "./ProfileMenu";
+import { useKeepPlace } from "./useKeepPlace";
 import { useRouteFocus } from "./useRouteFocus";
 
 type ShellProps = {
@@ -36,6 +37,7 @@ export function Shell({ items, children, profile = null, banner, onViewAs, onSig
   const link = Link as unknown as LinkLike;
   const [chatOpen, setChatOpen] = useState(false);
   const askRef = useRef<HTMLButtonElement>(null);
+  useKeepPlace(chatOpen);
   // Opening chat from Ask amax or the shortcut starts fresh (no pins, no leftover prompt); a pin or Ask button brings its record.
   const [fresh, setFresh] = useState(0);
   const openNow = useRef(chatOpen);
@@ -54,7 +56,7 @@ export function Shell({ items, children, profile = null, banner, onViewAs, onSig
   return (
     <>
       <a className="skip" href="#main">Skip to content</a>
-      <div className="app">
+      <div className={chatOpen ? "app chat-side" : "app"}>
         <Rail items={items} current={current} link={link} onMore={() => sheet.current?.showModal()} />
         <div className="content">
           <TopBar askRef={askRef} askOpen={chatOpen} onAsk={launch} bell={topBar} profile={<ProfileMenu profile={profile} onViewAs={onViewAs && profile ? (role) => onViewAs(role, profile.userId) : undefined} onSignOut={onSignOut} links={menuLinks} />} />

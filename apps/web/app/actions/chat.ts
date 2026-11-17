@@ -5,12 +5,15 @@ import { z } from "zod";
 import { AiDisabledError, aiConfigured } from "@amax/ai";
 import { logError } from "@amax/core/server";
 import { currentViewer } from "@amax/auth";
-import { cancelAction, chatTurn, confirmAction, resolvePins, type ChatTurn, type Pin } from "@amax/chat";
+import { askFirst, cancelAction, changeAction, chatTurn, confirmAction, resolvePins, type ChatTurn, type PendingAction, type Pin } from "@amax/chat";
+import { getSuggestion } from "@amax/agents/server";
+import { summaryLine } from "@amax/chat/addall";
 import { myChatUsage } from "../../lib/chat-usage";
 import { doneOutcome, outcomeOf, type CardOutcome } from "../../lib/chat-outcome";
 import { pageInfo, type PageInfo, type PinnedArgs } from "../../lib/page-context";
 import { installed } from "../../lib/registry";
 import { sameUser, SignedInElsewhere } from "../../lib/same-user";
+import { notPlanned, withUnplanned } from "../../lib/take-action";
 import { chatIntents, getDb, toolRegistry } from "../../lib/server";
 
 export type ChatResult = ({ ok: true; usage: string | null } & ChatTurn) | { ok: false; error: string };
@@ -25,7 +28,7 @@ export async function sendChat(input: { conversationId?: string; text: string; p
     if (!aiConfigured()) return { ok: false, error: "AI is off: no API key is configured on the server." };
     const intent = input.intentId ? chatIntents().find((i) => i.id === input.intentId) : undefined;
     const page = input.path ? (await pageInfo(installed, toolRegistry(), viewer, input.path.slice(0, 300))) ?? undefined : undefined;
-    const turn = await chatTurn(getDb()!, toolRegistry(), viewer, { conversationId: input.conversationId, text: input.text.slice(0, 4000), pins: input.pins?.slice(0, 8), intent, page });
+    const turn = await chatTurn(getDb()!, toolRegistry(), viewer, { conversationId: input.conversationId, text: input.text.slice(0, 4000), pins: input.pins?.slice(0, 8), intent, page, rules: installed.find((m) => m.id === page?.module)?.chatRules });
     return { ok: true, ...turn, usage: await myChatUsage(viewer) };
   } catch (e) {
     const id = logError("chat", e);
@@ -57,7 +60,7 @@ export async function confirmChat(conversationId: string, actionId: string, as?:
     const viewer = await currentViewer();
     sameUser(viewer, as);
     const { action, result } = await confirmAction(getDb()!, toolRegistry(), viewer, conversationId, actionId, typed === undefined ? {} : { answer: typed });
-    done = { title: action.title, result, receipt: action.look?.done };
+    done = { title: summaryLine(action.input, action.title), result, receipt: action.look?.done };
   } catch (e) {
     return outcomeOf(e);
   }
@@ -94,6 +97,18 @@ export async function cancelChat(conversationId: string, actionId: string, as?: 
   }
 }
 
+export type ChangeResult = { ok: true; action: PendingAction } | { ok: false; note: string };
+
+export async function changeChat(conversationId: string, actionId: string, percent: number): Promise<ChangeResult> {
+  try {
+    const viewer = await currentViewer();
+    return { ok: true, action: await changeAction(getDb()!, toolRegistry(), viewer, conversationId, actionId, percent) };
+  } catch (e) {
+    logError("chat.change", e);
+    return { ok: false, note: e instanceof z.ZodError ? "Use a whole number from 0 to 200." : "That card can't be changed any more. Ask again." };
+  }
+}
+
 const secretForm = z.object({ secret: z.string().min(1).max(16_384) });
 
 /**
@@ -112,5 +127,25 @@ export async function confirmSecretChat(conversationId: string, actionId: string
     return { state: "done", note: "Done: saved to the vault. The value can't be shown again." };
   } catch (e) {
     return outcomeOf(e);
+  }
+}
+
+export async function takeAction(conversationId: string | undefined, suggestionId: string, as?: string): Promise<{ ok: true; conversationId: string; text: string } | { ok: false; error: string }> {
+  try {
+    const viewer = await currentViewer();
+    sameUser(viewer, as);
+    const s = await getSuggestion(viewer, z.uuid().parse(suggestionId));
+    if (!s) return { ok: false, error: "That suggestion isn't there any more." };
+    const p = s.proposed as { personId?: string; projectKey?: string; month?: string; percent?: number };
+    const [who] = s.target.label.split(", ");
+    const grid = (await toolRegistry().call(viewer, "list_allocations", { everyone: true }, { source: "chat" }).catch(() => null)) as Parameters<typeof notPlanned>[0] | null;
+    const unplanned = grid && p.personId && p.month ? notPlanned(grid, p.personId, p.month) : [];
+    const text = `${s.title.replace(who, `**${who}**`)}. ${withUnplanned(s.detail ?? "", unplanned)} What would you like to do?`;
+    const context = `The person pressed Take action on this Allocation check suggestion: ${s.title}. ${s.detail ?? ""} The check's change: ${who} on ${p.projectKey} for ${String(p.month).slice(0, 7)} at ${p.percent}%. If they agree, make one allocate card with exactly that person, project, month and percent.`;
+    const id = await askFirst(getDb()!, viewer, { conversationId, context, question: text });
+    return { ok: true, conversationId: id, text };
+  } catch (e) {
+    const id = logError("chat.take", e);
+    return { ok: false, error: `${friendly(e)} (ref ${id.slice(0, 8)})` };
   }
 }

@@ -6,7 +6,7 @@ import type { PinRef } from "../pins";
 // with the user's permissions through the named read tool.
 export type { PinRef };
 
-export const openChat = (detail: { pin?: PinRef; intent?: string; prompt?: string }) => window.dispatchEvent(new CustomEvent("amax:chat", { detail }));
+export const openChat = (detail: { pin?: PinRef; intent?: string; prompt?: string; take?: string }) => window.dispatchEvent(new CustomEvent("amax:chat", { detail }));
 
 export function PinButton({ pin, inline }: { pin: PinRef; inline?: boolean }) {
   return (
