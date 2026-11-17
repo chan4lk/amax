@@ -1,0 +1,8 @@
+{
+  "change": "092-allocations-rows-on-demand",
+  "phase": "verify",
+  "branch": "",
+  "phases": {
+    "verify": {"status":"done","at":"2026-11-15T20:13:23Z"}
+  }
+}

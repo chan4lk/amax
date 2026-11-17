@@ -7,6 +7,7 @@ import { deliverNotification } from "./server/deliver";
 import { digestSchedules, sendDigest } from "./server/digest";
 import { NOTIFY } from "./server/notify";
 import { DELIVER_PERMISSION } from "./server/record";
+import { clearHandlers } from "./server/clear";
 import { ruleHandlers } from "./server/rules";
 import { Bell } from "./ui/Bell";
 import { NotificationsPage } from "./ui/NotificationsPage";
@@ -37,7 +38,7 @@ export default defineModule({
   schedules: digestSchedules,
   events: {
     emits: Object.values(EVENTS),
-    handlesFrom: ruleHandlers,
+    handlesFrom: (modules) => [...ruleHandlers(modules), ...clearHandlers(modules)],
     payloads: {
       [EVENTS.created]: { userId: "plain", ruleId: "plain", eventId: "plain", category: "plain", urgent: "plain" },
       [EVENTS.delivered]: declarePayload<DeliveryRecorded>({ deliveryId: "plain", notificationId: "plain", userId: "plain", channel: "plain", adapter: "plain", status: "plain" }),

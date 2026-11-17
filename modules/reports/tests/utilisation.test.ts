@@ -4,7 +4,8 @@ import { csvText } from "../server/csv";
 import type { Report } from "../server/view";
 import { reportsDb } from "./db";
 
-const pick = (r: Report) => r.rows.map((x) => [x.name, x.availableHours, x.leaveLabel, x.loggedHours, x.billableHours, x.utilisation]);
+const timed = (r: Report) => r.rows.filter((x) => !x.noTime);
+const pick = (r: Report) => timed(r).map((x) => [x.name, x.availableHours, x.leaveLabel, x.loggedHours, x.billableHours, x.utilisation]);
 
 describe.skipIf(!hasDb)("utilisation (Postgres)", () => {
   let db: Awaited<ReturnType<typeof reportsDb>>;
@@ -17,7 +18,7 @@ describe.skipIf(!hasDb)("utilisation (Postgres)", () => {
     expect(r.team).toMatchObject({ availableHours: 264, loggedHours: 260.5, billableHours: 222, utilisation: 84 });
     expect(r.lede).toBe("Billable hours from submitted and approved time ÷ available hours, October to date (Oct 1–16, 12 working days, 96 h per full-time person). Team: 222 ÷ 264 = 84%, against an 80% target.");
     expect(r.trend.map((t) => t.utilisation)).toEqual([72, 68, 74, 77, 79, 81, 78, 83, 82, 80, 84, 84]);
-    expect(r.availability.rows.map((x) => [x.name, x.workdays, x.availableHours, x.allocated])).toEqual([["Nimal Silva", 9, 72, 100], ["Kasun Dias", 9, 72, 100], ["Ayesha Rahman", 6, 48, 100]]);
+    expect(r.availability.rows.filter((x) => timed(r).some((t) => t.userId === x.userId)).map((x) => [x.name, x.workdays, x.availableHours, x.allocated])).toEqual([["Nimal Silva", 9, 72, 100], ["Kasun Dias", 9, 72, 100], ["Ayesha Rahman", 6, 48, 100]]);
     const finance = await db.call<Report>("sahan", "get_utilisation", {}, "Finance");
     expect([finance.rows, finance.team.utilisation]).toEqual([[], null]);
     expect((await db.call<Report>("sahan", "get_utilisation", {}, "PM")).rows).toEqual([]);
@@ -26,7 +27,7 @@ describe.skipIf(!hasDb)("utilisation (Postgres)", () => {
     await db.tick();
     const after = await db.call<Report>("maya", "get_utilisation", {});
     // 072 AC-6 (D1): her week is still a draft, so its hours don't count yet.
-    expect(after.rows.find((x) => x.name === "Tharushi Wijesinghe")).toBeUndefined();
+    expect(after.rows.find((x) => x.name === "Tharushi Wijesinghe" && !x.noTime)).toBeUndefined();
   }, 120_000);
 
   it("AC2 exports the table as CSV through the same read, with formula cells neutralised", async () => {

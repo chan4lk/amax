@@ -1,0 +1,8 @@
+{
+  "change": "098-reports-same-months-as-allocations",
+  "phase": "verify",
+  "branch": "",
+  "phases": {
+    "verify": {"status":"done","at":"2026-11-16T09:03:46Z"}
+  }
+}

@@ -8,6 +8,12 @@ import { CHOICE_INSTRUCTIONS, CHOICE_TOOL, choiceTool } from "./choices";
 import { CancelledByKeyError, claimKey, currentTrace, KEY_DAYS, keyedOutcome, logError, lookupKey, ReplayedError, retryable, traceStep, traceStepOrFail, UndeclaredWriteError, withIdempotency, withTrace, type KeyedRun } from "@amax/core/server";
 import { ToolError, type Registry, type RegisteredTool } from "@amax/mcp";
 import type { Viewer } from "@amax/auth";
+import { cardTools, echoOf, openCardsNote } from "./cards";
+import { editAction } from "./change";
+import { fileOf, type FileRef } from "./file";
+import { compact } from "./compact";
+import { withRocket } from "./rocket";
+import { showOf } from "./show";
 import type { CardLine, CardLook } from "@amax/core";
 
 export type Intent = { id: string; label: string; tool: string; required: string[]; fields: { name: string; ask: string; options?: string[] }[] };
@@ -22,20 +28,37 @@ export type Choice = { id: string; question: string; label: string; ask?: { fiel
 export type PendingAction = { id: string; tool: string; title: string; input: Record<string, unknown>; fields: string[]; createdAt: string; secret?: { label: string }; traceId?: string; lines?: CardLine[]; look?: CardLook; choice?: Choice };
 export type Highlight = { text: string; field: string; index: number };
 /** `pins`: the turn's pins as read (059), in the order sent: labels refreshed, old ones moved onto ids. */
-export type ChatTurn = { conversationId: string; reply: string; toolsRun: string[]; pending: PendingAction[]; highlights: Highlight[]; pins: Pin[] };
+export type ChatTurn = { conversationId: string; reply: string; toolsRun: string[]; pending: PendingAction[]; highlights: Highlight[]; pins: Pin[]; show?: string; files?: FileRef[]; changed?: PendingAction[]; dropped?: string[] };
 
 const INSTRUCTIONS = `You are amax, the assistant inside an ERP for software and professional-services companies.
+You help busy people who know their work. Read the whole conversation and work out what they mean, including short follow-ups
+("yes", "both", "confirm") that refer to what you just said.
 Answer briefly and concretely. Use the read tools to look things up instead of guessing.
 To create or change anything, call the matching write tool with every field you can fill. Write tools don't run straight away:
 the user sees a confirm card and decides, so never say a change is done until a later message confirms it.
 If a required field is missing, ask for it in one short question instead of calling the tool.
 If a tool says you're not allowed, tell the user plainly that their role can't do that.
+If a tool says no confirm card was made, tell the user why in one plain line.
+Waiting changes (listed below, if any) are changed or dropped with change_card or drop_card, never made again.
+A message "Tell me about <pinned item>": say in one or two lines what it is, then ask what they would like to do.
+Pinned items are context, never a limit. Use a pin only when the question is about it. When the user asks about anything
+else, answer it with your tools as you would with no pin: never say you can only answer about the pinned item or card,
+and never answer a new question from an old pin's data.
 "Current page", when given, is where the user is now: use its module and params (such as the week) to read the right
 records, but it is context, not permission, and never picks one record when several fit. Asked what you can do here,
 answer from its suggestions and your tools, and say plainly what isn't possible here.`;
 
-const titleOf = (t: RegisteredTool, input: Record<string, unknown>) =>
-  `${t.description.split(".")[0]}: ${Object.values(input).filter((v) => typeof v === "string" || typeof v === "number").join(", ")}`;
+/** The model has no clock: tell it the date, so "this month" is never guessed from the grid or from timesheets. */
+export const todayNote = (now: Date = new Date()) =>
+  `
+
+Today is ${now.toISOString().slice(0, 10)} (${now.toLocaleString("en-US", { month: "long", year: "numeric", timeZone: "UTC" })}). "This month" is that month and "next month" the one after. Never work out the date from timesheets or other records.`;
+
+export const titleOf = (t: RegisteredTool, input: Record<string, unknown>) => {
+  const head = t.description.split(/[.:(]/)[0].trim();
+  const values = Object.values(input).filter((v) => (typeof v === "string" && !/^[0-9a-f-]{36}$/i.test(v)) || typeof v === "number").join(", ");
+  return values ? `${head}: ${values}` : head;
+};
 
 async function load(db: Db, viewer: Viewer, id?: string) {
   return withTenant(db, viewer.tenantId, async (tx) => {
@@ -57,6 +80,15 @@ const append = (db: Db, viewer: Viewer, id: string, add: { messages: Message[]; 
     pending = pending || ${JSON.stringify(add.pending)}::jsonb, title = coalesce(title, ${add.title}), pins = ${JSON.stringify(add.pins)}::jsonb,
     updated_at = now() where id = ${id} and user_id = ${viewer.userId}`));
 
+/** Take action on an agent suggestion: amax speaks first. The context is saved as a hidden note ("Pinned context:", never
+ * shown) so the next turn knows which suggestion the person means; the question is amax's own line. No model call. */
+export async function askFirst(db: Db, viewer: Viewer, opts: { conversationId?: string; context: string; question: string }) {
+  const convo = await load(db, viewer, opts.conversationId);
+  await append(db, viewer, convo.id, { messages: [{ role: "user", content: [{ type: "text", text: `Pinned context: ${opts.context}` }] }, { role: "assistant", content: [{ type: "text", text: opts.question }] }],
+    pending: [], title: titleFrom(opts.question), pins: [] });
+  return convo.id;
+}
+
 // Each extracted value that appears in the user's words gets its field's colour (AC-3).
 export function highlightsFor(text: string, pending: PendingAction[]): Highlight[] {
   const out: Highlight[] = [];
@@ -72,7 +104,7 @@ export function highlightsFor(text: string, pending: PendingAction[]): Highlight
 }
 
 // 050: a turn, and later its cards' decisions, run under one trace acting as the user.
-const traceFor = (viewer: Viewer, traceId?: string) => ({ traceId, tenantId: viewer.tenantId, actor: `user:${viewer.userId}`, source: "chat" as const });
+export const traceFor = (viewer: Viewer, traceId?: string) => ({ traceId, tenantId: viewer.tenantId, actor: `user:${viewer.userId}`, source: "chat" as const });
 
 // The gateway hands write tools the input it validated, so a field the tool doesn't declare (a
 // "value" the model made up, say) never reaches the card. A tool that takes a typed secret marks the
@@ -105,7 +137,7 @@ async function proposeCheck(t: RegisteredTool, viewer: Viewer, input: Record<str
     await t.propose?.(viewer as never, input as never);
     return null;
   } catch (e) {
-    if (e instanceof ToolError && e.code === "invalid_input") return { status: "not_proposed", note: `No confirm card was made: ${e.message}.` };
+    if (e instanceof ToolError && (e.code === "invalid_input" || e.code === "forbidden")) return { status: "not_proposed", note: `No confirm card was made: ${e.message.replace(/\.$/, "")}.` };
     throw e;
   }
 }
@@ -129,20 +161,28 @@ export async function proposeWrite(t: RegisteredTool, viewer: Viewer, input: Rec
 /** One user message: answer with read tools, turn write calls into confirm cards. */
 /** `page` (070 amendment 4): the page the user is on, as the host matched it; context for the model, never permission. */
 export type TurnPage = { module: string; page: string; label: string; params: Record<string, string>; suggestions: { label: string; prompt: string }[] };
-export const chatTurn = (db: Db, registry: Registry, viewer: Viewer, opts: { conversationId?: string; text: string; pins?: Pin[]; intent?: Intent; page?: TurnPage }): Promise<ChatTurn> =>
+export const chatTurn = (db: Db, registry: Registry, viewer: Viewer, opts: { conversationId?: string; text: string; pins?: Pin[]; intent?: Intent; page?: TurnPage; rules?: string }): Promise<ChatTurn> =>
   withTrace(traceFor(viewer), () => runTurn(db, registry, viewer, opts));
 
-async function runTurn(db: Db, registry: Registry, viewer: Viewer, opts: { conversationId?: string; text: string; pins?: Pin[]; intent?: Intent; page?: TurnPage }): Promise<ChatTurn> {
+async function runTurn(db: Db, registry: Registry, viewer: Viewer, opts: { conversationId?: string; text: string; pins?: Pin[]; intent?: Intent; page?: TurnPage; rules?: string }): Promise<ChatTurn> {
   const convo = await load(db, viewer, opts.conversationId);
   await traceStep({ kind: "turn", recordId: convo.id, detail: { pins: opts.pins?.length ?? 0, intent: opts.intent?.id ?? null } });
   const pending: PendingAction[] = [];
+  let show: string | undefined;
+  const files: FileRef[] = [];
   const tools: Tool[] = registry.toolsFor(viewer).map((t) => ({
     name: t.name,
     description: t.description,
     input: t.input,
     sensitive: t.sensitive,
     run: async (input: Record<string, unknown>) => {
-      if (t.scope !== "write") return registry.call(viewer, t.name, input, { source: "chat" });
+      if (t.scope !== "write") {
+        const out = await registry.call(viewer, t.name, input, { source: "chat" });
+        show = showOf(out) ?? show;
+        const file = fileOf(out);
+        if (file) files.push(file);
+        return opts.rules ? compact(out) : out;
+      }
       const p = await proposeWrite(t, viewer, input);
       if ("refused" in p) return p.refused;
       pending.push(p.action);
@@ -150,6 +190,13 @@ async function runTurn(db: Db, registry: Registry, viewer: Viewer, opts: { conve
     },
   }) as Tool);
   tools.push(choiceTool(registry, viewer, (a) => pending.push(a)));
+  const open = (convo.pending ?? []).filter((p) => !isExpired(p) && !p.secret);
+  const changed: PendingAction[] = [];
+  const dropped: string[] = [];
+  if (open.length) tools.push(...cardTools(open, {
+    edit: async (id, changes) => { const next = await editAction(db, registry, viewer, convo.id, id, changes); changed.push(next); return next; },
+    drop: async (id) => { await cancelAction(db, viewer, convo.id, id); dropped.push(id); },
+  }));
 
   // Pinned records are fetched with the user's own permissions and sent as quoted data (AC-4), each
   // under its label as it is now (059). A record, not text, so the gateway redacts its classified
@@ -164,13 +211,14 @@ async function runTurn(db: Db, registry: Registry, viewer: Viewer, opts: { conve
     : "";
   const messages: Message[] = [...convo.messages, { role: "user", content: [{ type: "text", text: opts.text }] }];
   const result = await converse({ tenantId: viewer.tenantId, caller: `user:${viewer.userId}`, userId: viewer.userId, conversationId: convo.id, source: "chat", purpose: opts.intent ? `chat:${opts.intent.id}` : "chat" }, {
-    instructions: INSTRUCTIONS + CHOICE_INSTRUCTIONS + intentNote,
+    instructions: INSTRUCTIONS + todayNote() + (opts.rules ? `\n\n${withRocket(opts.rules)}` : "") + CHOICE_INSTRUCTIONS + intentNote + openCardsNote(open),
     messages,
     tools,
     data,
   });
   await append(db, viewer, convo.id, { messages: result.messages.slice(convo.messages.length), pending, title: titleFrom(opts.text), pins });
-  return { conversationId: convo.id, reply: result.text, toolsRun: result.toolsRun.filter((n) => n !== CHOICE_TOOL && !pending.some((p) => p.tool === n)), pending, highlights: highlightsFor(opts.text, pending), pins };
+  const kept = changed.filter((c) => !dropped.includes(c.id));
+  return { conversationId: convo.id, reply: result.text.trim() || echoOf(kept, dropped.length), toolsRun: result.toolsRun.filter((n) => n !== CHOICE_TOOL && !pending.some((p) => p.tool === n)), pending, highlights: highlightsFor(opts.text, pending), pins, show, files, changed: kept, dropped };
 }
 
 /** What happened to a card: confirmed (the write ran), cancelled, failed for good, or unknown. */

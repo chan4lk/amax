@@ -4,7 +4,8 @@ import { shortDay } from "../server/days";
 import type { Report } from "../server/view";
 import { hrs, Who } from "./parts";
 
-const allocated = (n: number | null, on: boolean) => (n === null ? (on ? "—" : "Allocations not installed") : `${n}%`);
+const allocated = (n: number | null, on: boolean) => (n === null ? (on ? "—" : "Allocations not installed") : <span className={n > 100 ? "pill bad" : "pill"}>{n}%</span>);
+const free = (n: number | null) => (n === null ? "—" : <span className={n > 0 ? "pill good" : "pill none"}>{hrs(n)}</span>);
 
 export function AvailabilityTable({ r }: { r: Report }) {
   const a = r.availability;
@@ -21,7 +22,7 @@ export function AvailabilityTable({ r }: { r: Report }) {
             <td className="num" data-label="Working days left">{x.workdays ?? "—"}{x.leaveLabel && <small>{x.leaveLabel}</small>}</td>
             <td className="num" data-label="Available">{x.availableHours === null ? "Leave not visible to you" : hrs(x.availableHours)}</td>
             <td className="num" data-label="Allocated">{allocated(x.allocated, a.allocationsOn)}</td>
-            <td className="num" data-label="Free">{hrs(x.freeHours)}<PinButton pin={personPin(x, r.month, r.monthName)} /></td>
+            <td className="num" data-label="Free">{free(x.freeHours)}<PinButton pin={personPin(x, r.month, r.monthName)} /></td>
           </tr>
         ))}
       </tbody>

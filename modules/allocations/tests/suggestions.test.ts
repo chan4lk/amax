@@ -26,7 +26,7 @@ describe.skipIf(!hasDb)("006 allocation suggestions (Postgres)", () => {
     const mine = (await listSuggestions(await db.as("maya"), { bucket: "open" })).filter((s) => s.target.id.startsWith(`${kasun.id}:`) && s.target.id.endsWith(month));
     expect(mine).toHaveLength(1);
     const [nimal] = await db.tx((tx) => tx.execute(sql`select id from auth.user where email = 'nimal@lumenlabs.test'`));
-    expect(mine[0]).toMatchObject({ title: expect.stringMatching(/^Move Kasun Dias to 40% on Fleet Tracker in /), actsFor: { id: `user:${nimal.id}` }, agent: { name: "Allocation check" } });
+    expect(mine[0]).toMatchObject({ title: expect.stringMatching(/^Kasun Dias is at 160% in /), actsFor: { id: `user:${nimal.id}` }, agent: { name: "Allocation check" } });
     const percent = async () => (await db.tx((tx) => tx.execute(sql`select a.percent from allocations.allocation a join delivery.project p on p.id = a.project_id where a.person_id = ${kasun.id} and p.key = 'FLT' and a.month = ${month}::date`)))[0]?.percent;
     const { undoUntil } = await acceptSuggestion(maya, { id: mine[0].id });
     expect(await percent()).toBe(40);

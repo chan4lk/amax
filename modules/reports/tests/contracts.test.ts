@@ -12,7 +12,7 @@ describe("AC-3 contract shape", () => {
   it("publishes every event the manifest emits, each with a declared payload", () => {
     expect(manifest.events?.emits).toEqual(Object.values(EVENTS));
     expect(Object.keys(manifest.events?.payloads ?? {})).toEqual(Object.values(EVENTS));
-    expect(manifest).toMatchObject({ id: "reports", group: "Work", dependsOn: ["hr"], integratesWith: ["time", "leave", "allocations"] });
+    expect(manifest).toMatchObject({ id: "reports", group: "Work", dependsOn: ["hr"], integratesWith: ["time", "leave", "allocations", "delivery"] });
   });
 });
 

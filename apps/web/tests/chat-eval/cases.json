@@ -1,0 +1,50 @@
+[
+  { "name": "open ask shows facts and makes no card", "steps": [
+    { "say": "fix allocations", "open": 0, "match": ["Kasun", "Ayesha"], "not": ["I suggest", "I recommend"] } ] },
+  { "name": "fix both after two suggestions makes two cards", "steps": [
+    { "say": "fix allocations", "open": 0 }, { "say": "fix both", "open": 2 } ] },
+  { "name": "fix it after one suggestion makes that card", "steps": [
+    { "say": "what does the allocation check suggest for Kasun?", "open": 0, "match": ["Kasun", "50%"] }, { "say": "fix it", "open": 1 } ] },
+  { "name": "using the suggestions is asked, then confirmed into cards", "steps": [
+    { "say": "fix kasun and ayesha using ai sugesstion", "open": 0, "match": ["Confirm"] }, { "say": "confirm all", "open": 2 } ] },
+  { "name": "confirming one person makes one card", "steps": [
+    { "say": "fix kasun and ayesha using ai sugesstion", "open": 0 }, { "say": "confirm Ayesha", "open": 1 } ] },
+  { "name": "over 100 percent is asked about first", "steps": [
+    { "say": "put Nimal to 60% jan FLT", "open": 0, "match": ["sure"] }, { "say": "yes", "open": 1 } ] },
+  { "name": "a question gets short facts", "steps": [
+    { "say": "who is over allocated in january?", "open": 0, "match": ["Kasun", "Ayesha"], "not": ["of 100%", "get_over", "list_"], "maxWords": 90 } ] },
+  { "name": "an exact order makes one card", "steps": [
+    { "say": "put Kasun on Contoso Portal at 30% in February 2027", "open": 1 } ] },
+  { "name": "an exact order for two makes two cards", "steps": [
+    { "say": "put Kasun and Nimal on HR Insights at 10% in February 2027", "open": 2 } ] },
+  { "name": "copy a month is one card", "steps": [
+    { "say": "copy december to january for everyone", "open": 1 } ] },
+  { "name": "the bot gives no suggestion of its own", "steps": [
+    { "say": "what do you suggest for january?", "open": 0, "match": ["Allocation check"], "not": ["I suggest", "I recommend", "I'd suggest", "I would suggest"] } ] },
+  { "name": "a shared first name is asked about", "steps": [
+    { "say": "amal", "open": 0, "match": ["which"] } ] },
+  { "name": "a waiting card is changed by typing", "steps": [
+    { "say": "put Kasun and Nimal on HR Insights at 10% in February 2027", "open": 2 }, { "say": "make Kasun 40%", "open": 2, "match": ["40"] } ] },
+  { "name": "a waiting card is dropped by typing", "steps": [
+    { "say": "put Kasun and Nimal on HR Insights at 10% in February 2027", "open": 2 }, { "say": "drop Nimal", "open": 1 } ] },
+  { "name": "a vague amount is asked, not guessed", "steps": [
+    { "say": "put Kasun on HR Insights a bit in February 2027", "open": 0, "match": ["\\?"] } ] },
+  { "name": "a bench question moves the bench card to that month", "steps": [
+    { "say": "who is on the bench in February?", "open": 0, "url": "bench=2027-02" } ] },
+  { "name": "thanks makes nothing", "steps": [
+    { "say": "thanks", "open": 0 } ] },
+  { "name": "capacity and demand are read out in FTE, worked out by the tool", "steps": [
+    {"say": "what is the capacity and demand this month?", "open": 0, "match": ["FTE", "capacity"], "not": ["440%", "of 100%", "get_load", "list_"]} ] },
+  { "name": "this month is the real current month", "steps": [
+    {"say": "which month is this month?", "open": 0, "match": ["2026"], "not": ["timesheet"]} ] },
+  { "name": "how FTE is calculated: HR on the 15th, not hours", "steps": [
+    {"say": "how is capacity calculated?", "open": 0, "match": ["HR", "15th"], "not": ["of 100%"]} ] },
+  { "name": "planned at 80% does not lower capacity", "steps": [
+    {"say": "if Kasun is at 80% is his capacity 0.8 FTE?", "open": 0, "match": ["spare|free", "1.0|100%|HR"], "not": ["capacity (is|becomes|drops to) 0.8"]} ] },
+  { "name": "a team gap is FTE, never a percent", "steps": [
+    {"say": "if the gap is 4.4 FTE is that 440%?", "open": 0, "match": ["FTE"], "not": ["yes, 440%"]} ] },
+  { "name": "who has the most capacity means free capacity", "steps": [
+    {"say": "who has the most capacity?", "open": 0, "match": ["Kasun", "free|spare"], "not": ["no one stands out", "nobody stands out"]} ] },
+  { "name": "asked to change someone outside my projects, says so and asks nothing", "steps": [
+    {"say": "I want to change Amal Dissanayake", "open": 0, "match": ["can.t change", "admin"], "not": ["What would you like", "which project"]} ] }
+]
