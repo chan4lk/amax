@@ -47,7 +47,7 @@ jobs:
       - name: Playwright failure context
         if: failure()
         run: find apps/web/test-results -name error-context.md -exec sh -c 'echo "== $1"; cat "$1"' _ {} \; || true
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: failure()
         with:
           name: playwright-test-results
