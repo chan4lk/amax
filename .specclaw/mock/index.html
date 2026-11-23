@@ -1365,7 +1365,135 @@ set AUDIT_HASH_KEY (the deployment's audit key)        # exit 1, nothing written
 <section data-change="082-dev-fresh-cache" id="082-dev-fresh-cache" data-roles="all" data-title="Dev starts fresh" data-nav="no" data-parent="001-amax-foundation">
   <h1>Dev starts fresh</h1>
   <p class="lede">No screen changes. <code>pnpm --filter @amax/web dev</code> no longer keeps Turbopack's compile cache between starts, so a leftover <code>apps/web/.next</code> from another branch can't put the browser into a refresh loop. Nobody deletes <code>.next</code> by hand any more.</p>
+</section>
+<section data-change="116-allocations-usability" id="116-allocations-usability" data-roles="admin leadership pm hr" data-title="Allocations: chat drives the screen" data-nav="no" data-parent="001-amax-foundation-allocations">
+  <div class="row head">
+    <div><h1>Allocations and forecast</h1><p class="lede">Showing people starting with Amal in Everyone. Ask amax to change what is shown.</p></div>
+    <div class="actions"><button class="btn">Allocate</button></div>
+  </div>
+  <div class="card" style="margin-bottom:28px">
+    <div class="card-head"><h2>You asked amax</h2></div>
+    <p style="margin:0 0 8px"><b>You:</b> show me Amal</p>
+    <p class="muted" style="margin:0">amax: Amal Perera is in Everyone, not My projects. He is at 100% in October and 60% in November. The screen below shows him.</p>
+  </div>
+  <div class="card" style="margin-bottom:28px">
+    <div class="card-head"><h2>Several changes in chat</h2></div>
+    <p style="margin:0 0 8px"><b>amax:</b> Kasun goes to 50% on Contoso Portal in November, and Nimal takes 40% on HR Insights. That puts Nimal at 140%.</p>
+    <p style="margin:0 0 6px"><b>2 changes ready</b></p>
+    <ul style="margin:0 0 10px;padding-left:18px"><li>Kasun Dias on CON, Nov 2026: 50% <button class="btn sm">Go to card</button></li><li>Nimal Silva on HRI, Nov 2026: 40% <button class="btn sm">Go to card</button></li></ul>
+    <div class="acts"><button class="btn sm primary">Add all</button> <button class="btn sm">Cancel all</button></div>
+    <p class="muted note" style="margin:10px 0 0">On a card, Change something opens a percent box with Update and Back; the card still needs Add it.</p>
+  </div>
+  <div class="card flush" style="margin-bottom:28px">
+    <div class="card-head"><h2>Bench by skill, January</h2><span class="muted" style="font-size:13px">6 people</span></div>
+    <table class="tbl">
+      <caption class="sr">People on the bench in January</caption>
+      <thead><tr><th>Person</th><th>Skill</th></tr></thead>
+      <tbody>
+        <tr><td>Kasun Dias</td><td>.NET</td></tr>
+        <tr><td>Dinesh Wickrama</td><td>.NET</td></tr>
+        <tr><td>Mohamed Rifkhan</td><td>.NET</td></tr>
+        <tr><td>Tharushi Wijesinghe</td><td>React</td></tr>
+        <tr><td>Ishara Perera</td><td>QA</td></tr>
+      </tbody>
+    </table>
+    <p class="muted note" style="padding:0 20px 16px">1 more, ask amax for the full list.</p>
+  </div>
+  <div class="card flush">
+    <div class="card-head"><h2>People by month</h2>
+      <div class="actions"><span class="chip">Delivery team</span><a class="btn" href="#116-allocations-usability">My projects</a><button class="btn">Copy to next month</button></div>
+    </div>
+    <table class="tbl">
+      <thead><tr><th>Person</th><th>Project</th><th>Oct, now</th><th>Nov</th><th>Dec</th></tr></thead>
+      <tbody>
+        <tr><td>Amal Perera</td><td>Fleet Tracker</td><td>100%</td><td>60%</td><td>Not planned</td></tr>
+        <tr class="total"><td>Amal, total</td><td></td><td><b>100%</b></td><td><b>60%</b></td><td>0% free</td></tr>
+      </tbody>
+    </table>
+    <p class="muted note" style="padding:0 20px 16px">No search box, no filter buttons, no dropdowns. Say it to amax.</p>
+  </div>
+</section>
+
+<!-- ================= People (HR records) =================
 <section data-change="117-allocations-take-action-record" id="117-allocations-take-action-record" data-roles="pm" data-title="Allocations: chat shows the record" data-nav="no" data-parent="001-amax-foundation-allocations">
+  <h1>Take action shows the record</h1>
+  <p class="lede">Nothing on the Allocations page moves. Only the chat wording changes. Fictional data.</p>
+  <div class="cols even">
+    <div class="card">
+      <div class="card-head"><h2>Take action, on your project</h2></div>
+      <div class="bubble" style="max-width:92%;padding:12px 14px;border-radius:16px;background:var(--sunken,#F4F2FB)"><p style="margin:0"><b>Ayesha Rahman</b> is at 120% in February 2027. Contoso Portal 60%, HR Insights 60%, above 100% capacity. What would you like to do?</p></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><h2>Fix someone in Everyone</h2></div>
+      <div class="bubble me" style="align-self:flex-end;max-width:80%;padding:10px 14px;border-radius:16px;background:var(--violet-soft,#ECE8FF);margin-bottom:10px">Fix Dinesh in January</div>
+      <div class="bubble" style="max-width:92%;padding:12px 14px;border-radius:16px;background:var(--sunken,#F4F2FB)"><p style="margin:0 0 8px">You can't change <b>Dinesh Wickrama</b>: Payments API is managed by Rukshan.</p><p style="margin:0">Here is the record. January: Payments API 100%, Internal tools 20%, total 120%.</p></div>
+    </div>
+  </div>
+</section>
+<section data-change="118-allocations-bot-facts" id="118-allocations-bot-facts" data-roles="pm" data-title="Allocations: right date, group and numbers" data-nav="no" data-parent="001-amax-foundation-allocations">
+  <h1>The bot gets the facts right</h1>
+  <p class="lede">Nothing on the Allocations page moves. Only chat answers change. Fictional data, today is 6 November 2026.</p>
+  <div class="cols even">
+    <div class="card"><div class="card-head"><h2>Precisely, same group</h2></div>
+      <div style="max-width:92%;padding:10px 14px;border-radius:16px;margin:0 0 8px;align-self:flex-end;background:var(--violet-soft,#ECE8FF)">What is the average allocation this month</div><div style="max-width:92%;padding:10px 14px;border-radius:16px;margin:0 0 8px;background:var(--sunken,#F4F2FB)"><b>Your three people average 93%</b> in November 2026.<br>Ayesha Rahman 100%, Kasun Dias 80%, Nimal Silva 100%.</div>
+      <div style="max-width:92%;padding:10px 14px;border-radius:16px;margin:0 0 8px;align-self:flex-end;background:var(--violet-soft,#ECE8FF)">No, precisely</div><div style="max-width:92%;padding:10px 14px;border-radius:16px;margin:0 0 8px;background:var(--sunken,#F4F2FB)"><b>Your three people average 93.33%</b> in November 2026.</div>
+    </div>
+    <div class="card"><div class="card-head"><h2>Who has room</h2></div>
+      <div style="max-width:92%;padding:10px 14px;border-radius:16px;margin:0 0 8px;align-self:flex-end;background:var(--violet-soft,#ECE8FF)">Who has the most capacity</div><div style="max-width:92%;padding:10px 14px;border-radius:16px;margin:0 0 8px;background:var(--sunken,#F4F2FB)"><b>Kasun Dias has the most room: 20% free</b> in November 2026.<br>Ayesha Rahman and Nimal Silva are fully allocated.</div>
+      <div style="max-width:92%;padding:10px 14px;border-radius:16px;margin:0 0 8px;align-self:flex-end;background:var(--violet-soft,#ECE8FF)">Which project has the most demand</div><div style="max-width:92%;padding:10px 14px;border-radius:16px;margin:0 0 8px;background:var(--sunken,#F4F2FB)"><b>Fleet Tracker: 1.1 people</b> in November 2026.<br>HR Insights 0.9, Contoso Portal 0.8.</div>
+    </div>
+  </div>
+</section>
+<section data-change="119-allocations-bot-capacity-answers" id="119-allocations-bot-capacity-answers" data-roles="pm" data-title="Allocations: capacity answers in colour" data-nav="no" data-parent="001-amax-foundation-allocations">
+  <h1>Capacity answers, in colour</h1>
+  <p class="lede">Nothing on the page moves. The bot reads capacity, planned and spare from worked-out numbers. Red is a problem, green is room, amber is nothing planned, violet is FTE. Fictional data, today is 7 November 2026.</p>
+  <div class="cols even">
+    <div class="card"><div class="card-head"><h2>How loaded are we</h2></div>
+      <div style="max-width:92%;padding:10px 14px;border-radius:16px;margin:0 0 8px;align-self:flex-end;background:var(--violet-soft,#ECE8FF)">what is the capacity and demand this month</div><div style="max-width:92%;padding:10px 14px;border-radius:16px;margin:0 0 8px;background:var(--sunken,#F4F2FB)"><b>November 2026, your 3 people:</b> <b style="color:#5B44D6">2.8 FTE</b> planned of <b style="color:#5B44D6">3.0 FTE</b> capacity, <b style="color:#0F6E4A">0.2 FTE spare</b>.<br><b style="color:#0F6E4A">Kasun Dias: 20% free</b>.</div>
+      <div style="max-width:92%;padding:10px 14px;border-radius:16px;margin:0 0 8px;align-self:flex-end;background:var(--violet-soft,#ECE8FF)">if Kasun is at 80% is his capacity 0.8</div><div style="max-width:92%;padding:10px 14px;border-radius:16px;margin:0 0 8px;background:var(--sunken,#F4F2FB)">No. His capacity stays <b style="color:#5B44D6">1.0 FTE</b> from HR. Planned <b style="color:#5B44D6">0.8</b>, so <b style="color:#0F6E4A">0.2 FTE spare</b>.</div>
+    </div>
+    <div class="card"><div class="card-head"><h2>Problems and gaps</h2></div>
+      <div style="max-width:92%;padding:10px 14px;border-radius:16px;margin:0 0 8px;align-self:flex-end;background:var(--violet-soft,#ECE8FF)">who is over in february</div><div style="max-width:92%;padding:10px 14px;border-radius:16px;margin:0 0 8px;background:var(--sunken,#F4F2FB)"><b>Ayesha Rahman</b> is <b style="color:#A8321F">over</b> at <b style="color:#A8321F">120%</b>. <b>Kasun Dias</b> is <b style="color:#A8321F">over</b> at <b style="color:#A8321F">110%</b>. <b>Nimal Silva</b> is <b style="color:#8A5200">not planned</b>.</div>
+      <div style="max-width:92%;padding:10px 14px;border-radius:16px;margin:0 0 8px;align-self:flex-end;background:var(--violet-soft,#ECE8FF)">the gap is 4.4 FTE, is that 440%</div><div style="max-width:92%;padding:10px 14px;border-radius:16px;margin:0 0 8px;background:var(--sunken,#F4F2FB)">No. A gap across people is <b style="color:#0F6E4A">4.4 FTE spare</b>, not a percent.</div>
+    </div>
+  </div>
+</section>
+<section data-change="120-allocations-demo-look" id="120-allocations-demo-look" data-roles="admin leadership pm" data-title="Allocations: the demo's look" data-nav="no" data-parent="001-amax-foundation-allocations">
+  <h1>Allocations and forecast</h1>
+  <p class="lede">Changes to <a href="#116-allocations-usability">Allocations</a>: the page follows the product owner's demo. Fictional data.</p>
+  <div style="display:grid;grid-template-columns:1fr 280px;gap:16px">
+    <div>
+      <div class="card pinnable"><h2>Capacity and demand, six months</h2><span class="muted">hover a month for FTE, spare or short, and who is over 100%</span>
+        <svg viewBox="0 0 600 110" width="100%" height="110" role="img" aria-label="Capacity and demand lines"><polyline points="10,40 110,40 210,38 310,38 410,36 510,36" fill="none" stroke="#2FCB8C" stroke-width="3"/><polyline points="10,52 110,48 210,30 310,24 410,18 510,16" fill="none" stroke="#7B61FF" stroke-width="3"/></svg></div>
+      <div class="card pinnable" style="margin-top:16px"><h2>People by month</h2><span class="muted">Your people · Everyone</span>
+        <div style="position:relative;height:34px;margin-top:10px;background:#F5F3FC;border-radius:12px"><div style="position:absolute;left:2%;width:30%;top:6px;height:22px;border-radius:11px;background:#7B61FF;color:#fff;font-size:12px;font-weight:600;padding:0 8px;line-height:22px">Fleet Tracker 100%</div><div style="position:absolute;left:36%;width:28%;top:6px;height:22px;border-radius:11px;background:#2FB5A0;color:#fff;font-size:12px;font-weight:600;padding:0 8px;line-height:22px">HR Insights 60%</div><div style="position:absolute;left:68%;width:30%;top:4px;height:26px;border-radius:12px;background:repeating-linear-gradient(135deg,#FDEFC7 0 7px,#FFF7E3 7px 14px);font-size:12px;padding:5px 8px">Bench</div></div>
+        <p class="muted" style="margin:8px 0 0">A month over 100% gets a red frame and a Fix chip that opens chat.</p></div>
+    </div>
+    <div>
+      <div class="card pinnable"><h2>Conflicts</h2><p><b>Ayesha Rahman</b> 120% in December</p><button class="btn" type="button">Take action</button></div>
+      <div class="card pinnable" style="margin-top:16px"><h2>Bench by month</h2><p><b>3</b> free in March</p></div>
+      <div class="card pinnable" style="margin-top:16px"><h2>Rolling off</h2><p>Amal has no work planned from February</p></div>
+    </div>
+  </div>
+</section>
+<section data-change="121-allocations-switch-speed" id="121-allocations-switch-speed" data-roles="admin leadership pm" data-title="Allocations: a fast switch, whole chip and box" data-nav="no" data-parent="001-amax-foundation-allocations">
+  <h1>Allocations and forecast</h1>
+  <p class="lede">Changes to <a href="#120-allocations-demo-look">Allocations</a>: switching groups no longer lags, and nothing is cut off. Fictional data.</p>
+  <div class="card pinnable"><h2>Who is on what, month by month</h2>
+    <div style="position:relative;height:70px;margin:14px 0 26px;background:#F5F3FC;border-radius:12px">
+      <div style="position:absolute;left:34%;width:16%;top:-6px;bottom:-10px;border:2px solid #C2412D;border-radius:12px;background:rgba(253,231,228,.4)"><b style="position:absolute;top:-11px;right:6px;background:#C2412D;color:#fff;border-radius:6px;padding:1px 7px;font-size:10.5px">120%</b><span style="position:absolute;left:50%;bottom:-13px;transform:translateX(-50%);background:#fff;color:#C2412D;border-radius:999px;padding:3px 9px;box-shadow:0 2px 6px rgba(0,0,0,.2);font-size:12px">Fix</span></div>
+    </div>
+    <p class="muted">The Fix chip shows whole under the frame, and can be clicked anywhere on it.</p></div>
+  <div class="card pinnable" style="margin-top:16px"><h2>Capacity runway</h2>
+    <div style="margin:10px 0 0 40%;width:220px;padding:12px;border-radius:16px;background:#fff;box-shadow:0 0 0 1px rgba(123,97,255,.14),0 14px 24px -14px rgba(60,40,160,.45)"><b>April</b> forecast<br>Capacity 144 FTE · Demand 0 FTE<br><span class="muted">the whole box shows, also for the last month</span></div></div>
+</section>
+<section data-change="123-allocations-rows-on-demand" id="123-allocations-rows-on-demand" data-roles="admin leadership pm" data-title="Allocations: rows as you scroll" data-nav="no" data-parent="001-amax-foundation-allocations">
+  <h1>Allocations and forecast</h1>
+  <p class="lede">Changes to <a href="#120-allocations-demo-look">Allocations</a>: with Everyone chosen the board builds the first people and the rest as you scroll. Fictional data.</p>
+  <div class="card pinnable"><h2>Who is on what, month by month</h2>
+    <p class="muted">Amal Dissanayake, Amal Gunawardena, Amal Liyanage … (20 people built)</p>
+    <div style="display:flex;align-items:center;gap:12px;margin-top:10px"><button class="btn" type="button">Show 24 more</button><span class="muted">124 more people load as you scroll</span></div></div>
+</section>
 <section data-change="125-reports-delivery-pulse" id="125-reports-delivery-pulse" data-roles="admin leadership pm" data-title="Reports: delivery pulse" data-nav="no" data-parent="001-amax-foundation-reports">
   <h1>Utilisation in October</h1>
   <p class="lede">Billable hours from submitted and approved time ÷ available hours, October to date (Oct 1–16, 12 working days, 96 h per full-time person). Team: 222 ÷ 264 = 84%, against an 80% target.</p>
@@ -1503,50 +1631,6 @@ set AUDIT_HASH_KEY (the deployment's audit key)        # exit 1, nothing written
     </div>
   </div>
 </section>
-<section data-change="117-allocations-take-action-record" id="117-allocations-take-action-record" data-roles="pm" data-title="Allocations: chat shows the record" data-nav="no" data-parent="001-amax-foundation-allocations">
-  <h1>Take action shows the record</h1>
-  <p class="lede">Nothing on the Allocations page moves. Only the chat wording changes. Fictional data.</p>
-  <div class="cols even">
-    <div class="card">
-      <div class="card-head"><h2>Take action, on your project</h2></div>
-      <div class="bubble" style="max-width:92%;padding:12px 14px;border-radius:16px;background:var(--sunken,#F4F2FB)"><p style="margin:0"><b>Ayesha Rahman</b> is at 120% in February 2027. Contoso Portal 60%, HR Insights 60%, above 100% capacity. What would you like to do?</p></div>
-    </div>
-    <div class="card">
-      <div class="card-head"><h2>Fix someone in Everyone</h2></div>
-      <div class="bubble me" style="align-self:flex-end;max-width:80%;padding:10px 14px;border-radius:16px;background:var(--violet-soft,#ECE8FF);margin-bottom:10px">Fix Dinesh in January</div>
-      <div class="bubble" style="max-width:92%;padding:12px 14px;border-radius:16px;background:var(--sunken,#F4F2FB)"><p style="margin:0 0 8px">You can't change <b>Dinesh Wickrama</b>: Payments API is managed by Rukshan.</p><p style="margin:0">Here is the record. January: Payments API 100%, Internal tools 20%, total 120%.</p></div>
-    </div>
-  </div>
-</section>
-<section data-change="118-allocations-bot-facts" id="118-allocations-bot-facts" data-roles="pm" data-title="Allocations: right date, group and numbers" data-nav="no" data-parent="001-amax-foundation-allocations">
-  <h1>The bot gets the facts right</h1>
-  <p class="lede">Nothing on the Allocations page moves. Only chat answers change. Fictional data, today is 6 November 2026.</p>
-  <div class="cols even">
-    <div class="card"><div class="card-head"><h2>Precisely, same group</h2></div>
-      <div style="max-width:92%;padding:10px 14px;border-radius:16px;margin:0 0 8px;align-self:flex-end;background:var(--violet-soft,#ECE8FF)">What is the average allocation this month</div><div style="max-width:92%;padding:10px 14px;border-radius:16px;margin:0 0 8px;background:var(--sunken,#F4F2FB)"><b>Your three people average 93%</b> in November 2026.<br>Ayesha Rahman 100%, Kasun Dias 80%, Nimal Silva 100%.</div>
-      <div style="max-width:92%;padding:10px 14px;border-radius:16px;margin:0 0 8px;align-self:flex-end;background:var(--violet-soft,#ECE8FF)">No, precisely</div><div style="max-width:92%;padding:10px 14px;border-radius:16px;margin:0 0 8px;background:var(--sunken,#F4F2FB)"><b>Your three people average 93.33%</b> in November 2026.</div>
-    </div>
-    <div class="card"><div class="card-head"><h2>Who has room</h2></div>
-      <div style="max-width:92%;padding:10px 14px;border-radius:16px;margin:0 0 8px;align-self:flex-end;background:var(--violet-soft,#ECE8FF)">Who has the most capacity</div><div style="max-width:92%;padding:10px 14px;border-radius:16px;margin:0 0 8px;background:var(--sunken,#F4F2FB)"><b>Kasun Dias has the most room: 20% free</b> in November 2026.<br>Ayesha Rahman and Nimal Silva are fully allocated.</div>
-      <div style="max-width:92%;padding:10px 14px;border-radius:16px;margin:0 0 8px;align-self:flex-end;background:var(--violet-soft,#ECE8FF)">Which project has the most demand</div><div style="max-width:92%;padding:10px 14px;border-radius:16px;margin:0 0 8px;background:var(--sunken,#F4F2FB)"><b>Fleet Tracker: 1.1 people</b> in November 2026.<br>HR Insights 0.9, Contoso Portal 0.8.</div>
-    </div>
-  </div>
-</section>
-<section data-change="119-allocations-bot-capacity-answers" id="119-allocations-bot-capacity-answers" data-roles="pm" data-title="Allocations: capacity answers in colour" data-nav="no" data-parent="001-amax-foundation-allocations">
-  <h1>Capacity answers, in colour</h1>
-  <p class="lede">Nothing on the page moves. The bot reads capacity, planned and spare from worked-out numbers. Red is a problem, green is room, amber is nothing planned, violet is FTE. Fictional data, today is 7 November 2026.</p>
-  <div class="cols even">
-    <div class="card"><div class="card-head"><h2>How loaded are we</h2></div>
-      <div style="max-width:92%;padding:10px 14px;border-radius:16px;margin:0 0 8px;align-self:flex-end;background:var(--violet-soft,#ECE8FF)">what is the capacity and demand this month</div><div style="max-width:92%;padding:10px 14px;border-radius:16px;margin:0 0 8px;background:var(--sunken,#F4F2FB)"><b>November 2026, your 3 people:</b> <b style="color:#5B44D6">2.8 FTE</b> planned of <b style="color:#5B44D6">3.0 FTE</b> capacity, <b style="color:#0F6E4A">0.2 FTE spare</b>.<br><b style="color:#0F6E4A">Kasun Dias: 20% free</b>.</div>
-      <div style="max-width:92%;padding:10px 14px;border-radius:16px;margin:0 0 8px;align-self:flex-end;background:var(--violet-soft,#ECE8FF)">if Kasun is at 80% is his capacity 0.8</div><div style="max-width:92%;padding:10px 14px;border-radius:16px;margin:0 0 8px;background:var(--sunken,#F4F2FB)">No. His capacity stays <b style="color:#5B44D6">1.0 FTE</b> from HR. Planned <b style="color:#5B44D6">0.8</b>, so <b style="color:#0F6E4A">0.2 FTE spare</b>.</div>
-    </div>
-    <div class="card"><div class="card-head"><h2>Problems and gaps</h2></div>
-      <div style="max-width:92%;padding:10px 14px;border-radius:16px;margin:0 0 8px;align-self:flex-end;background:var(--violet-soft,#ECE8FF)">who is over in february</div><div style="max-width:92%;padding:10px 14px;border-radius:16px;margin:0 0 8px;background:var(--sunken,#F4F2FB)"><b>Ayesha Rahman</b> is <b style="color:#A8321F">over</b> at <b style="color:#A8321F">120%</b>. <b>Kasun Dias</b> is <b style="color:#A8321F">over</b> at <b style="color:#A8321F">110%</b>. <b>Nimal Silva</b> is <b style="color:#8A5200">not planned</b>.</div>
-      <div style="max-width:92%;padding:10px 14px;border-radius:16px;margin:0 0 8px;align-self:flex-end;background:var(--violet-soft,#ECE8FF)">the gap is 4.4 FTE, is that 440%</div><div style="max-width:92%;padding:10px 14px;border-radius:16px;margin:0 0 8px;background:var(--sunken,#F4F2FB)">No. A gap across people is <b style="color:#0F6E4A">4.4 FTE spare</b>, not a percent.</div>
-    </div>
-  </div>
-</section>
-<section data-change="120-allocations-demo-look" id="120-allocations-demo-look" data-roles="admin leadership pm" data-title="Allocations: the demo's look" data-nav="no" data-parent="001-amax-foundation-allocations">
 <section data-change="127-reports-group-switch" id="127-reports-group-switch" data-roles="admin leadership pm" data-title="Reports: Your people and Everyone" data-nav="no" data-parent="001-amax-foundation-reports">
   <h1>Utilisation in October</h1>
   <p class="lede">Changes to <a href="#125-reports-delivery-pulse">Reports</a>: a Your people / Everyone switch beside the title. The table, the cards and the graph follow it. Fictional data.</p>
@@ -1556,25 +1640,6 @@ set AUDIT_HASH_KEY (the deployment's audit key)        # exit 1, nothing written
     <svg viewBox="0 0 600 120" width="100%" height="120" role="img" aria-label="Two utilisation lines"><polyline points="10,70 60,64 110,58 160,62 210,50 260,48 310,54 360,46 410,42 460,44 510,36 560,34" fill="none" stroke="#7B61FF" stroke-width="3"/><polyline points="10,84 60,80 110,74 160,76 210,66 260,64 310,66 360,60 410,58 460,60 510,52 560,50" fill="none" stroke="#2FCB8C" stroke-width="2.5"/><line x1="10" x2="590" y1="40" y2="40" stroke="#F2A93B" stroke-dasharray="5 5"/></svg>
   </div>
 </section>
-<section data-change="120-allocations-demo-look" id="120-allocations-demo-look" data-roles="admin leadership pm" data-title="Allocations: the demo's look" data-nav="no" data-parent="001-amax-foundation-allocations">
-  <h1>Allocations and forecast</h1>
-  <p class="lede">Changes to <a href="#116-allocations-usability">Allocations</a>: the page follows the product owner's demo. Fictional data.</p>
-  <div style="display:grid;grid-template-columns:1fr 280px;gap:16px">
-    <div>
-      <div class="card pinnable"><h2>Capacity and demand, six months</h2><span class="muted">hover a month for FTE, spare or short, and who is over 100%</span>
-        <svg viewBox="0 0 600 110" width="100%" height="110" role="img" aria-label="Capacity and demand lines"><polyline points="10,40 110,40 210,38 310,38 410,36 510,36" fill="none" stroke="#2FCB8C" stroke-width="3"/><polyline points="10,52 110,48 210,30 310,24 410,18 510,16" fill="none" stroke="#7B61FF" stroke-width="3"/></svg></div>
-      <div class="card pinnable" style="margin-top:16px"><h2>People by month</h2><span class="muted">Your people · Everyone</span>
-        <div style="position:relative;height:34px;margin-top:10px;background:#F5F3FC;border-radius:12px"><div style="position:absolute;left:2%;width:30%;top:6px;height:22px;border-radius:11px;background:#7B61FF;color:#fff;font-size:12px;font-weight:600;padding:0 8px;line-height:22px">Fleet Tracker 100%</div><div style="position:absolute;left:36%;width:28%;top:6px;height:22px;border-radius:11px;background:#2FB5A0;color:#fff;font-size:12px;font-weight:600;padding:0 8px;line-height:22px">HR Insights 60%</div><div style="position:absolute;left:68%;width:30%;top:4px;height:26px;border-radius:12px;background:repeating-linear-gradient(135deg,#FDEFC7 0 7px,#FFF7E3 7px 14px);font-size:12px;padding:5px 8px">Bench</div></div>
-        <p class="muted" style="margin:8px 0 0">A month over 100% gets a red frame and a Fix chip that opens chat.</p></div>
-    </div>
-    <div>
-      <div class="card pinnable"><h2>Conflicts</h2><p><b>Ayesha Rahman</b> 120% in December</p><button class="btn" type="button">Take action</button></div>
-      <div class="card pinnable" style="margin-top:16px"><h2>Bench by month</h2><p><b>3</b> free in March</p></div>
-      <div class="card pinnable" style="margin-top:16px"><h2>Rolling off</h2><p>Amal has no work planned from February</p></div>
-    </div>
-  </div>
-</section>
-<section data-change="121-allocations-switch-speed" id="121-allocations-switch-speed" data-roles="admin leadership pm" data-title="Allocations: a fast switch, whole chip and box" data-nav="no" data-parent="001-amax-foundation-allocations">
 <section data-change="128-reports-demo-look" id="128-reports-demo-look" data-roles="admin leadership pm" data-title="Reports: the demo's look" data-nav="no" data-parent="001-amax-foundation-reports">
   <h1>Utilisation in October</h1>
   <p class="lede">Changes to <a href="#125-reports-delivery-pulse">Reports</a>: the page follows the product owner's demo, and the Your people / Everyone switch changes every card at once. Fictional data.</p>
@@ -1593,24 +1658,6 @@ set AUDIT_HASH_KEY (the deployment's audit key)        # exit 1, nothing written
   <div class="card pinnable" style="margin-top:16px"><h2>People</h2><p class="muted">Nimal Silva 92%, Kasun Dias 88%, Ayesha Rahman 73%, ranked by utilisation; the top 15 show, everyone is in the table below</p></div>
   <div class="card pinnable" style="margin-top:16px"><h2>Coming up</h2><p class="muted">Oct 19 – 20 Ayesha away · Jan Ayesha planned at 110% · Mar 3 on the bench</p></div>
   <div class="card" style="margin-top:16px"><h2>Utilisation · Availability</h2><p class="muted">The tables, Export and Change target stay as they were.</p></div>
-</section>
-<section data-change="121-allocations-switch-speed" id="121-allocations-switch-speed" data-roles="admin leadership pm" data-title="Allocations: a fast switch, whole chip and box" data-nav="no" data-parent="001-amax-foundation-allocations">
-  <h1>Allocations and forecast</h1>
-  <p class="lede">Changes to <a href="#120-allocations-demo-look">Allocations</a>: switching groups no longer lags, and nothing is cut off. Fictional data.</p>
-  <div class="card pinnable"><h2>Who is on what, month by month</h2>
-    <div style="position:relative;height:70px;margin:14px 0 26px;background:#F5F3FC;border-radius:12px">
-      <div style="position:absolute;left:34%;width:16%;top:-6px;bottom:-10px;border:2px solid #C2412D;border-radius:12px;background:rgba(253,231,228,.4)"><b style="position:absolute;top:-11px;right:6px;background:#C2412D;color:#fff;border-radius:6px;padding:1px 7px;font-size:10.5px">120%</b><span style="position:absolute;left:50%;bottom:-13px;transform:translateX(-50%);background:#fff;color:#C2412D;border-radius:999px;padding:3px 9px;box-shadow:0 2px 6px rgba(0,0,0,.2);font-size:12px">Fix</span></div>
-    </div>
-    <p class="muted">The Fix chip shows whole under the frame, and can be clicked anywhere on it.</p></div>
-  <div class="card pinnable" style="margin-top:16px"><h2>Capacity runway</h2>
-    <div style="margin:10px 0 0 40%;width:220px;padding:12px;border-radius:16px;background:#fff;box-shadow:0 0 0 1px rgba(123,97,255,.14),0 14px 24px -14px rgba(60,40,160,.45)"><b>April</b> forecast<br>Capacity 144 FTE · Demand 0 FTE<br><span class="muted">the whole box shows, also for the last month</span></div></div>
-</section>
-<section data-change="123-allocations-rows-on-demand" id="123-allocations-rows-on-demand" data-roles="admin leadership pm" data-title="Allocations: rows as you scroll" data-nav="no" data-parent="001-amax-foundation-allocations">
-  <h1>Allocations and forecast</h1>
-  <p class="lede">Changes to <a href="#120-allocations-demo-look">Allocations</a>: with Everyone chosen the board builds the first people and the rest as you scroll. Fictional data.</p>
-  <div class="card pinnable"><h2>Who is on what, month by month</h2>
-    <p class="muted">Amal Dissanayake, Amal Gunawardena, Amal Liyanage … (20 people built)</p>
-    <div style="display:flex;align-items:center;gap:12px;margin-top:10px"><button class="btn" type="button">Show 24 more</button><span class="muted">124 more people load as you scroll</span></div></div>
 </section>
 <section data-change="129-reports-export-month" id="129-reports-export-month" data-roles="admin leadership pm" data-title="Reports: export month explained" data-nav="no" data-parent="001-amax-foundation-reports">
   <h1>Utilisation in October</h1>
@@ -2310,56 +2357,7 @@ set AUDIT_HASH_KEY (the deployment's audit key)        # exit 1, nothing written
   </div>
 </section>
 
-<!-- ================= Allocations: usability (070) ================= -->
-<section data-change="116-allocations-usability" id="116-allocations-usability" data-roles="admin leadership pm hr" data-title="Allocations: chat drives the screen" data-nav="no" data-parent="001-amax-foundation-allocations">
-  <div class="row head">
-    <div><h1>Allocations and forecast</h1><p class="lede">Showing people starting with Amal in Everyone. Ask amax to change what is shown.</p></div>
-    <div class="actions"><button class="btn">Allocate</button></div>
-  </div>
-  <div class="card" style="margin-bottom:28px">
-    <div class="card-head"><h2>You asked amax</h2></div>
-    <p style="margin:0 0 8px"><b>You:</b> show me Amal</p>
-    <p class="muted" style="margin:0">amax: Amal Perera is in Everyone, not My projects. He is at 100% in October and 60% in November. The screen below shows him.</p>
-  </div>
-  <div class="card" style="margin-bottom:28px">
-    <div class="card-head"><h2>Several changes in chat</h2></div>
-    <p style="margin:0 0 8px"><b>amax:</b> Kasun goes to 50% on Contoso Portal in November, and Nimal takes 40% on HR Insights. That puts Nimal at 140%.</p>
-    <p style="margin:0 0 6px"><b>2 changes ready</b></p>
-    <ul style="margin:0 0 10px;padding-left:18px"><li>Kasun Dias on CON, Nov 2026: 50% <button class="btn sm">Go to card</button></li><li>Nimal Silva on HRI, Nov 2026: 40% <button class="btn sm">Go to card</button></li></ul>
-    <div class="acts"><button class="btn sm primary">Add all</button> <button class="btn sm">Cancel all</button></div>
-    <p class="muted note" style="margin:10px 0 0">On a card, Change something opens a percent box with Update and Back; the card still needs Add it.</p>
-  </div>
-  <div class="card flush" style="margin-bottom:28px">
-    <div class="card-head"><h2>Bench by skill, January</h2><span class="muted" style="font-size:13px">6 people</span></div>
-    <table class="tbl">
-      <caption class="sr">People on the bench in January</caption>
-      <thead><tr><th>Person</th><th>Skill</th></tr></thead>
-      <tbody>
-        <tr><td>Kasun Dias</td><td>.NET</td></tr>
-        <tr><td>Dinesh Wickrama</td><td>.NET</td></tr>
-        <tr><td>Mohamed Rifkhan</td><td>.NET</td></tr>
-        <tr><td>Tharushi Wijesinghe</td><td>React</td></tr>
-        <tr><td>Ishara Perera</td><td>QA</td></tr>
-      </tbody>
-    </table>
-    <p class="muted note" style="padding:0 20px 16px">1 more, ask amax for the full list.</p>
-  </div>
-  <div class="card flush">
-    <div class="card-head"><h2>People by month</h2>
-      <div class="actions"><span class="chip">Delivery team</span><a class="btn" href="#116-allocations-usability">My projects</a><button class="btn">Copy to next month</button></div>
-    </div>
-    <table class="tbl">
-      <thead><tr><th>Person</th><th>Project</th><th>Oct, now</th><th>Nov</th><th>Dec</th></tr></thead>
-      <tbody>
-        <tr><td>Amal Perera</td><td>Fleet Tracker</td><td>100%</td><td>60%</td><td>Not planned</td></tr>
-        <tr class="total"><td>Amal, total</td><td></td><td><b>100%</b></td><td><b>60%</b></td><td>0% free</td></tr>
-      </tbody>
-    </table>
-    <p class="muted note" style="padding:0 20px 16px">No search box, no filter buttons, no dropdowns. Say it to amax.</p>
-  </div>
-</section>
-
-<!-- ================= People (HR records) =================
+<!-- ================= People (HR records) ================= -->
 <section data-change="011-hr-core" id="001-amax-foundation-people" data-roles="admin leadership hr pm" data-title="People" data-icon="user" data-group="people">
   <div class="row head">
     <div><h1>People</h1><p class="lede">184 people in 2 entities. 3 probation reviews are due this month and 2 contracts end in November.</p></div>
