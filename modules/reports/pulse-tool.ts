@@ -12,7 +12,7 @@ export const pulseInput = z.object({
   key: z.string().optional().describe("A month (allocation), a project id (hours) or 'name:date' (away) to narrow the card to one row"),
 });
 
-export const pulseDescription = "The delivery pulse for this month: a plain briefing, utilisation against the target, capacity vs demand for the next five months, who is over-allocated and the bench for the next three, hours logged against the allocation plan per project (red beyond 20%), and who is away in the next 14 days. Only people you may see are counted. card narrows it to one card; key to one row.";
+export const pulseDescription = "The delivery pulse for this month: a plain briefing, utilisation against the target, capacity vs demand for the next six months, who is over-allocated and the bench for the same six, hours logged against the allocation plan per project (red beyond 20%), and who is away in the next 14 days. Only people you may see are counted. card narrows it to one card; key to one row.";
 
 const slice = (p: Pulse, card: (typeof CARDS)[number]) => {
   if (card === "briefing") return { briefing: p.briefing };
