@@ -1,3 +1,4 @@
+import { bandOfPct } from "./look";
 import type { PersonUtilisation } from "../contracts";
 import type { Report } from "../server/view";
 
@@ -7,7 +8,7 @@ export type Filter = { band?: BandKey; find?: string };
 
 const BAND_WORDS: Record<BandKey, string> = { under: "under target", on: "on target", over: "over 100%", none: "with no submitted time yet" };
 
-export const bandOf = (u: number | null, target: number): BandKey => (u === null ? "none" : u > 100 ? "over" : u >= target ? "on" : "under");
+export const bandOf = bandOfPct;
 
 export const filterOf = (raw: { band?: string; find?: string }): Filter => ({
   band: BANDS.find((b) => b === raw.band),

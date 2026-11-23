@@ -10,7 +10,7 @@ export function Stats({ r, p }: { r: Report; p: Pulse }) {
   const free = r.availability.rows.reduce((n, x) => n + (x.freeHours ?? 0), 0);
   const stats: { k: string; value: string; sub: string; bad?: boolean; pin: ReturnType<typeof reportPin> }[] = [
     { k: "People", value: String(r.rows.length), sub: timed === r.rows.length ? "all with time logged" : `${timed} with time logged`, pin: reportPin(`People, ${r.monthName}`, r.month) },
-    { k: "Over-allocated", value: p.allocation.state === "off" ? "–" : String(over), sub: "next 6 months", bad: over > 0, pin: pulsePin("Over-allocated, next 3 months", "allocation") },
+    { k: "Over-allocated", value: p.allocation.state === "off" ? "–" : String(over), sub: "next 6 months", bad: over > 0, pin: pulsePin("Over-allocated, next 6 months", "allocation") },
     { k: "Free hours left", value: r.availability.allocationsOn ? `${hoursText(Math.round(free * 10) / 10)} h` : "–", sub: `rest of ${r.monthName}`, pin: reportPin(`Free hours, rest of ${r.monthName}`, r.month) },
     { k: "Away soon", value: p.away.state === "off" ? "–" : String(p.away.rows.length), sub: "next 14 days", pin: pulsePin("Away soon", "away") },
   ];

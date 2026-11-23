@@ -21,9 +21,9 @@ export const allocation: Section = {
   summary: (d) => {
     const over = [...new Set(d.pulse.allocation.months.flatMap((m) => m.over.map((o) => o.name)))];
     const bench = d.pulse.allocation.months.filter((m) => m.bench > 0);
-    return `${over.length ? `${names(over)} ${over.length === 1 ? "is" : "are"} planned above 100% in the next six months` : "Nobody is planned above 100% in the next three months"}${bench.length ? `; ${names(bench.map((m) => `${m.bench} in ${m.label}`))} on the bench` : ""}.`;
+    return `${over.length ? `${names(over)} ${over.length === 1 ? "is" : "are"} planned above 100% in the next six months` : "Nobody is planned above 100% in the next six months"}${bench.length ? `; ${names(bench.map((m) => `${m.bench} in ${m.label}`))} on the bench` : ""}.`;
   },
-  figures: (d) => [["Over-allocated people", String(new Set(d.pulse.allocation.months.flatMap((m) => m.over.map((o) => o.name))).size), "next three months"]],
+  figures: (d) => [["Over-allocated people", String(new Set(d.pulse.allocation.months.flatMap((m) => m.over.map((o) => o.name))).size), "next six months"]],
   findings: (d) => [
     ...d.pulse.allocation.months.flatMap((m) => m.over.map((o) => `${o.name} is planned at ${o.percent}% in ${m.label}.`)),
     ...d.pulse.allocation.months.filter((m) => m.bench > 0).map((m) => `${m.bench} on the bench in ${m.label} (${m.skills}).`),
