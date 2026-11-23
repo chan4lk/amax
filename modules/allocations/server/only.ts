@@ -7,15 +7,17 @@ import { MAX_MONTHS, personOf, projectNamed, setAllocation, span } from "./servi
 
 const month = z.string().regex(/^\d{4}-\d{2}(-\d{2})?$/, "a month, e.g. 2026-11").transform(monthOf);
 
+export const onlyInput = z.object({ person: z.string().min(2), projectKey: z.string().optional(), work: z.string().min(2).optional(), month, through: month.optional(), percent: z.number().int().min(1).max(200).default(100) })
+  .refine((i) => Boolean(i.projectKey) !== Boolean(i.work), "name a project key or other work, not both")
+  .refine((i) => !i.through || i.through >= i.month, { message: "through can't be before month", path: ["through"] })
+  .refine((i) => !i.through || span(i.month, i.through) <= MAX_MONTHS, { message: `at most ${MAX_MONTHS} months at a time`, path: ["through"] });
+
 export const allocateOnly = defineService({
   scoped: true,
   name: "allocations.allocation.only",
   action: "allocations:allocate",
   resource: "allocations.allocation",
-  input: z.object({ person: z.string().min(2), projectKey: z.string().optional(), work: z.string().min(2).optional(), month, through: month.optional(), percent: z.number().int().min(1).max(200).default(100) })
-    .refine((i) => Boolean(i.projectKey) !== Boolean(i.work), "name a project key or other work, not both")
-    .refine((i) => !i.through || i.through >= i.month, { message: "through can't be before month", path: ["through"] })
-    .refine((i) => !i.through || span(i.month, i.through) <= MAX_MONTHS, { message: `at most ${MAX_MONTHS} months at a time`, path: ["through"] }),
+  input: onlyInput,
   async run(tx, asked, ctx) {
     const input = await projectNamed(tx, asked);
     const through = input.through ?? input.month;
