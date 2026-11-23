@@ -20,16 +20,17 @@ test.beforeEach(async ({ page }) => page.setViewportSize({ width: 1440, height: 
 test("AC1 AC2 utilisation leads with the team's 84%; trend and table readable by screen readers; CSV export; pinned, no forms", async ({ page }) => {
   await signIn(page, "maya@lumenlabs.test", "/reports");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Utilisation in October");
-  await expect(page.locator(".lede")).toHaveText("Billable hours from submitted and approved time ÷ available hours, October to date (Oct 1–16, 12 working days, 96 h per full-time person). Team: 222 ÷ 264 = 84%, against an 80% target.");
-  await expect(page.locator("tr[data-person='Kasun Dias']")).toContainText("80 h2 days medical78.0 h70.0 h88%");
-  await expect(page.locator("tr.total")).toContainText("Team264 h260.5 h222.0 h84%");
+  await expect(page.locator(".lede")).toContainText("Everyone: on track at 84% against the 80% target.");
+  await expect(page.locator(".gc b")).toHaveText("84%");
+  await expect(page.locator(".b-tables:not([hidden]) tr[data-person='Kasun Dias']")).toContainText("80 h2 days medical78.0 h70.0 h88%");
+  await expect(page.locator(".b-tables:not([hidden]) tr.total")).toContainText("Team264 h260.5 h222.0 h84%");
   await expect(page.getByRole("table", { name: "Utilisation per month against the 80% target" }).locator("tbody tr")).toHaveCount(12);
   expect((await csvOf(page)).split("\r\n").at(-1)).toBe('"Team","264","","260.5","222","84"');
   await expect(page.locator("main form, main input, main textarea, main select")).toHaveCount(0);
   expect(await unpinned(page)).toEqual([]);
   expect(await axe(page)).toEqual([]);
 
-  await page.locator("tr[data-person='Kasun Dias'] .pin").click({ force: true });
+  await page.locator(".b-tables:not([hidden]) tr[data-person='Kasun Dias'] .pin").click({ force: true });
   await expect(chat(page).locator(".pinchip > span").last()).toHaveText("Kasun Dias, utilisation in October");
 });
 
@@ -37,9 +38,28 @@ test("AC1 Availability tab: the rest of October after holidays and leave, and th
   await signIn(page, "maya@lumenlabs.test", "/reports");
   await page.getByRole("link", { name: "Availability" }).click();
   await expect(page).toHaveURL(/\/reports\?view=availability$/);
-  await expect(page.locator("tr[data-person='Ayesha Rahman']")).toContainText("63 days annual48 h100%0 h");
+  await expect(page.locator(".b-tables:not([hidden]) tr[data-person='Ayesha Rahman']")).toContainText("63 days annual48 h100%0 h");
   expect(await unpinned(page)).toEqual([]);
   expect(await axe(page)).toEqual([]);
   await page.getByRole("button", { name: "Ask amax to change the utilisation target" }).click();
   await expect(page.getByLabel("Message amax")).toHaveValue("Change the utilisation target from 80% to ");
+});
+
+test("AC1 AC12 AC13 the page reads top to bottom with nothing repeated, and everything already there stays, light and dark, one column on a phone", async ({ page }) => {
+  await signIn(page, "maya@lumenlabs.test", "/reports");
+  const titles = await page.locator("main .bento h2").allTextContents();
+  expect(titles).toEqual(["Billable against available", "Utilisation, last 12 months", "How the percentage is made", "Hours against the plan", "People", "Coming up"]);
+  await page.getByRole("link", { name: "Your people" }).click();
+  await expect(page).toHaveURL(/group=mine/);
+  await expect(page.locator(".lede")).toContainText("Your people:");
+  await expect(page.getByRole("button", { name: "Ask amax to change the utilisation target" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Export as CSV" })).toBeVisible();
+  await expect(page.getByRole("navigation", { name: "Report" }).getByRole("link")).toHaveText(["Utilisation", "Availability"]);
+  await expect(page.locator(".b-tables:not([hidden]) tr.total")).toContainText("Team264 h260.5 h222.0 h84%");
+  expect(await unpinned(page)).toEqual([]);
+  expect(await axe(page)).toEqual([]);
+  await page.emulateMedia({ colorScheme: "dark" });
+  expect(await axe(page)).toEqual([]);
+  await page.setViewportSize({ width: 390, height: 800 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 });

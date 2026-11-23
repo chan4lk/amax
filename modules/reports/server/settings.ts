@@ -8,7 +8,7 @@ import { settingsOf } from "./read";
 const actor = (ctx: { actor: { id: string }; onBehalfOf?: string }) => (ctx.onBehalfOf ? `${ctx.actor.id} for ${ctx.onBehalfOf}` : ctx.actor.id);
 
 export const setUtilisationTarget = defineService({
-  name: "reports.target.set", action: "reports:admin", resource: "reports.settings",
+  name: "reports.target.set", action: "reports:target", resource: "reports.settings",
   input: z.object({ target: z.number().int().min(1).max(100).describe("The utilisation target, in percent") }),
   async run(tx, a, ctx) {
     const before = (await settingsOf(tx)).target;

@@ -8,3 +8,7 @@ import type { ServiceContext } from "./authorize";
 /** GitHub's return to /api/git/github/callback: the module turns its query into the Git accounts screen's query. */
 export const GITHUB_CALLBACK_SLOT = "app.github-callback";
 export type GitHubCallback = (ctx: ServiceContext, params: Record<string, string>) => Promise<Record<string, string>>;
+
+export const REPORT_EXPORT_SLOT = "app.report-export";
+export type ReportDownload = { status: number; text: string } | { status: 200; filename: string; contentType: string; body: Uint8Array<ArrayBuffer> };
+export type ReportExport = (ctx: ServiceContext, params: Record<string, string>) => Promise<ReportDownload>;

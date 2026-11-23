@@ -9,7 +9,8 @@ import { AskButton } from "./AskButton";
 import { NotificationList } from "./List";
 import { pollInbox } from "./poll";
 
-const POLL_MS = 60_000;
+const POLL_MS = 10_000;
+const AFTER_CHANGE_MS = [500, 2000, 4000, 7000, 11000];
 const NAV_DELAY_MS = 400;
 const unreadIds = (i: Inbox) => i.groups.flatMap((g) => g.items.filter((n) => !n.read));
 const label = (n: number) => (n ? `Notifications, ${n} unread` : "Notifications, none unread");
@@ -20,8 +21,9 @@ function useInbox(initial: Inbox, now: number) {
   const [state, setState] = useState({ inbox: initial, now });
   const pathname = usePathname();
   const first = useRef(true);
-  const refresh = () => void pollInbox().then(setState, () => undefined);
-  useEffect(() => setState({ inbox: initial, now }), [initial, now]);
+  const newer = (next: { inbox: Inbox; now: number }) => setState((s) => (next.now >= s.now ? next : s));
+  const refresh = () => void pollInbox().then(newer, () => undefined);
+  useEffect(() => newer({ inbox: initial, now }), [initial, now]);
   // Shortly after the move, so a navigation that leaves the app (signing out) unmounts the bell first.
   useEffect(() => {
     if (first.current) return void (first.current = false);
@@ -30,7 +32,10 @@ function useInbox(initial: Inbox, now: number) {
   }, [pathname]);
   useEffect(() => {
     const id = window.setInterval(() => document.visibilityState === "visible" && refresh(), POLL_MS);
-    return () => window.clearInterval(id);
+    let soon: number[] = [];
+    const onChange = () => { soon.forEach(window.clearTimeout); soon = AFTER_CHANGE_MS.map((ms) => window.setTimeout(refresh, ms)); };
+    window.addEventListener("amax:changed", onChange);
+    return () => { window.clearInterval(id); soon.forEach(window.clearTimeout); window.removeEventListener("amax:changed", onChange); };
   }, []);
   return state;
 }
@@ -78,7 +83,7 @@ export function BellMenu({ initial, now }: { initial: Inbox; now: number }) {
             <h2 id="bell-title" tabIndex={-1}>Notifications{inbox.unread > 0 && <> <span className="chip">{inbox.unread} unread</span></>}</h2>
             {inbox.unread > 0 && <AskButton label="Mark all read" prompt="Mark all my notifications read" pin={{ label: "My notifications", tool: "get_notifications", args: {} }} />}
           </div>
-          {empty ? <p className="muted">Nothing yet. Approvals, releases and reminders show up here.</p> : <NotificationList groups={inbox.groups} now={at} />}
+          {empty ? <p className="muted">You're all caught up. New approvals, releases and reminders show up here.</p> : <NotificationList groups={inbox.groups} now={at} />}
           <div className="foot"><Link href="/notifications">Notification settings</Link></div>
         </div>
       )}

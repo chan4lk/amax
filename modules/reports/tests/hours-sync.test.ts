@@ -13,7 +13,7 @@ describe.skipIf(!hasDb)("070 reports keeps up with corrected and deleted time (P
   beforeAll(async () => { db = await reportsDb(); }, 240_000);
   afterAll(() => db?.t.drop());
 
-  const tharushi = async () => (await db.call<Report>("maya", "get_utilisation", {})).rows.find((x) => x.name === "Tharushi Wijesinghe");
+  const tharushi = async () => (await db.call<Report>("maya", "get_utilisation", {})).rows.find((x) => x.name === "Tharushi Wijesinghe" && !x.noTime);
   const copy = (id: string) => db.q(sql`select hours::float as hours, revision, deleted_at is not null as deleted from reports.logged_hours where entry_id = ${id}`);
   const deliver = (h: EventHandlerDef, payload: object) => db.tx((tx) => h.handle({ tx, tenantId: T, event: { id: randomUUID(), name: h.event, payload: payload as Record<string, unknown> } }));
 

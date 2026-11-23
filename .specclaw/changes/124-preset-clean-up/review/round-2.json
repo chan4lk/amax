@@ -1,0 +1,121 @@
+{
+ "counts": {
+  "blocker": 0,
+  "major": 1,
+  "minor": 0
+ },
+ "escalated": [],
+ "files": [
+  "apps/web/app/actions/chat.ts",
+  "apps/web/lib/take-action.ts",
+  "apps/web/tests/take-action-plan.test.ts",
+  "modules/allocations/server/only.ts",
+  "modules/allocations/tests/only-cap.test.ts",
+  "modules/reports/pulse-tool.ts"
+ ],
+ "final": false,
+ "findings": [
+  {
+   "file": "modules/reports/pulse-tool.ts",
+   "fp": "1660df3604ab",
+   "in_delta": true,
+   "line": 15,
+   "message": "This fixes only the case that was reported. pulseDescription now hard-codes the word 'six' but is not built from SPAN (pulse-allocation.ts:9). The second copy the previous round named is unchanged: get_load_summary in modules/allocations/mcp-views.ts:50 still says 'Per month (the five shown)', although gridFor returns six months. Fix: export one window constant and build both descriptions from it, so the text and the cards cannot drift apart again.",
+   "original_severity": "major",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B1",
+   "scenario": "Someone asks chat 'how loaded are we for the next months?'. The model calls get_load_summary, reads 'the five shown' and says five months, while the tool returns and the page shows six.",
+   "severity": "major"
+  },
+  {
+   "file": "modules/reports/server/export-scope.ts",
+   "fp": "91fa72973c21",
+   "in_delta": false,
+   "line": 31,
+   "message": "Still open, and nothing in this round touches it. No test drives export_report with a project set while Delivery or Allocations is switched off. modules/reports/tests contains no module-off case for export_report. Add a table-driven test through reportsDb with three cases: Delivery off, Allocations off (each refused with the new message), and both on (a report is built).",
+   "original_severity": "major",
+   "pass": "review",
+   "pre_existing": true,
+   "rule": "B2",
+   "scenario": "Someone reverts the module-off guard in export-scope.ts. export_report {project:'Fleet Tracker'} with Allocations off then builds a report with an empty plan, and every test still passes.",
+   "severity": "major"
+  },
+  {
+   "file": "modules/allocations/server/services.ts",
+   "fp": "e26686ec5c13",
+   "in_delta": false,
+   "line": 64,
+   "message": "Still open. The standing branch of setAllocation still returns early with an AllocationSet payload that has no over, personUserId, project, month, total or byUser, and it emits no monthSettled events. Fix: run loadOf over the months written or removed, build the same payload as the month path (lines 78-81), and emit the fixed events.",
+   "original_severity": "major",
+   "pass": "review",
+   "pre_existing": true,
+   "rule": "B1",
+   "scenario": "A PM sets Ayesha on CON at 80% until further notice while she is already at 50% elsewhere. The allocation is written at 130%, but no 'over' notification reaches the PM. Ending a standing allocation that had caused an over-allocation never clears the urgent notification.",
+   "severity": "major"
+  },
+  {
+   "file": "modules/reports/server/pulse-allocation.ts",
+   "fp": "8bf8e1904473",
+   "in_delta": false,
+   "line": 31,
+   "message": "Still open. allocationCards ignores its month and today parameters and builds the window and outlook from new Date(), while the away card uses Reports' pinned today. Fix: build the window from the report's today or month (windowMonths(new Date(today), SPAN)) and pass that date to monthOutlook.",
+   "original_severity": "major",
+   "pass": "review",
+   "pre_existing": true,
+   "rule": "B4",
+   "scenario": "Reports is on October 2026 and the calendar date is 2026-11-23. The capacity and over-allocation cards cover Nov to Apr, while the rest of the report and the away card follow October.",
+   "severity": "major"
+  },
+  {
+   "file": "modules/allocations/mcp.ts",
+   "fp": "106c1f889488",
+   "in_delta": false,
+   "line": 36,
+   "message": "Still open. propose and note default the month with windowMonths(new Date(),1)[0] when the card is drafted, and run works the default out again from the clock when the card is confirmed. The stored card input has no month, and the same default is written three times (B4). Fix: write the defaulted month into the input before the card is stored, so run uses that stored value.",
+   "original_severity": "major",
+   "pass": "review",
+   "pre_existing": true,
+   "rule": "B5",
+   "scenario": "A card is drafted on 2026-11-30 at 23:58 with no month. The card and its over-allocation note are for November. The person confirms at 00:01 on 2026-12-01, and the allocation is written to December.",
+   "severity": "major"
+  }
+ ],
+ "head": "c8d8871ff535f9593b44edce121df808b64a96a6",
+ "impact": [
+  "apps/mock/public/mock/index.html",
+  "apps/web/app/(app)/overview.css",
+  "apps/web/app/(app)/settings/audit/audit.css",
+  "apps/web/app/(app)/settings/backups/ExportsCard.tsx",
+  "apps/web/app/(app)/settings/hub.css",
+  "apps/web/app/(app)/settings/keys/keys.css",
+  "apps/web/app/(app)/settings/retention/retention.css",
+  "apps/web/app/(app)/settings/settings.css",
+  "apps/web/app/(app)/suggestions/suggestions.css",
+  "apps/web/app/(public)/welcome/sections.css",
+  "apps/web/app/(public)/welcome/welcome.css",
+  "apps/web/components/chat/Chat.tsx",
+  "apps/web/components/chat/RevealOnce.tsx",
+  "apps/web/components/chat/SecretConfirm.tsx",
+  "apps/web/tests/e2e/allocations.spec.ts",
+  "apps/web/tests/registry-038.test.ts",
+  "modules/allocations/mcp-context.ts",
+  "modules/allocations/mcp-views.ts",
+  "modules/allocations/mcp.ts",
+  "modules/allocations/server/attention.ts"
+ ],
+ "model": "opus",
+ "passes": [
+  "review",
+  "design"
+ ],
+ "prompt_chars": 66064,
+ "round": 2,
+ "since": "160ec3be",
+ "status": "open",
+ "system_chars": 43375,
+ "tier": "review",
+ "tools": "Read,Grep,Glob",
+ "ts_end": 1795441588,
+ "ts_start": 1795441482
+}

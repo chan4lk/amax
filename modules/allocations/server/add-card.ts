@@ -10,7 +10,7 @@ import { readAlloc } from "./read";
 import { STANDING_WITH_END, standingWithEnd } from "./rules";
 import { freeIn } from "./team";
 
-export type AddInput = { person?: string; projectKey?: string; work?: string; month?: string; through?: string; percent?: number; standing?: boolean };
+export type AddInput = { person?: string; projectKey?: string; work?: string; month?: string; through?: string; percent?: number; standing?: boolean; overOk?: boolean };
 const PICKS = 4;
 
 export const freeLabel = (free: number | null) => (free === null ? "" : free === 0 ? " · fully allocated" : free < 0 ? ` · over-allocated by ${-free}%` : ` · ${free}% free this month`);

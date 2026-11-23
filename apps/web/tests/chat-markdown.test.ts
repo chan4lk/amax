@@ -30,3 +30,26 @@ describe("chat markdown", () => {
     expect(html("a | b | c")).toBe("<p style=\"margin:0 0 6px\">a | b | c</p>");
   });
 });
+
+describe("chat markdown colours for capacity answers", () => {
+  it("paints spare green, over and short red, not planned amber and FTE figures violet", () => {
+    const out = html("**Kasun Dias** has 20% free. Your people: 2.8 FTE planned of 3.0 FTE, 0.2 FTE spare. Ayesha is over at 120%. 0.4 FTE short. Nimal is not planned.");
+    expect(out).toContain('<span class="c-good">20% free</span>');
+    expect(out).toContain('<span class="c-good">0.2 FTE spare</span>');
+    expect(out).toContain('<span class="c-fte">2.8 FTE</span>');
+    expect(out).toContain('<span class="c-fte">3.0 FTE</span>');
+    expect(out).toContain('<span class="over">over</span>');
+    expect(out).toContain('<span class="over">120%</span>');
+    expect(out).toContain('<span class="over">0.4 FTE short</span>');
+    expect(out).toContain('<span class="c-none">not planned</span>');
+  });
+
+  it("keeps the old rules: no longer over and nobody is over stay plain, 100% and 99% stay plain", () => {
+    const out = html("Nobody is over. She is no longer over. 100% and 99% are fine.");
+    expect(out).not.toContain('class="over"');
+  });
+
+  it("a team gap is never turned into a percent colour", () => {
+    expect(html("4.4 FTE spare")).toBe('<p style="margin:0 0 6px"><span class="c-good">4.4 FTE spare</span></p>');
+  });
+});

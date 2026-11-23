@@ -53,7 +53,7 @@ describe.skipIf(!hasDb)("054 copy month waits for chat's confirm; a grid row pin
     const maya = await db.as("maya", "PM");
     const [con] = await db.tx((tx) => tx.execute(sql`select id from delivery.project where key = 'CON'`));
     const row = await registry.call(maya, "get_allocation", { person: "LL-0417", projectId: con.id }, { source: "chat" });
-    expect(row).toMatchObject({ person: "Kasun Dias", project: "Contoso Portal", percents: [20, 20, 20, null, null] });
-    expect(await registry.call(maya, "get_allocation", { person: "LL-0417" }, { source: "chat" })).toMatchObject({ employeeNo: "LL-0417", totals: [100, 100, 100, 0, 0] });
+    expect(row).toMatchObject({ person: "Kasun Dias", project: "Contoso Portal", percents: [20, 20, 20, null, null, null] });
+    expect(await registry.call(maya, "get_allocation", { person: "LL-0417" }, { source: "chat" })).toMatchObject({ employeeNo: "LL-0417", totals: [100, 100, 100, 0, 0, 0] });
   }, 60_000);
 });

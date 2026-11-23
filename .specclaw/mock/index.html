@@ -1366,6 +1366,360 @@ set AUDIT_HASH_KEY (the deployment's audit key)        # exit 1, nothing written
   <h1>Dev starts fresh</h1>
   <p class="lede">No screen changes. <code>pnpm --filter @amax/web dev</code> no longer keeps Turbopack's compile cache between starts, so a leftover <code>apps/web/.next</code> from another branch can't put the browser into a refresh loop. Nobody deletes <code>.next</code> by hand any more.</p>
 </section>
+<section data-change="116-allocations-usability" id="116-allocations-usability" data-roles="admin leadership pm hr" data-title="Allocations: chat drives the screen" data-nav="no" data-parent="001-amax-foundation-allocations">
+  <div class="row head">
+    <div><h1>Allocations and forecast</h1><p class="lede">Showing people starting with Amal in Everyone. Ask amax to change what is shown.</p></div>
+    <div class="actions"><button class="btn">Allocate</button></div>
+  </div>
+  <div class="card" style="margin-bottom:28px">
+    <div class="card-head"><h2>You asked amax</h2></div>
+    <p style="margin:0 0 8px"><b>You:</b> show me Amal</p>
+    <p class="muted" style="margin:0">amax: Amal Perera is in Everyone, not My projects. He is at 100% in October and 60% in November. The screen below shows him.</p>
+  </div>
+  <div class="card" style="margin-bottom:28px">
+    <div class="card-head"><h2>Several changes in chat</h2></div>
+    <p style="margin:0 0 8px"><b>amax:</b> Kasun goes to 50% on Contoso Portal in November, and Nimal takes 40% on HR Insights. That puts Nimal at 140%.</p>
+    <p style="margin:0 0 6px"><b>2 changes ready</b></p>
+    <ul style="margin:0 0 10px;padding-left:18px"><li>Kasun Dias on CON, Nov 2026: 50% <button class="btn sm">Go to card</button></li><li>Nimal Silva on HRI, Nov 2026: 40% <button class="btn sm">Go to card</button></li></ul>
+    <div class="acts"><button class="btn sm primary">Add all</button> <button class="btn sm">Cancel all</button></div>
+    <p class="muted note" style="margin:10px 0 0">On a card, Change something opens a percent box with Update and Back; the card still needs Add it.</p>
+  </div>
+  <div class="card flush" style="margin-bottom:28px">
+    <div class="card-head"><h2>Bench by skill, January</h2><span class="muted" style="font-size:13px">6 people</span></div>
+    <table class="tbl">
+      <caption class="sr">People on the bench in January</caption>
+      <thead><tr><th>Person</th><th>Skill</th></tr></thead>
+      <tbody>
+        <tr><td>Kasun Dias</td><td>.NET</td></tr>
+        <tr><td>Dinesh Wickrama</td><td>.NET</td></tr>
+        <tr><td>Mohamed Rifkhan</td><td>.NET</td></tr>
+        <tr><td>Tharushi Wijesinghe</td><td>React</td></tr>
+        <tr><td>Ishara Perera</td><td>QA</td></tr>
+      </tbody>
+    </table>
+    <p class="muted note" style="padding:0 20px 16px">1 more, ask amax for the full list.</p>
+  </div>
+  <div class="card flush">
+    <div class="card-head"><h2>People by month</h2>
+      <div class="actions"><span class="chip">Delivery team</span><a class="btn" href="#116-allocations-usability">My projects</a><button class="btn">Copy to next month</button></div>
+    </div>
+    <table class="tbl">
+      <thead><tr><th>Person</th><th>Project</th><th>Oct, now</th><th>Nov</th><th>Dec</th></tr></thead>
+      <tbody>
+        <tr><td>Amal Perera</td><td>Fleet Tracker</td><td>100%</td><td>60%</td><td>Not planned</td></tr>
+        <tr class="total"><td>Amal, total</td><td></td><td><b>100%</b></td><td><b>60%</b></td><td>0% free</td></tr>
+      </tbody>
+    </table>
+    <p class="muted note" style="padding:0 20px 16px">No search box, no filter buttons, no dropdowns. Say it to amax.</p>
+  </div>
+</section>
+
+<!-- ================= People (HR records) =================
+<section data-change="117-allocations-take-action-record" id="117-allocations-take-action-record" data-roles="pm" data-title="Allocations: chat shows the record" data-nav="no" data-parent="001-amax-foundation-allocations">
+  <h1>Take action shows the record</h1>
+  <p class="lede">Nothing on the Allocations page moves. Only the chat wording changes. Fictional data.</p>
+  <div class="cols even">
+    <div class="card">
+      <div class="card-head"><h2>Take action, on your project</h2></div>
+      <div class="bubble" style="max-width:92%;padding:12px 14px;border-radius:16px;background:var(--sunken,#F4F2FB)"><p style="margin:0"><b>Ayesha Rahman</b> is at 120% in February 2027. Contoso Portal 60%, HR Insights 60%, above 100% capacity. What would you like to do?</p></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><h2>Fix someone in Everyone</h2></div>
+      <div class="bubble me" style="align-self:flex-end;max-width:80%;padding:10px 14px;border-radius:16px;background:var(--violet-soft,#ECE8FF);margin-bottom:10px">Fix Dinesh in January</div>
+      <div class="bubble" style="max-width:92%;padding:12px 14px;border-radius:16px;background:var(--sunken,#F4F2FB)"><p style="margin:0 0 8px">You can't change <b>Dinesh Wickrama</b>: Payments API is managed by Rukshan.</p><p style="margin:0">Here is the record. January: Payments API 100%, Internal tools 20%, total 120%.</p></div>
+    </div>
+  </div>
+</section>
+<section data-change="118-allocations-bot-facts" id="118-allocations-bot-facts" data-roles="pm" data-title="Allocations: right date, group and numbers" data-nav="no" data-parent="001-amax-foundation-allocations">
+  <h1>The bot gets the facts right</h1>
+  <p class="lede">Nothing on the Allocations page moves. Only chat answers change. Fictional data, today is 6 November 2026.</p>
+  <div class="cols even">
+    <div class="card"><div class="card-head"><h2>Precisely, same group</h2></div>
+      <div style="max-width:92%;padding:10px 14px;border-radius:16px;margin:0 0 8px;align-self:flex-end;background:var(--violet-soft,#ECE8FF)">What is the average allocation this month</div><div style="max-width:92%;padding:10px 14px;border-radius:16px;margin:0 0 8px;background:var(--sunken,#F4F2FB)"><b>Your three people average 93%</b> in November 2026.<br>Ayesha Rahman 100%, Kasun Dias 80%, Nimal Silva 100%.</div>
+      <div style="max-width:92%;padding:10px 14px;border-radius:16px;margin:0 0 8px;align-self:flex-end;background:var(--violet-soft,#ECE8FF)">No, precisely</div><div style="max-width:92%;padding:10px 14px;border-radius:16px;margin:0 0 8px;background:var(--sunken,#F4F2FB)"><b>Your three people average 93.33%</b> in November 2026.</div>
+    </div>
+    <div class="card"><div class="card-head"><h2>Who has room</h2></div>
+      <div style="max-width:92%;padding:10px 14px;border-radius:16px;margin:0 0 8px;align-self:flex-end;background:var(--violet-soft,#ECE8FF)">Who has the most capacity</div><div style="max-width:92%;padding:10px 14px;border-radius:16px;margin:0 0 8px;background:var(--sunken,#F4F2FB)"><b>Kasun Dias has the most room: 20% free</b> in November 2026.<br>Ayesha Rahman and Nimal Silva are fully allocated.</div>
+      <div style="max-width:92%;padding:10px 14px;border-radius:16px;margin:0 0 8px;align-self:flex-end;background:var(--violet-soft,#ECE8FF)">Which project has the most demand</div><div style="max-width:92%;padding:10px 14px;border-radius:16px;margin:0 0 8px;background:var(--sunken,#F4F2FB)"><b>Fleet Tracker: 1.1 people</b> in November 2026.<br>HR Insights 0.9, Contoso Portal 0.8.</div>
+    </div>
+  </div>
+</section>
+<section data-change="119-allocations-bot-capacity-answers" id="119-allocations-bot-capacity-answers" data-roles="pm" data-title="Allocations: capacity answers in colour" data-nav="no" data-parent="001-amax-foundation-allocations">
+  <h1>Capacity answers, in colour</h1>
+  <p class="lede">Nothing on the page moves. The bot reads capacity, planned and spare from worked-out numbers. Red is a problem, green is room, amber is nothing planned, violet is FTE. Fictional data, today is 7 November 2026.</p>
+  <div class="cols even">
+    <div class="card"><div class="card-head"><h2>How loaded are we</h2></div>
+      <div style="max-width:92%;padding:10px 14px;border-radius:16px;margin:0 0 8px;align-self:flex-end;background:var(--violet-soft,#ECE8FF)">what is the capacity and demand this month</div><div style="max-width:92%;padding:10px 14px;border-radius:16px;margin:0 0 8px;background:var(--sunken,#F4F2FB)"><b>November 2026, your 3 people:</b> <b style="color:#5B44D6">2.8 FTE</b> planned of <b style="color:#5B44D6">3.0 FTE</b> capacity, <b style="color:#0F6E4A">0.2 FTE spare</b>.<br><b style="color:#0F6E4A">Kasun Dias: 20% free</b>.</div>
+      <div style="max-width:92%;padding:10px 14px;border-radius:16px;margin:0 0 8px;align-self:flex-end;background:var(--violet-soft,#ECE8FF)">if Kasun is at 80% is his capacity 0.8</div><div style="max-width:92%;padding:10px 14px;border-radius:16px;margin:0 0 8px;background:var(--sunken,#F4F2FB)">No. His capacity stays <b style="color:#5B44D6">1.0 FTE</b> from HR. Planned <b style="color:#5B44D6">0.8</b>, so <b style="color:#0F6E4A">0.2 FTE spare</b>.</div>
+    </div>
+    <div class="card"><div class="card-head"><h2>Problems and gaps</h2></div>
+      <div style="max-width:92%;padding:10px 14px;border-radius:16px;margin:0 0 8px;align-self:flex-end;background:var(--violet-soft,#ECE8FF)">who is over in february</div><div style="max-width:92%;padding:10px 14px;border-radius:16px;margin:0 0 8px;background:var(--sunken,#F4F2FB)"><b>Ayesha Rahman</b> is <b style="color:#A8321F">over</b> at <b style="color:#A8321F">120%</b>. <b>Kasun Dias</b> is <b style="color:#A8321F">over</b> at <b style="color:#A8321F">110%</b>. <b>Nimal Silva</b> is <b style="color:#8A5200">not planned</b>.</div>
+      <div style="max-width:92%;padding:10px 14px;border-radius:16px;margin:0 0 8px;align-self:flex-end;background:var(--violet-soft,#ECE8FF)">the gap is 4.4 FTE, is that 440%</div><div style="max-width:92%;padding:10px 14px;border-radius:16px;margin:0 0 8px;background:var(--sunken,#F4F2FB)">No. A gap across people is <b style="color:#0F6E4A">4.4 FTE spare</b>, not a percent.</div>
+    </div>
+  </div>
+</section>
+<section data-change="120-allocations-demo-look" id="120-allocations-demo-look" data-roles="admin leadership pm" data-title="Allocations: the demo's look" data-nav="no" data-parent="001-amax-foundation-allocations">
+  <h1>Allocations and forecast</h1>
+  <p class="lede">Changes to <a href="#116-allocations-usability">Allocations</a>: the page follows the product owner's demo. Fictional data.</p>
+  <div style="display:grid;grid-template-columns:1fr 280px;gap:16px">
+    <div>
+      <div class="card pinnable"><h2>Capacity and demand, six months</h2><span class="muted">hover a month for FTE, spare or short, and who is over 100%</span>
+        <svg viewBox="0 0 600 110" width="100%" height="110" role="img" aria-label="Capacity and demand lines"><polyline points="10,40 110,40 210,38 310,38 410,36 510,36" fill="none" stroke="#2FCB8C" stroke-width="3"/><polyline points="10,52 110,48 210,30 310,24 410,18 510,16" fill="none" stroke="#7B61FF" stroke-width="3"/></svg></div>
+      <div class="card pinnable" style="margin-top:16px"><h2>People by month</h2><span class="muted">Your people · Everyone</span>
+        <div style="position:relative;height:34px;margin-top:10px;background:#F5F3FC;border-radius:12px"><div style="position:absolute;left:2%;width:30%;top:6px;height:22px;border-radius:11px;background:#7B61FF;color:#fff;font-size:12px;font-weight:600;padding:0 8px;line-height:22px">Fleet Tracker 100%</div><div style="position:absolute;left:36%;width:28%;top:6px;height:22px;border-radius:11px;background:#2FB5A0;color:#fff;font-size:12px;font-weight:600;padding:0 8px;line-height:22px">HR Insights 60%</div><div style="position:absolute;left:68%;width:30%;top:4px;height:26px;border-radius:12px;background:repeating-linear-gradient(135deg,#FDEFC7 0 7px,#FFF7E3 7px 14px);font-size:12px;padding:5px 8px">Bench</div></div>
+        <p class="muted" style="margin:8px 0 0">A month over 100% gets a red frame and a Fix chip that opens chat.</p></div>
+    </div>
+    <div>
+      <div class="card pinnable"><h2>Conflicts</h2><p><b>Ayesha Rahman</b> 120% in December</p><button class="btn" type="button">Take action</button></div>
+      <div class="card pinnable" style="margin-top:16px"><h2>Bench by month</h2><p><b>3</b> free in March</p></div>
+      <div class="card pinnable" style="margin-top:16px"><h2>Rolling off</h2><p>Amal has no work planned from February</p></div>
+    </div>
+  </div>
+</section>
+<section data-change="121-allocations-switch-speed" id="121-allocations-switch-speed" data-roles="admin leadership pm" data-title="Allocations: a fast switch, whole chip and box" data-nav="no" data-parent="001-amax-foundation-allocations">
+  <h1>Allocations and forecast</h1>
+  <p class="lede">Changes to <a href="#120-allocations-demo-look">Allocations</a>: switching groups no longer lags, and nothing is cut off. Fictional data.</p>
+  <div class="card pinnable"><h2>Who is on what, month by month</h2>
+    <div style="position:relative;height:70px;margin:14px 0 26px;background:#F5F3FC;border-radius:12px">
+      <div style="position:absolute;left:34%;width:16%;top:-6px;bottom:-10px;border:2px solid #C2412D;border-radius:12px;background:rgba(253,231,228,.4)"><b style="position:absolute;top:-11px;right:6px;background:#C2412D;color:#fff;border-radius:6px;padding:1px 7px;font-size:10.5px">120%</b><span style="position:absolute;left:50%;bottom:-13px;transform:translateX(-50%);background:#fff;color:#C2412D;border-radius:999px;padding:3px 9px;box-shadow:0 2px 6px rgba(0,0,0,.2);font-size:12px">Fix</span></div>
+    </div>
+    <p class="muted">The Fix chip shows whole under the frame, and can be clicked anywhere on it.</p></div>
+  <div class="card pinnable" style="margin-top:16px"><h2>Capacity runway</h2>
+    <div style="margin:10px 0 0 40%;width:220px;padding:12px;border-radius:16px;background:#fff;box-shadow:0 0 0 1px rgba(123,97,255,.14),0 14px 24px -14px rgba(60,40,160,.45)"><b>April</b> forecast<br>Capacity 144 FTE · Demand 0 FTE<br><span class="muted">the whole box shows, also for the last month</span></div></div>
+</section>
+<section data-change="123-allocations-rows-on-demand" id="123-allocations-rows-on-demand" data-roles="admin leadership pm" data-title="Allocations: rows as you scroll" data-nav="no" data-parent="001-amax-foundation-allocations">
+  <h1>Allocations and forecast</h1>
+  <p class="lede">Changes to <a href="#120-allocations-demo-look">Allocations</a>: with Everyone chosen the board builds the first people and the rest as you scroll. Fictional data.</p>
+  <div class="card pinnable"><h2>Who is on what, month by month</h2>
+    <p class="muted">Amal Dissanayake, Amal Gunawardena, Amal Liyanage … (20 people built)</p>
+    <div style="display:flex;align-items:center;gap:12px;margin-top:10px"><button class="btn" type="button">Show 24 more</button><span class="muted">124 more people load as you scroll</span></div></div>
+</section>
+<section data-change="125-reports-delivery-pulse" id="125-reports-delivery-pulse" data-roles="admin leadership pm" data-title="Reports: delivery pulse" data-nav="no" data-parent="001-amax-foundation-reports">
+  <h1>Utilisation in October</h1>
+  <p class="lede">Billable hours from submitted and approved time ÷ available hours, October to date (Oct 1–16, 12 working days, 96 h per full-time person). Team: 222 ÷ 264 = 84%, against an 80% target.</p>
+  <div class="card pinnable" style="margin-bottom:20px">
+    <h2>This month in a line</h2>
+    <p style="font-size:17px;line-height:1.55;margin:8px 0 0">October is on track: utilisation is <b>84%</b> against an 80% target. December is the one to watch, with demand <b style="color:#B33A28">1 FTE over</b> capacity and <b>Ayesha Rahman</b> and <b>Kasun Dias</b> both at <b style="color:#B33A28">120%</b>. <b>Fleet Tracker</b> has logged <b style="color:#B33A28">30% behind</b> its plan.</p>
+  </div>
+  <div class="card pinnable" style="margin-bottom:20px">
+    <div class="card-head"><h2>Utilisation, last 12 months</h2><span class="muted" style="font-size:13px">Target 80%</span><button class="btn sm">Change target</button></div>
+    <div class="big">84% <span class="muted" style="font-size:15px;font-weight:500">222 h of 264 h</span></div>
+    <svg class="chart viz" data-kind="line" data-labels="Nov,Dec,Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct" data-series="Target|#F2A93B|dash|80,80,80,80,80,80,80,80,80,80,80,80;Billable|#7B61FF|area|72,68,74,77,79,81,78,83,82,80,84,84" data-max="100" data-step="25" viewBox="0 0 1000 220" role="img" aria-label="Utilisation per month against an 80% target"></svg>
+    <div class="legend"><span><i style="background:var(--violet)"></i>Billable utilisation</span><span><i style="background:repeating-linear-gradient(90deg,#F2A93B 0 5px,transparent 5px 9px)"></i>Target</span></div>
+  </div>
+  <div class="cols even" style="margin-bottom:28px">
+    <div class="card pinnable">
+      <div class="card-head"><h2>Capacity vs demand</h2><span class="chip bad">Dec over by 1 FTE</span></div>
+      <svg class="chart viz" data-kind="line" data-labels="Oct,Nov,Dec,Jan,Feb" data-series="Capacity|#2FCB8C|dash|140,141,142,142,143;Demand|#7B61FF|area|138,140,143,136,138" data-min="130" data-max="150" data-step="5" viewBox="0 0 560 210" role="img" aria-label="Capacity and demand in FTE, October to February; December demand is 143 against capacity 142"></svg>
+      <div class="legend"><span><i style="background:var(--violet)"></i>Demand</span><span><i style="background:#2FCB8C"></i>Capacity</span></div>
+    </div>
+    <div class="card pinnable">
+      <div class="card-head"><h2>Over-allocated and bench</h2></div>
+      <div class="row line pinnable"><span><b>December</b></span><span><span class="chip bad">2 over</span> Ayesha Rahman 120%, Kasun Dias 120%</span></div>
+      <div class="row line pinnable"><span><b>January</b></span><span><span class="chip">5 on the bench</span> .NET 2, Data 1, QA 1, React 1</span></div>
+      <div class="row line pinnable"><span><b>February</b></span><span class="muted">Nobody over. 3 on the bench.</span></div>
+    </div>
+    <div class="card pinnable">
+      <div class="card-head"><h2>Hours vs plan, by project</h2><span class="muted" style="font-size:13px">October to date</span></div>
+      <table class="tbl"><thead><tr><th>Project</th><th class="num">Planned</th><th class="num">Logged</th><th>Drift</th></tr></thead>
+        <tbody>
+        <tr class="pinnable"><td>Contoso Portal</td><td class="num">142 h</td><td class="num">150 h</td><td><span class="chip">+6%</span></td></tr>
+        <tr class="pinnable"><td>Fleet Tracker</td><td class="num">120 h</td><td class="num">84 h</td><td><span class="chip bad">−30% behind plan</span></td></tr>
+        <tr class="pinnable"><td>HR Insights</td><td class="num">60 h</td><td class="num">63 h</td><td><span class="chip">+5%</span></td></tr>
+        </tbody></table>
+    </div>
+    <div class="card pinnable">
+      <div class="card-head"><h2>Away soon</h2><span class="muted" style="font-size:13px">next 14 days</span></div>
+      <div class="row line pinnable"><span class="who"><span class="av sm a2">KD</span>Kasun Dias</span><span>Mon 19 – Tue 20 Oct · casual</span></div>
+      <div class="row line pinnable"><span class="who"><span class="av sm a3">NS</span>Nimal Silva</span><span>Mon 26 Oct · annual, half day</span></div>
+    </div>
+  </div>
+  <div class="card flush pinnable">
+    <div class="card-head"><div class="seg" role="group" aria-label="Report"><button aria-pressed="true">Utilisation</button><button aria-pressed="false">Availability</button><button aria-pressed="false">Estimate vs actual</button></div><button class="btn"><svg viewBox="0 0 24 24"><path d="M12 4v11m-4-4 4 4 4-4M5 20h14"/></svg>Export</button></div>
+    <div class="scroll-x"><table class="tbl">
+      <thead><tr><th>Person</th><th class="num">Available</th><th class="num">Logged</th><th class="num">Billable</th><th style="min-width:280px">Utilisation</th></tr></thead>
+      <tbody>
+      <tr class="pinnable"><td><div class="who"><span class="av sm a3">NS</span>Nimal Silva</div></td><td class="num">96 h</td><td class="num">98.5 h</td><td class="num">88.0 h</td><td><div class="row"><div class="meter" style="flex:1"><i style="width:92%;background:var(--mint)"></i></div><b>92%</b></div></td></tr>
+      <tr class="pinnable"><td><div class="who"><span class="av sm a2">KD</span>Kasun Dias</div></td><td class="num">80 h<small>2 days medical</small></td><td class="num">78.0 h</td><td class="num">70.0 h</td><td><div class="row"><div class="meter" style="flex:1"><i style="width:88%;background:var(--mint)"></i></div><b>88%</b></div></td></tr>
+      <tr class="pinnable"><td><div class="who"><span class="av sm a4">AR</span>Ayesha Rahman</div></td><td class="num">88 h<small>1 day casual</small></td><td class="num">84.0 h</td><td class="num">64.0 h</td><td><div class="row"><div class="meter" style="flex:1"><i style="width:73%;background:var(--amber)"></i></div><b>73%</b></div></td></tr>
+      <tr class="total pinnable"><td>Team</td><td class="num">264 h</td><td class="num">260.5 h</td><td class="num">222.0 h</td><td><div class="row"><div class="meter" style="flex:1"><i style="width:84%;background:var(--violet)"></i></div><b>84%</b></div></td></tr>
+      </tbody></table></div>
+  </div>
+
+  <h2 style="margin:34px 0 4px">States the cards can be in</h2>
+  <p class="muted" style="margin:0 0 14px">Every card, and every row above, has a + (shown on hover) to ask amax about it.</p>
+  <div class="cols even">
+    <div class="card pinnable">
+      <h2>When nothing is wrong</h2>
+      <p style="font-size:17px;line-height:1.55;margin:8px 0 12px">October is on track: utilisation is <b>84%</b> against an 80% target. Nobody is over-allocated, every month has the people it needs, and every project is close to plan.</p>
+      <div class="row line"><span><b>Capacity vs demand</b></span><span><span class="chip">All five months covered</span></span></div>
+      <div class="row line"><span><b>Over-allocated</b></span><span class="muted">Nobody over in the next three months.</span></div>
+      <div class="row line"><span><b>Away soon</b></span><span class="muted">Nobody is away in the next 14 days.</span></div>
+    </div>
+    <div class="card pinnable">
+      <h2>A project over its plan</h2>
+      <table class="tbl"><thead><tr><th>Project</th><th class="num">Planned</th><th class="num">Logged</th><th>Drift</th></tr></thead>
+        <tbody>
+        <tr><td>Contoso Portal</td><td class="num">142 h</td><td class="num">190 h</td><td><span class="chip bad">+34% over plan</span></td></tr>
+        <tr><td>Fleet Tracker</td><td class="num">120 h</td><td class="num">84 h</td><td><span class="chip bad">−30% behind plan</span></td></tr>
+        <tr><td>HR Insights</td><td class="num">60 h</td><td class="num">63 h</td><td><span class="chip">+5%</span></td></tr>
+        </tbody></table>
+      <p class="muted" style="margin:12px 0 0;font-size:13px">Red when logged hours are more than 20% above or below plan.</p>
+    </div>
+    <div class="card pinnable">
+      <h2>A module is not installed</h2>
+      <div class="row line"><span><b>Capacity vs demand</b></span><span class="muted">Allocations is not installed.</span></div>
+      <div class="row line"><span><b>Hours vs plan</b></span><span class="muted">Allocations is not installed.</span></div>
+      <div class="row line"><span><b>Away soon</b></span><span class="muted">Leave is not installed.</span></div>
+      <p class="muted" style="margin:12px 0 0;font-size:13px">The card says so and the page still works.</p>
+    </div>
+  </div>
+</section>
+<section data-change="126-reports-export" id="126-reports-export" data-roles="admin leadership pm" data-title="Reports: export from chat" data-nav="no" data-parent="001-amax-foundation-reports">
+  <h1>A report from chat</h1>
+  <p class="lede">Changes to <a href="#125-reports-delivery-pulse">Reports</a>: nothing on the page moves. Ask amax for a report and download it as PDF or Word. Fictional data.</p>
+  <div class="cols even">
+    <div class="card">
+      <div class="card-head"><h2>Chat</h2><span class="muted" style="font-size:13px">on the Reports page</span></div>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div class="bubble me" style="align-self:flex-end;max-width:80%;padding:10px 14px;border-radius:16px;background:var(--violet-soft,#ECE8FF)">Give me a PDF report for October</div>
+        <div class="bubble" style="max-width:90%;padding:12px 14px;border-radius:16px;background:var(--sunken,#F4F2FB)">
+          <span class="chip agent" style="margin-bottom:8px">export_report</span>
+          <p style="margin:8px 0 12px">Here's October to date for your three people: utilisation 84% against 80%, two people over-allocated, three projects behind plan.</p>
+          <div style="display:flex;align-items:center;gap:14px;padding:12px 14px;border-radius:14px;background:#fff;border:1px solid var(--line,#E6E3F2)">
+            <div style="width:40px;height:48px;border-radius:8px;background:#FDE7E4;color:#A8321F;display:grid;place-items:center;font-weight:700;font-size:12px">PDF</div>
+            <div style="flex:1;min-width:0"><b>Utilisation report, October 2026</b><div class="muted" style="font-size:13px">Oct 1–16 · PDF · 3 pages · made for Demo Project Manager</div></div>
+            <button class="btn primary sm"><svg viewBox="0 0 24 24"><path d="M12 4v11m-4-4 4 4 4-4M5 20h14"/></svg>Download</button>
+          </div>
+        </div>
+        <div class="bubble me" style="align-self:flex-end;max-width:80%;padding:10px 14px;border-radius:16px;background:var(--violet-soft,#ECE8FF)">Same for Fleet Tracker, as Word</div>
+        <div class="bubble" style="max-width:90%;padding:12px 14px;border-radius:16px;background:var(--sunken,#F4F2FB)">
+          <div style="display:flex;align-items:center;gap:14px;padding:12px 14px;border-radius:14px;background:#fff;border:1px solid var(--line,#E6E3F2)">
+            <div style="width:40px;height:48px;border-radius:8px;background:#E3EEFF;color:#1F5BC4;display:grid;place-items:center;font-weight:700;font-size:12px">DOC</div>
+            <div style="flex:1;min-width:0"><b>Fleet Tracker report, October 2026</b><div class="muted" style="font-size:13px">Oct 1–16 · Word · 2 pages · 3 people</div></div>
+            <button class="btn primary sm"><svg viewBox="0 0 24 24"><path d="M12 4v11m-4-4 4 4 4-4M5 20h14"/></svg>Download</button>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap"><span class="chip">How is delivery this month?</span><span class="chip">Download this month as a PDF report</span></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head"><h2>Page 1 of the PDF</h2><span class="muted" style="font-size:13px">A4</span></div>
+      <div style="background:#fff;color:#1F1B3A;border:1px solid #E6E3F2;border-radius:6px;padding:28px 30px;box-shadow:0 10px 30px -18px rgba(40,30,110,.35);font-size:12px;line-height:1.5">
+        <div style="font-size:20px;font-weight:700">Utilisation report, October 2026</div>
+        <div style="color:#5D5A73;margin-bottom:12px">Oct 1–16 · made for Demo Project Manager on 16 Oct 2026 · amax</div>
+        <p style="margin:0 0 12px">October is on track: utilisation is <b>84%</b> against an 80% target. Ayesha Rahman and Nimal Silva are over-allocated in October; Fleet Tracker has logged 42% behind its plan.</p>
+        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:12px">
+          <div style="border:1px solid #E6E3F2;border-radius:6px;padding:6px"><div style="color:#5D5A73;font-size:10px">Utilisation</div><b style="font-size:16px">84%</b></div>
+          <div style="border:1px solid #E6E3F2;border-radius:6px;padding:6px"><div style="color:#5D5A73;font-size:10px">Capacity</div><b style="font-size:16px">Covered</b></div>
+          <div style="border:1px solid #E6E3F2;border-radius:6px;padding:6px"><div style="color:#5D5A73;font-size:10px">Over-allocated</div><b style="font-size:16px;color:#A8321F">2</b></div>
+          <div style="border:1px solid #E6E3F2;border-radius:6px;padding:6px"><div style="color:#5D5A73;font-size:10px">Off plan</div><b style="font-size:16px;color:#A8321F">3</b></div>
+          <div style="border:1px solid #E6E3F2;border-radius:6px;padding:6px"><div style="color:#5D5A73;font-size:10px">Away soon</div><b style="font-size:16px">2</b></div>
+        </div>
+        <svg class="chart viz" data-kind="line" data-labels="Nov,Dec,Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct" data-series="Target|#F2A93B|dash|80,80,80,80,80,80,80,80,80,80,80,80;Billable|#7B61FF|area|72,68,74,77,79,81,78,83,82,80,84,84" data-max="100" data-step="25" viewBox="0 0 560 170" role="img" aria-label="Utilisation per month against an 80% target"></svg>
+        <table style="width:100%;border-collapse:collapse;margin-top:10px;font-size:11px">
+          <thead><tr style="background:#F1EEFF"><th style="text-align:left;padding:4px">Person</th><th style="text-align:right;padding:4px">Available</th><th style="text-align:right;padding:4px">Logged</th><th style="text-align:right;padding:4px">Billable</th><th style="text-align:right;padding:4px">Utilisation</th></tr></thead>
+          <tbody>
+            <tr><td style="padding:4px">Nimal Silva</td><td style="text-align:right;padding:4px">96 h</td><td style="text-align:right;padding:4px">98.5 h</td><td style="text-align:right;padding:4px">88.0 h</td><td style="text-align:right;padding:4px">92%</td></tr>
+            <tr><td style="padding:4px">Kasun Dias</td><td style="text-align:right;padding:4px">80 h</td><td style="text-align:right;padding:4px">78.0 h</td><td style="text-align:right;padding:4px">70.0 h</td><td style="text-align:right;padding:4px">88%</td></tr>
+            <tr><td style="padding:4px">Ayesha Rahman</td><td style="text-align:right;padding:4px">88 h</td><td style="text-align:right;padding:4px">84.0 h</td><td style="text-align:right;padding:4px">64.0 h</td><td style="text-align:right;padding:4px">73%</td></tr>
+            <tr style="font-weight:700;background:#F1EEFF"><td style="padding:4px">Team</td><td style="text-align:right;padding:4px">264 h</td><td style="text-align:right;padding:4px">260.5 h</td><td style="text-align:right;padding:4px">222.0 h</td><td style="text-align:right;padding:4px">84%</td></tr>
+          </tbody>
+        </table>
+        <div style="color:#5D5A73;font-size:10px;margin-top:14px;border-top:1px solid #E6E3F2;padding-top:6px">From submitted and approved time. People you may not see are left out. Page 1 of 3.</div>
+      </div>
+    </div>
+  </div>
+</section>
+<section data-change="127-reports-group-switch" id="127-reports-group-switch" data-roles="admin leadership pm" data-title="Reports: Your people and Everyone" data-nav="no" data-parent="001-amax-foundation-reports">
+  <h1>Utilisation in October</h1>
+  <p class="lede">Changes to <a href="#125-reports-delivery-pulse">Reports</a>: a Your people / Everyone switch beside the title. The table, the cards and the graph follow it. Fictional data.</p>
+  <div class="card">
+    <div class="card-head"><h2>Utilisation, last 12 months</h2><span class="muted">Your people 78% · Everyone 74% · Target 80%</span></div>
+    <div style="display:flex;gap:10px;align-items:center;margin:6px 0 10px"><span class="chip">Your people</span><span class="chip agent">Everyone</span><span class="muted" style="font-size:13px">the chosen group is the solid violet line, the other group the green line</span></div>
+    <svg viewBox="0 0 600 120" width="100%" height="120" role="img" aria-label="Two utilisation lines"><polyline points="10,70 60,64 110,58 160,62 210,50 260,48 310,54 360,46 410,42 460,44 510,36 560,34" fill="none" stroke="#7B61FF" stroke-width="3"/><polyline points="10,84 60,80 110,74 160,76 210,66 260,64 310,66 360,60 410,58 460,60 510,52 560,50" fill="none" stroke="#2FCB8C" stroke-width="2.5"/><line x1="10" x2="590" y1="40" y2="40" stroke="#F2A93B" stroke-dasharray="5 5"/></svg>
+  </div>
+</section>
+<section data-change="128-reports-demo-look" id="128-reports-demo-look" data-roles="admin leadership pm" data-title="Reports: the demo's look" data-nav="no" data-parent="001-amax-foundation-reports">
+  <h1>Utilisation in October</h1>
+  <p class="lede">Changes to <a href="#125-reports-delivery-pulse">Reports</a>: the page follows the product owner's demo, and the Your people / Everyone switch changes every card at once. Fictional data.</p>
+  <div style="display:grid;grid-template-columns:1fr 2fr;gap:16px">
+    <div class="card pinnable"><h2>Billable against available</h2><span class="muted">against the 80% target</span>
+      <div style="width:130px;height:130px;margin:10px auto;border-radius:50%;border:14px solid #8F7BFF;display:grid;place-items:center;font-size:30px;font-weight:800">84%</div>
+      <div style="display:flex;gap:8px"><div style="flex:1;text-align:center;padding:8px;border-radius:14px;background:#F5F3FC"><b>222 h</b><br><span class="muted" style="font-size:12px">billable</span></div><div style="flex:1;text-align:center;padding:8px;border-radius:14px;background:#F5F3FC"><b>264 h</b><br><span class="muted" style="font-size:12px">available</span></div><div style="flex:1;text-align:center;padding:8px;border-radius:14px;background:#F5F3FC"><b>261 h</b><br><span class="muted" style="font-size:12px">logged</span></div></div></div>
+    <div class="card pinnable"><h2>Utilisation, last 12 months</h2><span class="muted">Your people 84% · Everyone 81% · target 80%</span>
+      <svg viewBox="0 0 600 120" width="100%" height="120" role="img" aria-label="Two utilisation lines"><polyline points="10,80 60,86 110,70 160,64 210,56 260,60 310,50 360,52 410,56 460,46 510,40 560,40" fill="none" stroke="#7B61FF" stroke-width="4"/><polyline points="10,86 60,90 110,78 160,72 210,66 260,68 310,60 360,62 410,64 460,56 510,50 560,50" fill="none" stroke="#3FB8E0" stroke-width="2.5"/><line x1="10" x2="590" y1="58" y2="58" stroke="#F2A93B" stroke-dasharray="6 6"/></svg></div>
+  </div>
+  <div class="card pinnable" style="margin-top:16px"><h2>Needs attention</h2><p><b>Fleet Tracker</b> −22% behind plan <button class="btn" type="button">Take action</button></p></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px">
+    <div class="card pinnable"><h2>How the percentage is made</h2><p class="muted">Contracted 288 h, leave −24 h, available 264 h, logged 261 h, billable 222 h</p></div>
+    <div class="card pinnable"><h2>Hours against the plan</h2><p class="muted">Contoso Portal +6%, Fleet Tracker −22%, HR Insights −13%</p></div>
+  </div>
+  <div class="card pinnable" style="margin-top:16px"><h2>People</h2><p class="muted">Nimal Silva 92%, Kasun Dias 88%, Ayesha Rahman 73%, ranked by utilisation; the top 15 show, everyone is in the table below</p></div>
+  <div class="card pinnable" style="margin-top:16px"><h2>Coming up</h2><p class="muted">Oct 19 – 20 Ayesha away · Jan Ayesha planned at 110% · Mar 3 on the bench</p></div>
+  <div class="card" style="margin-top:16px"><h2>Utilisation · Availability</h2><p class="muted">The tables, Export and Change target stay as they were.</p></div>
+</section>
+<section data-change="129-reports-export-month" id="129-reports-export-month" data-roles="admin leadership pm" data-title="Reports: export month explained" data-nav="no" data-parent="001-amax-foundation-reports">
+  <h1>Utilisation in October</h1>
+  <p class="lede">Changes to <a href="#126-reports-export">Reports export</a>: a month Reports hasn't reached is explained in chat. Fictional data.</p>
+  <div class="card pinnable"><h2>Chat</h2>
+    <p><b>You:</b> Create the utilisation report for November</p>
+    <p><b>amax:</b> November 2026 hasn't started yet. Reports' latest month is October 2026. Want that one?</p>
+    <p><b>You:</b> Yes</p>
+    <p><b>amax:</b> Utilisation report, October 2026 · Oct 1–16 · PDF · 2 pages</p></div>
+</section>
+<section data-change="130-reports-person-plan" id="130-reports-person-plan" data-roles="admin leadership pm" data-title="Reports: a person's project percentages" data-nav="no" data-parent="001-amax-foundation-reports">
+  <h1>Utilisation report: Ayesha Rahman, October 2026</h1>
+  <p class="lede">Changes to <a href="#126-reports-export">Reports export</a>: a person's report can list their planned percent on each project. Fictional data.</p>
+  <div class="card pinnable"><h2>5. Planned allocation by project</h2>
+    <table class="tbl"><thead><tr><th>Person</th><th>Project</th><th class="num">Planned</th></tr></thead><tbody>
+      <tr><td>Ayesha Rahman</td><td>Fleet Tracker</td><td class="num">50%</td></tr>
+      <tr><td></td><td>Contoso Portal</td><td class="num">30%</td></tr>
+      <tr><td></td><td>HR Insights</td><td class="num">30%</td></tr>
+      <tr><td></td><td><b>Total</b></td><td class="num"><b>110%</b></td></tr></tbody></table>
+    <p class="muted">Planned allocation is the percent of the person's time planned on each project, not hours worked.</p></div>
+</section>
+<section data-change="131-reports-extra-hours" id="131-reports-extra-hours" data-roles="admin leadership pm" data-title="Reports: extra hours said" data-nav="no" data-parent="001-amax-foundation-reports">
+  <h1>Utilisation in October</h1>
+  <p class="lede">Changes to <a href="#125-reports-delivery-pulse">Reports</a>: a person who logged more than their available hours is told apart from their percentage. Fictional data.</p>
+  <div class="card pinnable"><h2>Findings</h2><p>Nimal Silva logged 98.5 h, 2.5 h more than the 96 h available.</p>
+    <table class="tbl"><thead><tr><th>Person</th><th class="num">Available</th><th class="num">Logged</th><th class="num">Billable</th><th class="num">Utilisation</th><th>Note</th></tr></thead><tbody>
+      <tr><td>Nimal Silva</td><td class="num">96 h</td><td class="num">98.5 h</td><td class="num">88 h</td><td class="num">92%</td><td>2.5 h more than available</td></tr></tbody></table></div>
+</section>
+<section data-change="132-reports-several-people" id="132-reports-several-people" data-roles="admin leadership pm" data-title="Reports: one report for several people" data-nav="no" data-parent="001-amax-foundation-reports">
+  <h1>Utilisation report: Nimal Silva, Kasun Dias and Ayesha Rahman, October 2026</h1>
+  <p class="lede">Changes to <a href="#126-reports-export">Reports export</a>: one request for several named people gives one report. Fictional data.</p>
+  <div class="card pinnable"><h2>Utilisation by person</h2>
+    <table class="tbl"><thead><tr><th>Person</th><th class="num">Available</th><th class="num">Logged</th><th class="num">Billable</th><th class="num">Utilisation</th></tr></thead><tbody>
+      <tr><td>Nimal Silva</td><td class="num">96 h</td><td class="num">98.5 h</td><td class="num">88 h</td><td class="num">92%</td></tr>
+      <tr><td>Kasun Dias</td><td class="num">80 h</td><td class="num">78 h</td><td class="num">70 h</td><td class="num">88%</td></tr>
+      <tr><td>Ayesha Rahman</td><td class="num">88 h</td><td class="num">84 h</td><td class="num">64 h</td><td class="num">73%</td></tr>
+      <tr><td><b>Team</b></td><td class="num">264 h</td><td class="num">260.5 h</td><td class="num">222 h</td><td class="num">84%</td></tr></tbody></table>
+    <p class="muted">A name that can't be found refuses the whole report and says which name.</p></div>
+</section>
+<section data-change="133-reports-load-only-what-is-asked" id="133-reports-load-only-what-is-asked" data-roles="admin leadership pm" data-title="Reports: only what is asked is read" data-nav="no" data-parent="001-amax-foundation-reports">
+  <h1>Utilisation report: Nimal Silva, October 2026</h1>
+  <p class="lede">Changes to <a href="#126-reports-export">Reports export</a>: a report about named people reads only them, and their trend is their own. Fictional data.</p>
+  <div class="card pinnable"><h2>Trend</h2><p>Over the last twelve months utilisation of Nimal Silva moved from 72% in Nov to 92% in Oct.</p>
+    <p class="muted">Not "team utilisation": the line is his. A report that does not ask for the trend does not read twelve months.</p></div>
+</section>
+<section data-change="134-reports-same-months-as-allocations" id="134-reports-same-months-as-allocations" data-roles="admin leadership pm" data-title="Reports: Coming up matches Allocations" data-nav="no" data-parent="001-amax-foundation-reports">
+  <h1>Utilisation in October</h1>
+  <p class="lede">Changes to <a href="#125-reports-delivery-pulse">Reports</a>: Coming up lists the same months as the Allocations tab. Fictional data.</p>
+  <div class="card pinnable"><h2>Coming up</h2><p class="muted">the next two weeks and the next six months</p>
+    <p><b>NOVEMBER</b> · over-allocated: Ayesha Rahman is planned at 110%</p>
+    <p><b>FEBRUARY</b> · over-allocated: Kasun Dias is planned at 110%</p>
+    <p class="muted">The same two people the Allocations tab's Conflicts card lists.</p></div>
+</section>
+<section data-change="135-reports-no-unasked-reports" id="135-reports-no-unasked-reports" data-roles="admin leadership pm" data-title="Reports chat: no unasked files" data-nav="no" data-parent="001-amax-foundation-reports">
+  <h1>Utilisation in October</h1>
+  <p class="lede">Changes to <a href="#126-reports-export">Reports export</a>: a question is answered in chat; a file is made only when asked for. Fictional data.</p>
+  <div class="card pinnable"><h2>Chat</h2>
+    <p><b>You:</b> Tell me about Nimal</p>
+    <p><b>amax:</b> <b>Nimal Silva is at 92% in October</b>: 88 h billable of 96 h available; logged 98.5 h, 2.5 h more than available. Want a PDF of this?</p>
+    <p><b>You:</b> Yes, as a PDF</p>
+    <p><b>amax:</b> Utilisation report: Nimal Silva, October 2026 · PDF · 2 pages</p></div>
+</section>
 <!-- ================= 068 Overview deltas ================= -->
 <section data-change="073-time-workflow-enhancements" id="073-time-workflow-enhancements" data-roles="all" data-title="Time: weekend and reminders" data-nav="no" data-parent="001-amax-foundation-time">
   <h1>Time: weekend hours, reminders, This week</h1>

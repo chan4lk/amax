@@ -1,7 +1,11 @@
 import { declarePayload, defineModule } from "@amax/core";
+import { chatSuggestions } from "./chat-suggestions";
+import { reportRules } from "./chat-rules";
 import { EVENTS, type HolidaySet, type TargetSet } from "./contracts";
+import { REPORT_EXPORT_SLOT } from "@amax/core/server";
 import { reportsFixtures } from "./fixtures";
 import { mcpTools } from "./mcp";
+import { reportExport } from "./server/export-slot";
 import { hoursCorrectedHandler, hoursDeletedHandler, hoursHandler } from "./server/hours";
 import { weekStatusHandlers } from "./server/status";
 import { ReportsPage } from "./ui/ReportsPage";
@@ -15,13 +19,15 @@ export default defineModule({
   group: "Work",
   order: 40,
   dependsOn: ["hr"],
-  integratesWith: ["time", "leave", "allocations"],
-  permissions: ["reports:read", "reports:admin"],
+  integratesWith: ["time", "leave", "allocations", "delivery"],
+  permissions: ["reports:read", "reports:target", "reports:admin"],
   // Who opens Reports (the mock's admin, leadership, PM and finance); what each sees is still limited
-  // to the people whose time, hr record and leave they may see. Admin holds reports:admin.
-  grants: { Leadership: READ, PM: READ, Finance: READ },
+  grants: { Leadership: [...READ, "reports:target"], PM: [...READ, "reports:target"], Finance: READ },
   routes: [{ path: "", title: "Reports", component: ReportsPage }],
   mcpTools,
+  chatSuggestions,
+  provides: { [REPORT_EXPORT_SLOT]: reportExport },
+  chatRules: reportRules,
   // The hours read model mirrors time.entry (logged, corrected and deleted entries, 070): kept as long as timesheets are (seven years from the day).
   retention: [
     { table: "reports.logged_hours", label: "Logged hours (reports copy)", subject: ["user_id"], fields: ["user_id", "hours"], class: "personal", period: "P7Y", start: { at: ["day"] }, action: "delete" },

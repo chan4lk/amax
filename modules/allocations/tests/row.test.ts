@@ -6,7 +6,7 @@ vi.mock("../server/grid", () => ({ gridFor: async () => grid.value }));
 const { getAllocation } = await import("../server/row");
 
 const person = (employeeNo: string, name: string) => ({ personId: employeeNo, employeeNo, name, initials: "", totals: [50], capacity: [100],
-  lines: [{ projectId: "p-1", label: "Contoso Portal", manages: false, percents: [50] }] });
+  lines: [{ projectId: "p-1", label: "Contoso Portal", manages: false, editable: true, percents: [50] }] });
 const v = {} as Viewer;
 
 // 057: get_allocation never answers with whichever namesake comes first.

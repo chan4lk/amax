@@ -21,6 +21,7 @@ export type PersonUtilisation = {
   utilisation: number | null;
   /** Some hours' timesheet status couldn't be read (072): no %, and the row stays out of the team figure. */
   hoursIncomplete?: boolean;
+  noTime?: boolean;
 };
 
 /**
@@ -38,3 +39,6 @@ export async function utilisation(tx: Tx, viewer: Viewer, range: { from: string;
   if (!can(viewer, "reports:read")) throw new ForbiddenError("reports:read", "reports");
   return utilisationOf(await loadInputs(tx, viewer, range), range);
 }
+
+export { buildExport, ExportQuery } from "./server/export";
+export { ExportRefused } from "./server/export-data";

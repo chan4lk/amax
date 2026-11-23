@@ -6,11 +6,14 @@ import { utilisationOf } from "./figures";
 import { loadInputs, type Inputs } from "./inputs";
 import { read, settingsOf } from "./read";
 import { ledeOf } from "./lede";
+import { groupOf, rosterOf, type Group } from "./roster";
+import { heatOf, type Heat } from "./heat";
 
 export type Trend = { month: string; label: string; utilisation: number | null }[];
 export type Report = {
-  month: string; monthName: string; range: Range; span: string; workingDays: number; target: number; lede: string; notes: string[];
-  trend: Trend; rows: PersonUtilisation[]; team: TeamUtilisation; availability: Availability;
+  group: Group; month: string; monthName: string; range: Range; span: string; workingDays: number; target: number; lede: string; notes: string[];
+  trend: Trend; rows: PersonUtilisation[]; team: TeamUtilisation; availability: Availability; heat: Heat;
+  titles: Record<string, string>;
 };
 
 const span = (r: Range) => (r.from.slice(0, 7) === r.to.slice(0, 7) ? `${shortDay(r.from)}–${Number(r.to.slice(8))}` : `${shortDay(r.from)}–${shortDay(r.to)}`);
@@ -27,15 +30,19 @@ const trendOf = (inputs: Inputs, month: string, today: string): Trend =>
     return { month: m, label: monthName(m, "short"), utilisation: r ? utilisationOf(inputs, r).team.utilisation : null };
   });
 
-/** The Reports screen for a month (default: this month to date), as the viewer may see it. */
-export async function getReport(v: Viewer, month?: string): Promise<Report> {
+export type ReportParts = { trend?: boolean; heat?: boolean; availability?: boolean };
+
+export async function getReport(v: Viewer, month?: string, asked?: string, opts: { only?: Set<string>; parts?: ReportParts } = {}): Promise<Report> {
+  const parts = { trend: true, heat: true, availability: true, ...opts.parts };
+  const group = groupOf(v, asked);
   if (month && !MONTH.test(month)) throw new Error("give the month as YYYY-MM");
   return read(v, async (tx) => {
     const { target, today } = await settingsOf(tx);
     const m = month ?? monthOfDay(today);
     const range = rangeOf(m, today);
     if (!range) throw new Error(`${monthName(m)} ${m.slice(0, 4)} hasn't started yet`);
-    const inputs = await loadInputs(tx, v, { from: `${shiftMonth(m, -11)}-01`, to: monthEnd(m) });
+    const back = parts.trend ? 11 : parts.heat ? 5 : 0;
+    const inputs = await loadInputs(tx, v, { from: `${shiftMonth(m, -back)}-01`, to: monthEnd(m) }, await rosterOf(tx, v, m, group), opts.only);
     const { rows, team } = utilisationOf(inputs, range);
     const workingDays = workingDaysOf(rows, inputs, range);
     const name = monthName(m);
@@ -46,9 +53,11 @@ export async function getReport(v: Viewer, month?: string): Promise<Report> {
       ...(team.statusUnknown ? [`${team.statusUnknown} ${team.statusUnknown === 1 ? "person is" : "people are"} left out of the team figure: some of their hours' timesheet status couldn't be read.`] : []),
     ];
     return {
-      month: m, monthName: name, range, span: span(range), workingDays, target, notes,
+      group, month: m, monthName: name, range, span: span(range), workingDays, target, notes,
       lede: ledeOf({ name, span: span(range), workingDays, perPerson: workingDays * HOURS_PER_DAY, team, target, toDate: range.to < monthEnd(m) }),
-      trend: trendOf(inputs, m, today), rows, team, availability: await availabilityOf(tx, v, inputs, rows, m, today),
+      titles: Object.fromEntries(inputs.people.filter((p) => rows.some((r) => r.userId === p.userId)).map((p) => [p.userId, p.title])),
+      trend: parts.trend ? trendOf(inputs, m, today) : [], heat: parts.heat ? heatOf(inputs, rows, m, today) : { months: [], rows: [] }, rows, team,
+      availability: parts.availability ? await availabilityOf(tx, v, inputs, rows, m, today) : { range: null, allocationsOn: false, rows: [] },
     };
   });
 }

@@ -1,0 +1,11 @@
+{
+  "change": "125-reports-delivery-pulse",
+  "phase": "verify",
+  "branch": "",
+  "phases": {
+    "proposal": {"status":"approved","at":"2026-11-05T07:50:50Z"},
+    "tasks": {"status":"done","at":"2026-11-05T07:53:40Z"},
+    "build": {"status":"done","at":"2026-11-05T08:18:28Z"},
+    "verify": {"status":"done","at":"2026-11-17T09:29:21Z"}
+  }
+}

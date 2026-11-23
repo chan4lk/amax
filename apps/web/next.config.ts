@@ -10,6 +10,7 @@ const config: NextConfig = {
   // 082: no compile cache kept between dev starts. One left from another branch went stale and reloaded the page on
   // every jobs tick (Windows). Builds keep their cache.
   experimental: { externalDir: true, turbopackFileSystemCacheForDev: false },
+  serverExternalPackages: ["pdfkit"],
 };
 
 export default config;

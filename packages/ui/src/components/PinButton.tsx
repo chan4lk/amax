@@ -7,7 +7,7 @@ import type { PinRef } from "../pins";
 export type { PinRef };
 
 /** `quiet` (106): the intent opens chat without its "tell me the details" line, so the page's suggestions lead. */
-export const openChat = (detail: { pin?: PinRef; intent?: string; prompt?: string; quiet?: boolean }) => window.dispatchEvent(new CustomEvent("amax:chat", { detail }));
+export const openChat = (detail: { pin?: PinRef; intent?: string; prompt?: string; quiet?: boolean; take?: string }) => window.dispatchEvent(new CustomEvent("amax:chat", { detail }));
 
 export function PinButton({ pin, inline }: { pin: PinRef; inline?: boolean }) {
   return (

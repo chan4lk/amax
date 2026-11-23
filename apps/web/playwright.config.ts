@@ -5,7 +5,7 @@ const port = Number(process.env.E2E_PORT ?? 3500); // parallel worktrees set the
 export default defineConfig({
   testDir: "tests/e2e",
   // Signed-in flows need Postgres: playwright.auth.config.ts (pnpm e2e:auth).
-  testIgnore: /(admin|auth|delivery|sections|delivery-visual|ai|ai-usage|mcp|chat|chat-first|pins|releases|secrets|workflows|audit|retention|retention-visual|api|api-visual|notifications|suggestions|backups|backups-visual|landing|overview|set-up-project|set-up-project-fields|project-team|git-accounts)\.spec\.ts|amx\.setup\.ts/,
+  testIgnore: /(admin|auth|delivery|sections|delivery-visual|ai|ai-usage|mcp|chat|chat-first|pins|releases|secrets|workflows|audit|retention|retention-visual|api|api-visual|notifications|suggestions|backups|backups-visual|landing|overview|set-up-project|set-up-project-fields|project-team|git-accounts|allocations)\.spec\.ts|amx\.setup\.ts/,
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   reporter: process.env.CI ? "github" : "list",

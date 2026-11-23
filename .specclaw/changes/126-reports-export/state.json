@@ -1,0 +1,10 @@
+{
+  "change": "126-reports-export",
+  "phase": "verify",
+  "branch": "",
+  "phases": {
+    "proposal": {"status":"approved","at":"2026-11-05T10:37:05Z"},
+    "tasks": {"status":"done","at":"2026-11-05T10:39:28Z"},
+    "verify": {"status":"done","at":"2026-11-17T09:29:33Z"}
+  }
+}

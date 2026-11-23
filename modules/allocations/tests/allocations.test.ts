@@ -19,11 +19,11 @@ describe.skipIf(!hasDb)("allocations against Postgres", () => {
     const grid = await gridFor(await db.as("maya", "PM"), { today: TODAY });
     expect(grid.people.map((p) => p.name)).toEqual(["Ayesha Rahman", "Kasun Dias", "Nimal Silva"]);
     const by = (n: string) => grid.people.find((p) => p.name === n)!;
-    expect(by("Ayesha Rahman").totals).toEqual([100, 100, 120, 100, 100]);
-    expect(by("Kasun Dias").totals).toEqual([100, 100, 100, 0, 0]);
+    expect(by("Ayesha Rahman").totals).toEqual([100, 100, 120, 100, 100, 0]);
+    expect(by("Kasun Dias").totals).toEqual([100, 100, 100, 0, 0, 0]);
     expect(by("Nimal Silva").lines.map((l) => [l.label, l.manages])).toEqual([["Contoso Portal", false], ["Fleet Tracker", true]]);
-    expect(grid.months.map((m) => m.forecast)).toEqual([false, false, false, true, true]);
-    expect(headlines(grid)).toEqual({ over: [{ name: "Ayesha Rahman", month: "2026-12-01" }], idle: [{ name: "Kasun Dias", month: "2027-01-01" }] });
+    expect(grid.months.map((m) => m.forecast)).toEqual([false, false, false, true, true, true]);
+    expect(headlines(grid)).toEqual({ over: [{ name: "Ayesha Rahman", month: "2026-12-01" }], idle: [{ name: "Ayesha Rahman", month: "2027-03-01" }, { name: "Kasun Dias", month: "2027-01-01" }, { name: "Nimal Silva", month: "2027-03-01" }] });
   });
 
   it("AC-2 capacity (hr FTE) and demand match fixtures.md; January bench is 6 by skill; works without the optional leave module", async () => {
@@ -46,7 +46,7 @@ describe.skipIf(!hasDb)("allocations against Postgres", () => {
     const audit = await db.tx((tx) => tx.execute(sql`select action, after from core.audit_event where action like 'allocations.%' order by seq`));
     expect(audit.map((a) => a.action)).toEqual(["allocations.allocation.set", "allocations.month.copy"]);
     const events = await db.tx((tx) => tx.execute(sql`select name from core.event where name like 'allocations.%' order by created_at, id`));
-    expect(events.map((e) => e.name)).toEqual(["allocations.allocation.set", "allocations.month.copied"]);
+    expect(events.map((e) => e.name).sort()).toEqual(["allocations.allocation.set", "allocations.month.copied", "allocations.month.settled", "allocations.month.settled"]);
     const intent = (manifest.chatIntents as { id: string; tool: string }[]).find((i) => i.id === "allocations.allocate")!;
     expect(manifest.mcpTools!.map((t) => t.name)).toContain(intent.tool);
     // A second copy finds those rows already planned: skipped, not forbidden.

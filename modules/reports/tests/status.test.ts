@@ -11,7 +11,7 @@ describe.skipIf(!hasDb)("072 AC-6 utilisation counts submitted and approved week
   beforeAll(async () => { db = await reportsDb(); }, 240_000);
   afterAll(() => db?.t.drop());
 
-  const hers = async () => (await db.call<Report>("maya", "get_utilisation", {})).rows.find((x) => x.name === "Tharushi Wijesinghe")?.billableHours ?? null;
+  const hers = async () => (await db.call<Report>("maya", "get_utilisation", {})).rows.find((x) => x.name === "Tharushi Wijesinghe" && !x.noTime)?.billableHours ?? null;
   const step = async (key: string, tool: string, args: object) => { await db.call(key, tool, args); await db.tick(); await db.tick(); return hers(); };
   const week = { person: "tharushi@lumenlabs.test", week: "2026-W42" };
 

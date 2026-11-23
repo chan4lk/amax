@@ -10,10 +10,13 @@ export type { Reader } from "@amax/hr/contracts";
 /** One person's share of a month on a delivery project (projectId) or on other work (work). Percent of a full-time month. */
 export type Allocation = { id: string; personId: string; projectId: string | null; work: string | null; month: string; percent: number };
 
-export const EVENTS = { allocationSet: "allocations.allocation.set", monthCopied: "allocations.month.copied" } as const;
+export const EVENTS = { allocationSet: "allocations.allocation.set", monthCopied: "allocations.month.copied", fixSuggested: "allocations.fix.suggested", monthSettled: "allocations.month.settled" } as const;
+export type MonthSettled = { personUserId: string; month: string };
 /** Emitted for every allocate call: the months written, and percent 0 when the rows were removed. */
 /** `standing` (107): set or ended until further notice; `months` are the ones written ahead (none when it ended). */
-export type AllocationSet = { personId: string; projectId: string | null; work: string | null; months: string[]; percent: number; by: string; standing?: boolean };
+export type AllocationSet = { personId: string; projectId: string | null; work: string | null; months: string[]; percent: number; by: string; standing?: boolean;
+  personUserId?: string | null; project?: string; month?: string; total?: number; over?: boolean; byUser?: string };
+export type FixSuggested = { suggestionId: string; personUserId: string | null; projectId: string; project: string; month: string; total: number; percent: number };
 /** The audited Copy to next month bulk action. */
 export type MonthCopied = { team: string; from: string; to: string; rows: number; by: string };
 
@@ -54,3 +57,6 @@ export async function personMonthTotals(tx: Tx, reader: Reader, opts: { from: st
     where month between ${monthOf(opts.from)}::date and ${monthOf(opts.to)}::date ${ids("person_id", opts.personIds)} group by person_id, month order by person_id, month`))
     .map((r) => ({ personId: r.person_id as string, month: day(r.month), percent: Number(r.percent) })), opts.personIds);
 }
+
+export { monthOutlook, type MonthOutlook } from "./server/outlook";
+export { windowMonths } from "./server/months";

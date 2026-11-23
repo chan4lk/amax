@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import type { Edits, FieldCheck, PendingAction } from "@amax/chat";
+import { summaryLine } from "@amax/chat/addall";
 import { FormConfirm } from "./FormConfirm";
 
 // 073: the confirm card. What it is and whose record it touches, the one figure to check, the details as an aligned list,
@@ -30,7 +31,7 @@ export function Lines({ lines }: { lines: { label: string; value: string }[] }) 
 
 export function ConfirmCard({ action, state, note, field, onConfirm, onEdit, onCancel, onCheck, onNext, secret, after }: Props) {
   const look = action.look ?? {};
-  const lines = action.lines ?? Object.entries(action.input).map(([label, v]) => ({ label, value: typeof v === "string" ? v : JSON.stringify(v) }));
+  const lines = (action.lines ?? Object.entries(action.input).map(([label, v]) => ({ label, value: typeof v === "string" ? v : JSON.stringify(v) }))).filter((l) => l.label !== "overOk");
   const danger = look.tone === "danger";
   const editing = Boolean(action.form) && (state === "open" || state === "working");
   if (state === "done" || state === "cancelled") {
@@ -47,7 +48,7 @@ export function ConfirmCard({ action, state, note, field, onConfirm, onEdit, onC
       <div className="cc-top"><span className="cc-eyebrow">Confirm · {look.kind ?? "Change"}</span>{look.who && <span className="cc-who">{look.who}</span>}</div>
       {look.figure ? (
         <div className="cc-fig"><span className="cc-num">{look.figure}</span><span className="cc-sub"><b>{look.subject ?? action.title}</b>{look.detail && <small>{look.detail}</small>}</span></div>
-      ) : <p className="cc-title">{action.title}</p>}
+      ) : <p className="cc-title">{summaryLine(action.input, action.title)}</p>}
       {!(editing && onCheck) && lines.length > 0 && <Lines lines={lines} />}
       {editing && onCheck ? (
         <>

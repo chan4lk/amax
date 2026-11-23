@@ -10,7 +10,7 @@ export function Who({ name, initials }: { name: string; initials: string }) {
 
 export function Meter({ value, tone }: { value: number | null; tone: "good" | "under" | "team" }) {
   if (value === null) return <span className="muted">Not counted</span>;
-  return <div className="bar"><div className="meter" aria-hidden="true"><i className={tone} style={{ width: `${Math.min(100, value)}%` }} /></div><b>{value}%</b></div>;
+  return <div className="bar"><div className="meter" aria-hidden="true"><i className={tone} style={{ width: `${Math.min(100, value)}%` }} /></div><b className={`pct ${tone}`}>{value}%</b></div>;
 }
 
 export function ExportLink({ filename, csv }: { filename: string; csv: string }) {
