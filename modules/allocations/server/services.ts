@@ -24,7 +24,7 @@ const mayAllocate = (ctx: ServiceContext, projectId: string | null) => {
 };
 /** Longest range one allocate call may write. */
 export const MAX_MONTHS = 24;
-const span = (from: string, to: string) => (Number(to.slice(0, 4)) - Number(from.slice(0, 4))) * 12 + Number(to.slice(5, 7)) - Number(from.slice(5, 7)) + 1;
+export const span = (from: string, to: string) => (Number(to.slice(0, 4)) - Number(from.slice(0, 4))) * 12 + Number(to.slice(5, 7)) - Number(from.slice(5, 7)) + 1;
 
 export async function personOf(tx: Tx, ctx: ServiceContext, who: string) {
   const r = await resolvePerson(tx, ctx, who);
