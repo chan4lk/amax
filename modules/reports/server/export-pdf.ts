@@ -1,3 +1,4 @@
+/// <reference path="../pdfkit-standalone.d.ts" />
 import PDFDocument from "pdfkit/js/pdfkit.standalone.js";
 import type { Block, Table } from "./export-blocks";
 import { drawChart } from "./export-chart";
