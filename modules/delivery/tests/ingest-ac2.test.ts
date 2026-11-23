@@ -68,6 +68,8 @@ describe.skipIf(!hasDb)("008 AC-2 pushes attribute commits only through a verifi
     expect(await drafts()).toEqual([]);
     await expect(setCommitTimeLogging(ops, { legalEntityId: entity, enabled: true })).rejects.toThrow(/tell the entity's people first/);
     await setCommitTimeLogging(ops, { legalEntityId: entity, enabled: true, peopleNotified: true });
+    // 104 review round 2: a commit drafts only from the start of the consent period; these fixtures commit on Oct 18.
+    await t.owner`update delivery.commit_time set notified_at = '2026-10-01T00:00:00Z' where legal_entity_id = ${entity}`;
     await push([timed("b2c0ffee2")]);
     expect(await drafts()).toEqual([expect.objectContaining({ proposalKey: "ING-001", projectKey: "ING", day: "2026-10-18", hours: 1.5, commit: "b2c0ffee2" })]);
     const [line] = await withTenant(app, T, (tx) => tx.execute(sql`select text from delivery.activity order by at desc limit 1`));

@@ -7,7 +7,7 @@ export const lumen: SharedFixtures = {
   today: "2026-10-16",
   entities: [
     { id: "11111111-1111-4111-8111-1111111111a1", key: "lk", name: "Lumen Labs Lanka (Pvt) Ltd", country: "LK", baseCurrency: "LKR", headcount: 171 },
-    { id: "11111111-1111-4111-8111-1111111111a2", key: "au", name: "Lumen Labs Pty Ltd", country: "AU", baseCurrency: "AUD", headcount: 13 },
+    { id: "11111111-1111-4111-8111-1111111111a2", key: "au", name: "Lumen Labs Pty Ltd", country: "AU", baseCurrency: "AUD", headcount: 13, timezone: "Australia/Sydney" },
   ],
   departments: { Engineering: 112, Quality: 24, Delivery: 14, Sales: 9, "People and Culture": 8, Finance: 6, IT: 6, Leadership: 5 },
   people: [

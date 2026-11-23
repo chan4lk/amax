@@ -1,0 +1,10 @@
+{
+  "change": "116-allocations-usability",
+  "phase": "verify",
+  "branch": "",
+  "phases": {
+    "proposal": {"status":"approved","at":"2026-10-22T14:19:11Z"},
+    "tasks": {"status":"done","at":"2026-10-23T11:57:04Z"},
+    "verify": {"status":"done","at":"2026-11-17T09:28:55Z"}
+  }
+}

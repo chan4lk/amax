@@ -1,0 +1,68 @@
+{
+ "counts": {
+  "blocker": 0,
+  "major": 0,
+  "minor": 1
+ },
+ "escalated": [],
+ "files": [
+  "apps/mock/public/mock/index.html",
+  "packages/core/src/log.ts",
+  "packages/core/tests/log.test.ts"
+ ],
+ "final": true,
+ "findings": [
+  {
+   "class": "security",
+   "file": "packages/core/src/log.ts",
+   "fp": "35b6d0ca6b6f",
+   "in_delta": true,
+   "line": 7,
+   "message": "oneLine replaces line-breaking and control characters but lets Unicode format characters through: bidi overrides and isolates (U+202A\u2013U+202E, U+2066\u2013U+2069) and zero-width characters (U+200B\u2013U+200F, U+FEFF). Each log line stays one line, but these characters can change how it looks in a terminal or log viewer, for example by reversing the reference id or hiding part of the scope. Before 115, the allow-list removed them. Fix: add \\p{Cf} to the character class, and add a test row with a U+202E in the scope.",
+   "original_severity": "minor",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B8",
+   "scenario": "logError(`a${'\\u202E'}di`, new Error('x')) \u2192 the line holds an RLO, and a viewer shows the text after it reversed. No caller passes untrusted text into the scope today, so this can't be shown in practice.",
+   "severity": "minor",
+   "unclassified": false
+  }
+ ],
+ "head": "ab83e93c25f113562005342c1b17abe46fafcfca",
+ "impact": [
+  "apps/web/app/(app)/page.tsx",
+  "apps/web/app/actions/chat-history.ts",
+  "apps/web/app/actions/chat.ts",
+  "apps/web/app/api/webhooks/[tenant]/[provider]/route.ts",
+  "apps/web/lib/admin/status.ts",
+  "apps/web/lib/chat-outcome.ts",
+  "apps/web/lib/chat-usage.ts",
+  "apps/web/lib/oauth-http.ts",
+  "apps/web/lib/overview.ts",
+  "apps/web/lib/tick.ts",
+  "modules/delivery/server/ingest.ts",
+  "modules/git-accounts/server/callback.ts",
+  "modules/git-accounts/server/connect.ts",
+  "modules/presales/server/promote.ts",
+  "modules/time/server/bulk.ts",
+  "packages/ai/src/gateway.ts",
+  "packages/ai/tests/gateway.test.ts",
+  "packages/api/src/limits.ts",
+  "packages/api/src/rest.ts",
+  "packages/chat/src/engine.ts"
+ ],
+ "model": "opus",
+ "passes": [
+  "review",
+  "design"
+ ],
+ "prompt_chars": 56769,
+ "round": 3,
+ "since": null,
+ "status": "clean",
+ "system_chars": 44115,
+ "tier": "review",
+ "tools": "Read,Grep,Glob",
+ "ts_end": 1794822725,
+ "ts_start": 1794822663
+}

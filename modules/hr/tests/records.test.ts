@@ -97,7 +97,7 @@ describe.skipIf(!hasDb)("hr records (Postgres)", () => {
   });
 
   it("statuses follow the dates: the daily job starts joiners and moves future leavers to left, and is safe to re-run", async () => {
-    expect(manifest.jobs?.map((j) => [j.name, j.cron])).toEqual([["hr.person.status", "5 0 * * *"]]);
+    expect(manifest.jobs?.map((j) => [j.name, j.cron])).toEqual([["hr.person.status", "5 * * * *"]]);
     const joiner = await hire("Dated Joiner", "2027-01-04");
     const leaver = await hire("Dated Leaver", "2026-01-05");
     await recordLeaver(hr, { employeeNo: leaver.employeeNo, leftOn: "2027-01-08" });

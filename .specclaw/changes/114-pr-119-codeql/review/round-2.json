@@ -1,0 +1,60 @@
+{
+ "counts": {
+  "blocker": 0,
+  "major": 0,
+  "minor": 0
+ },
+ "escalated": [],
+ "files": [
+  "apps/mock/public/mock/index.html",
+  "apps/web/tests/e2e/git-accounts.spec.ts",
+  "modules/delivery/tests/chat.test.ts",
+  "modules/delivery/tests/delivery.test.ts",
+  "modules/delivery/tests/mcp-registry.test.ts",
+  "modules/delivery/tests/sync-import.test.ts",
+  "modules/delivery/ui/ReleasesPage.tsx",
+  "modules/time/server/my.ts",
+  "packages/core/src/log.ts",
+  "packages/core/tests/log.test.ts",
+  "packages/testing/tests/review-gate-covered.test.ts"
+ ],
+ "final": true,
+ "findings": [],
+ "head": "80b268ed493bb3aae6e7089add19793552e9d074",
+ "impact": [
+  ".github/workflows/ci.yml",
+  ".github/workflows/specclaw-sync.yml",
+  "apps/web/app/(public)/welcome/sections.css",
+  "apps/web/components/chat/CardForm.tsx",
+  "apps/web/components/chat/ChoiceCard.tsx",
+  "apps/web/components/chat/ConfirmCard.tsx",
+  "apps/web/components/marketing/Bands.tsx",
+  "apps/web/lib/admin/workflows.ts",
+  "apps/web/lib/page-context.ts",
+  "apps/web/tests/e2e/delivery-visual.spec.ts",
+  "modules/allocations/server/person.ts",
+  "modules/allocations/server/row.ts",
+  "modules/allocations/tests/no-hr-107.test.ts",
+  "modules/allocations/tests/row.test.ts",
+  "modules/allocations/ui/AllocationsPage.tsx",
+  "modules/allocations/ui/ProjectTeamPage.tsx",
+  "modules/compliance/server/context.ts",
+  "modules/delivery/chat.ts",
+  "modules/delivery/mcp.ts",
+  "modules/delivery/server/services.ts"
+ ],
+ "model": "opus",
+ "passes": [
+  "review",
+  "design"
+ ],
+ "prompt_chars": 99168,
+ "round": 2,
+ "since": null,
+ "status": "clean",
+ "system_chars": 44154,
+ "tier": "review",
+ "tools": "Read,Grep,Glob",
+ "ts_end": 1794821220,
+ "ts_start": 1794821156
+}

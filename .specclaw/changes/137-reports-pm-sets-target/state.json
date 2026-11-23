@@ -1,0 +1,8 @@
+{
+  "change": "137-reports-pm-sets-target",
+  "phase": "verify",
+  "branch": "",
+  "phases": {
+    "verify": {"status":"done","at":"2026-11-16T09:28:10Z"}
+  }
+}

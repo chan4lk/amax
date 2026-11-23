@@ -3,9 +3,9 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode, type RefObject } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { announce, Mascot, openChat as toChat, PinButton, type PinRef } from "@amax/ui";
-import type { Conversation, ConversationSummary, FileRef, Highlight, PendingAction } from "@amax/chat";
+import type { Answers, Conversation, ConversationSummary, Edits, FileRef, Highlight, PendingAction } from "@amax/chat";
 import { FileCard } from "./FileCard";
-import { cancelChat, changeChat, confirmChat, pageContext, takeAction, refreshPins, sendChat, type CardOutcome } from "../../app/actions/chat";
+import { cancelChat, changeChat, checkCardField, confirmChat, pageContext, takeAction, refreshPins, sendChat, type CardOutcome } from "../../app/actions/chat";
 import type { PageInfo } from "../../lib/page-context";
 import { pinKey, withFresh, type Pin } from "@amax/chat/pins";
 import { ChoiceCard } from "./ChoiceCard";
@@ -24,8 +24,8 @@ import { Reveal, Thinking } from "./Reveal";
 
 type Entry =
   | { kind: "me"; text: string; highlights: Highlight[] }
-  | { kind: "amax"; text: string; tools: string[]; error?: boolean; fresh?: boolean; files?: FileRef[] }
-  | { kind: "confirm"; action: PendingAction; state: CardOutcome["state"] | "working" | "expired"; note?: string; reveal?: CardOutcome["reveal"]; editing?: boolean; edited?: string; inGroup?: boolean };
+  | { kind: "amax"; text: string; tools: string[]; error?: boolean; fresh?: boolean; files?: FileRef[]; answers?: Answers }
+  | { kind: "confirm"; action: PendingAction; state: CardOutcome["state"] | "working" | "expired"; note?: string; field?: string; reveal?: CardOutcome["reveal"]; open?: CardOutcome["open"]; editing?: boolean; edited?: string; inGroup?: boolean };
 
 const GROUPED = new Set(["allocate", "allocate_only"]);
 const groupable = (x: Entry) => x.kind === "confirm" && x.state === "open" && !x.action.secret && !x.action.choice && GROUPED.has(x.action.tool);
@@ -156,7 +156,7 @@ export function Chat({ open, fresh = 0, onClose, returnFocus, signedIn, userId, 
   // Pins and intents arrive from anywhere on the page.
   useEffect(() => {
     const onEvent = (e: Event) => {
-      const d = (e as CustomEvent<{ pin?: PinRef; intent?: string; prompt?: string; take?: string }>).detail;
+      const d = (e as CustomEvent<{ pin?: PinRef; intent?: string; prompt?: string; quiet?: boolean; take?: string }>).detail;
       const key = d.pin ? pinKey(d.pin) : undefined;
       // An untouched Ask amax prompt belongs to the record it pinned. A pin or prompt for another record
       // replaces both, so the agent never gets the last row's pin with this row's question.
@@ -180,7 +180,10 @@ export function Chat({ open, fresh = 0, onClose, returnFocus, signedIn, userId, 
         if (added && !d.prompt && !d.intent && !d.take && latest.current.signedIn) void latest.current.send(`Tell me about ${pin.label}`, [pin]);
         if (d.take && latest.current.signedIn) void latest.current.take(d.take);
       }
-      if (d.intent) { asked.current = null; setIntent(d.intent); setText(""); setLog((l) => [...l, { kind: "amax", text: `${d.prompt ?? "New record"}: tell me the details and I'll fill it in.`, tools: [] }]); }
+      if (d.intent) {
+        asked.current = null; setIntent(d.intent); setText("");
+        if (!d.quiet) setLog((l) => [...l, { kind: "amax", text: `${d.prompt ?? "New record"}: tell me the details and I'll fill it in.`, tools: [] }]);
+      }
       else if (d.prompt) {
         asked.current = key ? { key, added } : null;
         filled.current = d.prompt;
@@ -276,16 +279,16 @@ export function Chat({ open, fresh = 0, onClose, returnFocus, signedIn, userId, 
         const next = r.changed?.filter((c) => c.id === x.action.id).pop();
         return next ? { ...x, action: next, editing: false, note: undefined, edited: "Changed, as you asked. Check it, then Add it." } : x;
       });
-      return grouped([...touched, ...(r.reply || r.files?.length ? [{ kind: "amax" as const, text: r.reply, tools: r.toolsRun, fresh: true, files: r.files }] : []), ...r.pending.map((action) => ({ kind: "confirm" as const, action, state: "open" as const }))]);
+      return grouped([...touched, ...(r.reply || r.answers || r.files?.length ? [{ kind: "amax" as const, text: r.reply || (r.answers?.question ?? ""), tools: r.toolsRun, fresh: true, files: r.files, answers: r.answers }] : []), ...r.pending.map((action) => ({ kind: "confirm" as const, action, state: "open" as const }))]);
     });
     if (r.show) { filtered.current = true; router.push(r.show, { scroll: false }); }
-    announce(r.pending.some((p) => p.choice) ? "amax offered a choice for you to pick from" : r.pending.length ? "amax prepared a change for you to confirm" : "amax replied");
+    announce(r.pending.some((p) => p.choice) ? "amax offered a choice for you to pick from" : r.pending.length ? "amax prepared a change for you to confirm" : r.answers ? "amax asked a question with answers to pick from" : "amax replied");
   }
 
-  async function decide(action: PendingAction, ok: boolean, answer?: string): Promise<string | undefined> {
+  async function decide(action: PendingAction, ok: boolean, answer?: string, edits?: Edits): Promise<string | undefined> {
     if (!convo.current) return undefined;
     // One decision per card: the buttons go away while the request is in flight.
-    setLog((l) => l.map((x) => (x.kind === "confirm" && x.action.id === action.id ? { ...x, state: "working", note: undefined } : x)));
+    setLog((l) => l.map((x) => (x.kind === "confirm" && x.action.id === action.id ? { ...x, state: "working", note: undefined, field: undefined } : x)));
     // 076: on a choice card, once one option is done or the card is cancelled, every other option is closed too (the
     // server has recorded them as not chosen or cancelled).
     const sibling = (x: Entry) => x.kind === "confirm" && !!action.choice && x.action.choice?.id === action.choice.id && x.action.id !== action.id && x.state === "open";
@@ -293,7 +296,7 @@ export function Chat({ open, fresh = 0, onClose, returnFocus, signedIn, userId, 
       : (o.state === "done" || o.state === "cancelled") && sibling(x) ? { ...x, state: "cancelled" as const, note: undefined } : x)));
     try {
       // The server says what the card is now: done, cancelled, back open to retry, or an error.
-      const o = ok ? await confirmChat(convo.current, action.id, userId, answer) : await cancelChat(convo.current, action.id, userId);
+      const o = ok ? await confirmChat(convo.current, action.id, userId, answer, edits) : await cancelChat(convo.current, action.id, userId);
       apply(o);
       announce(o.note);
       // The record this page shows was renamed (a re-tag): follow it, or the page would read "not found".
@@ -407,6 +410,12 @@ export function Chat({ open, fresh = 0, onClose, returnFocus, signedIn, userId, 
               {e.tools.length > 0 && <div className="tools" hidden aria-label="Tools used">{e.tools.map((t, j) => <span key={j}>{t}</span>)}</div>}
               {e.error ? <p className="err">{e.text}</p> : e.fresh ? <Reveal text={e.text} render={(t) => <Markdown text={t} />} /> : <Markdown text={e.text} />}
               {e.files?.map((f) => <FileCard key={f.href} file={f} />)}
+              {e.answers && !log.slice(i + 1).some((x) => x.kind === "me") && (
+                // 084 AC-2: quick replies; a click sends the answer as if typed, and they go once anything is sent.
+                <div className="c-answers" role="group" aria-label={e.answers.question}>
+                  {e.answers.options.map((o) => <button key={o} type="button" className="chip" disabled={busy} onClick={() => send(o)}>{o}</button>)}
+                </div>
+              )}
             </div></div>
           );
           const choice = e.action.choice;
@@ -422,7 +431,9 @@ export function Chat({ open, fresh = 0, onClose, returnFocus, signedIn, userId, 
           if (e.inGroup && e.action.id !== shown && !(e.state === "open" && openCards.length <= 1)) return null;
           return (
             <div key={i} data-i={i} id={`card-${e.action.id}`} tabIndex={-1} className="m">
-              <ConfirmCard action={e.action} state={e.state} note={e.note} onConfirm={() => decide(e.action, true)} onCancel={() => decide(e.action, false)}
+              <ConfirmCard action={e.action} state={e.state} note={e.note} field={e.field} onConfirm={(edits) => decide(e.action, true, undefined, edits)} onCancel={() => decide(e.action, false)}
+                onCheck={(edits) => checkCardField(convo.current ?? "", e.action.id, edits, userId)}
+                onNext={(prompt) => { filled.current = prompt; setText(prompt); input.current?.focus({ preventScroll: true }); }}
                 onEdit={() => { if (typeof e.action.input.percent === "number") patch(e.action.id, { editing: true }); else { setText("Change "); input.current?.focus({ preventScroll: true }); } }}
                 secret={e.editing && typeof e.action.input.percent === "number" ? <PercentEdit value={e.action.input.percent} onSave={(p) => savePercent(e.action, p)} onBack={() => { patch(e.action.id, { editing: false }); requestAnimationFrame(() => backToBar(e.action.id)); }} /> : e.action.secret && convo.current ? <SecretConfirm conversationId={convo.current} as={userId} action={{ ...e.action, secret: e.action.secret }} onCancel={() => decide(e.action, false)}
                   onState={(o) => setLog((l) => l.map((x) => (x.kind === "confirm" && x.action.id === e.action.id ? { ...x, ...o } : x)))} /> : undefined}
@@ -430,6 +441,7 @@ export function Chat({ open, fresh = 0, onClose, returnFocus, signedIn, userId, 
                   {e.edited && !e.editing && e.state === "open" && <p className="muted">{e.edited}</p>}
                   {e.inGroup && e.action.id === shown && !e.editing && <button className="btn sm" type="button" style={{ marginTop: 10 }} onClick={() => backToBar(e.action.id)}>Back to the list</button>}
                   {e.reveal && <RevealOnce reveal={e.reveal} onDone={() => setLog((l) => l.map((x) => (x.kind === "confirm" && x.action.id === e.action.id ? { ...x, reveal: undefined } : x)))} />}
+                  {!e.reveal && e.open && <p style={{ margin: "8px 0 0" }}><a className="btn sm primary" href={e.open.url}>{e.open.label} ↗</a></p>}
                 </>} />
             </div>
           );

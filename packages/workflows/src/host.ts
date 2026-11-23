@@ -1,4 +1,4 @@
-import { sql } from "drizzle-orm";
+import { sql, type SQL } from "drizzle-orm";
 import type { Tx } from "@amax/db";
 import type { StartOptions, WorkflowEngine } from "./engine";
 import { ENTITY_ZONES } from "./schedules";
@@ -20,7 +20,19 @@ export async function startWorkflow(tenantId: string, workflow: string, input: J
 
 /** A legal entity's time zone: its own (workflows.entity_zone), else its country's default, else UTC. */
 export async function entityZone(tx: Tx, legalEntityId: string | null): Promise<string> {
-  if (!legalEntityId) return "UTC";
-  const [r] = await tx.execute(sql`select z.timezone, e.country from core.legal_entity e left join workflows.entity_zone z on z.legal_entity_id = e.id where e.id = ${legalEntityId}`);
-  return (r?.timezone as string | undefined) ?? ENTITY_ZONES[String(r?.country ?? "").trim()] ?? "UTC";
+  return (legalEntityId ? await entityZoneSet(tx, legalEntityId) : null) ?? "UTC";
+}
+
+/**
+ * 110: the one rule for an entity's zone, as SQL for any query: its own (workflows.entity_zone), else its country's
+ * default, else null. `entityId` is a SQL expression, such as a column of the caller's row.
+ */
+export const entityZoneSql = (entityId: SQL) => sql`coalesce(
+  (select z.timezone from workflows.entity_zone z where z.legal_entity_id = ${entityId}),
+  (select ${JSON.stringify(ENTITY_ZONES)}::jsonb ->> trim(e0.country) from core.legal_entity e0 where e0.id = ${entityId}))`;
+
+/** 109: the zone an entity has, its own or its country's, or null where entityZone would fall back to UTC, so a screen can say so. */
+export async function entityZoneSet(tx: Tx, legalEntityId: string): Promise<string | null> {
+  const [r] = await tx.execute(sql`select ${entityZoneSql(sql`${legalEntityId}::uuid`)} as zone`);
+  return (r?.zone as string | null) ?? null;
 }

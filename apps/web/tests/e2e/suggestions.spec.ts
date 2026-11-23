@@ -37,7 +37,8 @@ test("006 Suggestions: decisions first, the undo window and agent jobs, every ro
     expect(violations.map((v) => `${colorScheme} ${v.id}: ${v.nodes[0]?.target}`)).toEqual([]);
   }
   await page.goto("/allocations");
-  await expect(page.locator(".card", { has: page.getByRole("heading", { name: "Agent suggestions" }) }).locator("tbody tr")).toHaveCount(2);
+  await expect(page.getByRole("region", { name: "Conflicts" })).toBeVisible();
+  await expect(page.getByRole("link", { name: /All suggestions/ })).toHaveAttribute("href", "/suggestions");
 });
 
 test("006 AC-5 suggestions outside a person's scope are never shown", async ({ page }) => {

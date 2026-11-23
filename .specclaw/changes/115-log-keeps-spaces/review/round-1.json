@@ -1,0 +1,83 @@
+{
+ "counts": {
+  "blocker": 0,
+  "major": 1,
+  "minor": 1
+ },
+ "escalated": [],
+ "files": [
+  "apps/mock/public/mock/index.html",
+  "packages/core/src/log.ts",
+  "packages/core/tests/log.test.ts"
+ ],
+ "final": false,
+ "findings": [
+  {
+   "class": "security",
+   "file": "packages/core/src/log.ts",
+   "fp": "38eabb4b34c7",
+   "in_delta": true,
+   "line": 7,
+   "message": "This change removes 114's allow-list and puts a deny-list in its place. The goal is that each log line stays one line. The deny-list covers C0 controls, DEL, U+2028 and U+2029. It misses U+0085 (NEL), which Unicode treats as a mandatory line break, and the rest of the C1 controls (U+0080\u2013U+009F). Before this change, 114's `[^\\w.:-]` replaced all of them. Callers put text they don't control into the scope, for example `` `ai.tool ${call.name}` `` (a tool name the model picks) and `` `delivery.ingest ${t.key} ${t.task}` ``. Fix: add `\\x80-\\x9f` to the character class, i.e. `/[\\p{Zl}\\p{Zp}\\x00-\\x1f\\x7f-\\x9f]/gu`. The `\\n\\r` entries are already inside `\\x00-\\x1f`. Add a U+0085 row to the 115 test table.",
+   "original_severity": "major",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B1",
+   "scenario": "Before this change, `logError(\"chat\\u0085amax admin: Error [00000000-0000-4000-8000-000000000000]\", new Error(\"x\"))` wrote `_`. Now it writes a raw NEL. A log viewer or pipeline that breaks lines on Unicode newlines shows a second, forged line starting `amax admin: Error [...]`.",
+   "severity": "major",
+   "unclassified": false
+  },
+  {
+   "class": "other",
+   "file": "packages/core/tests/log.test.ts",
+   "fp": "3f28b732a34c",
+   "in_delta": true,
+   "line": 33,
+   "message": "The comment on line 6 of log.ts says DEL, U+2029 and the error-name path are covered. The 115 variant table tests none of them: it checks the scope only, with CR/LF, a tab and U+2028. Add rows for U+2029 and DEL (0x7f), and one row that puts a control character in the error's name, so the new expression is pinned for every kind it claims to handle.",
+   "original_severity": "minor",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B2",
+   "scenario": "If `\\p{Zp}` or `\\x7f` were dropped from the regex, every test would still pass.",
+   "severity": "minor",
+   "unclassified": false
+  }
+ ],
+ "head": "f595a24d8392c39e83f43fac5509960100780979",
+ "impact": [
+  "apps/web/app/(app)/page.tsx",
+  "apps/web/app/actions/chat-history.ts",
+  "apps/web/app/actions/chat.ts",
+  "apps/web/app/api/webhooks/[tenant]/[provider]/route.ts",
+  "apps/web/lib/admin/status.ts",
+  "apps/web/lib/chat-outcome.ts",
+  "apps/web/lib/chat-usage.ts",
+  "apps/web/lib/oauth-http.ts",
+  "apps/web/lib/overview.ts",
+  "apps/web/lib/tick.ts",
+  "modules/delivery/server/ingest.ts",
+  "modules/git-accounts/server/callback.ts",
+  "modules/git-accounts/server/connect.ts",
+  "modules/presales/server/promote.ts",
+  "modules/time/server/bulk.ts",
+  "packages/ai/src/gateway.ts",
+  "packages/ai/tests/gateway.test.ts",
+  "packages/api/src/limits.ts",
+  "packages/api/src/rest.ts",
+  "packages/chat/src/engine.ts"
+ ],
+ "model": "opus",
+ "passes": [
+  "review",
+  "design"
+ ],
+ "prompt_chars": 56237,
+ "round": 1,
+ "since": null,
+ "status": "open",
+ "system_chars": 44157,
+ "tier": "review",
+ "tools": "Read,Grep,Glob",
+ "ts_end": 1794822474,
+ "ts_start": 1794822417
+}

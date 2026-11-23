@@ -1,0 +1,11 @@
+{
+  "change": "098-renumber-duplicate-changes",
+  "phase": "pr",
+  "branch": "",
+  "phases": {
+    "proposal": {"status":"approved","at":"2026-11-10T15:43:28Z"},
+    "tasks": {"status":"done","at":"2026-11-10T15:50:11Z"},
+    "verify": {"status":"done","at":"2026-11-10T16:45:21Z"},
+    "pr": {"status":"raised","at":"2026-11-10T16:53:48Z","url":"https://github.com/chan4lk/amax/pull/115"}
+  }
+}

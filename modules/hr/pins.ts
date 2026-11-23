@@ -7,3 +7,8 @@ export const personPin = (p: { id: string; name: string }): PinRef => ({ label: 
 
 export const personOf = (r: { person: { id: string; name: string } } | null): PinnedRecord | null =>
   r ? { id: r.person.id, label: personPin(r.person).label } : null;
+
+/** 110 AC-3: a legal entity's pin by its id, through get_legal_entity; the label is the entity's name as it is now. */
+export const entityPin = (e: { id: string; name: string }): PinRef => ({ label: `${e.name}: time zone`, tool: "get_legal_entity", args: { entityId: e.id } });
+
+export const entityOf = (r: { id: string; name: string } | null): PinnedRecord | null => (r ? { id: r.id, label: entityPin(r).label } : null);

@@ -1,8 +1,0 @@
-{
-  "change": "087-reports-group-switch",
-  "phase": "verify",
-  "branch": "",
-  "phases": {
-    "verify": {"status":"done","at":"2026-11-17T09:29:52Z"}
-  }
-}

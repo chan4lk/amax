@@ -1,0 +1,75 @@
+{
+ "counts": {
+  "blocker": 0,
+  "major": 0,
+  "minor": 0
+ },
+ "escalated": [],
+ "files": [
+  "AGENTS.md",
+  "apps/mock/public/mock/index.html",
+  "apps/web/tests/e2e/delivery.spec.ts",
+  "modules/delivery/server/repo-time.ts",
+  "modules/delivery/server/services.ts",
+  "modules/delivery/server/tasks.ts",
+  "modules/delivery/sync/import.ts",
+  "modules/delivery/tests/board-092.test.ts",
+  "modules/delivery/tests/ci-095.test.ts",
+  "modules/delivery/ui/released.ts",
+  "packages/testing/tests/review-gate-covered.test.ts",
+  "scripts/review-gate/rules.mjs"
+ ],
+ "final": true,
+ "findings": [
+  {
+   "file": "modules/delivery/README.md",
+   "fp": "ff3461fe4362",
+   "in_delta": false,
+   "line": 46,
+   "message": "This change makes `releasedLabel` return \"In Prod\" alone and puts the version in the card's own release chip (`modules/delivery/ui/released.ts`). The delivery README still says the Released card reads \"In Prod \u00b7 <release>\", so the docs and the code now disagree. Change the README line to match: \"In Prod\" beside the card's release chip (095 AC-2).",
+   "original_severity": "minor",
+   "pass": "review",
+   "pre_existing": true,
+   "rule": "B1",
+   "scenario": "A reader follows README:46 and expects the board card to read \"In Prod \u00b7 v2.3.0\". The card renders a `v2.3.0` chip followed by an \"In Prod\" chip.",
+   "severity": "minor"
+  }
+ ],
+ "head": "191af3453399af85c4c622bb5922295f8357c547",
+ "impact": [
+  ".claude/settings.json",
+  "apps/web/app/(app)/settings/backups/format.ts",
+  "apps/web/app/(app)/settings/keys/format.ts",
+  "apps/web/app/(app)/settings/keys/keys.css",
+  "apps/web/app/(public)/welcome/welcome.css",
+  "apps/web/app/api/jobs/tick/route.ts",
+  "apps/web/app/api/webhooks/[tenant]/[provider]/route.ts",
+  "apps/web/components/chat/Chat.tsx",
+  "apps/web/components/chat/ChoiceCard.tsx",
+  "apps/web/components/marketing/HowStage.tsx",
+  "apps/web/components/marketing/copy.ts",
+  "apps/web/lib/admin/backups.ts",
+  "apps/web/lib/admin/secrets.ts",
+  "apps/web/lib/backup-workflows.ts",
+  "apps/web/lib/chat-outcome.ts",
+  "apps/web/lib/same-user.ts",
+  "apps/web/lib/server.ts",
+  "modules/delivery/mcp.ts",
+  "modules/delivery/server/owner.ts",
+  "modules/delivery/server/push.ts"
+ ],
+ "model": "opus",
+ "passes": [
+  "review",
+  "design"
+ ],
+ "prompt_chars": 69964,
+ "round": 3,
+ "since": null,
+ "status": "clean",
+ "system_chars": 43195,
+ "tier": "review",
+ "tools": "Read,Grep,Glob",
+ "ts_end": 1794316943,
+ "ts_start": 1794316838
+}

@@ -1,0 +1,62 @@
+{
+ "counts": {
+  "blocker": 0,
+  "major": 0,
+  "minor": 0
+ },
+ "error": "backend exited 1: You've hit your 5-hour limit \u00b7 resets 12:50pm (Asia/Colombo)",
+ "files": [
+  "apps/mock/public/mock/index.html",
+  "modules/delivery/README.md",
+  "modules/delivery/server/owner.ts",
+  "modules/delivery/server/push.ts",
+  "modules/delivery/server/services.ts",
+  "modules/delivery/sync/authors.ts",
+  "modules/delivery/sync/specclaw.ts",
+  "modules/delivery/tests/board-092.test.ts",
+  "modules/delivery/tests/owner-092.test.ts",
+  "modules/delivery/ui/ProjectPage.tsx",
+  "modules/delivery/ui/released.ts",
+  "packages/testing/tests/specclaw-sync-ci.test.ts",
+  "plugins/amax/scripts/read-specclaw.mjs",
+  "scripts/specclaw-sync-ci.mjs"
+ ],
+ "final": false,
+ "findings": [],
+ "head": "806f4c6a4ab121bb6fb3739b498a28ac654dbebd",
+ "impact": [
+  ".claude-plugin/marketplace.json",
+  "apps/web/app/(app)/settings/api/ApiTickets.tsx",
+  "apps/web/app/(app)/settings/api/CredentialTable.tsx",
+  "apps/web/lib/admin/api.ts",
+  "apps/web/lib/page-context.ts",
+  "apps/web/lib/registry.ts",
+  "apps/web/tests/admin/api-reveal.test.ts",
+  "apps/web/tests/admin/fixture.ts",
+  "apps/web/tests/admin/hardening-053.test.ts",
+  "apps/web/tests/admin/it-admin.test.ts",
+  "apps/web/tests/admin/privacy.test.ts",
+  "apps/web/tests/admin/proxy-wiring.test.ts",
+  "apps/web/tests/admin/review-052.test.ts",
+  "apps/web/tests/admin/secret.test.ts",
+  "apps/web/tests/admin/tools.test.ts",
+  "apps/web/tests/dev-seed.test.ts",
+  "apps/web/tests/e2e/audit.spec.ts",
+  "apps/web/tests/e2e/delivery.spec.ts",
+  "apps/web/tests/e2e/global-auth.ts",
+  "modules/delivery/sync/import.ts"
+ ],
+ "model": "opus",
+ "passes": [
+  "review",
+  "design"
+ ],
+ "round": 1,
+ "since": null,
+ "status": "not_run",
+ "system_chars": 43040,
+ "tier": "review",
+ "tools": "Read,Grep,Glob",
+ "ts_end": 1794289666,
+ "ts_start": 1794289613
+}

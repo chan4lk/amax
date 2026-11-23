@@ -1,0 +1,58 @@
+{
+ "counts": {
+  "blocker": 0,
+  "major": 0,
+  "minor": 0
+ },
+ "escalated": [],
+ "files": [
+  "packages/core/src/log.ts",
+  "packages/core/tests/log.test.ts"
+ ],
+ "final": false,
+ "findings": [],
+ "fix_proof": {
+  "base": "f595a24d8392c39e83f43fac5509960100780979",
+  "mode": "warn",
+  "reason": "no review.test_command configured, so no test could prove the fix",
+  "status": "not_proven",
+  "tests": []
+ },
+ "head": "ab83e93c25f113562005342c1b17abe46fafcfca",
+ "impact": [
+  "apps/web/app/(app)/page.tsx",
+  "apps/web/app/actions/chat-history.ts",
+  "apps/web/app/actions/chat.ts",
+  "apps/web/app/api/webhooks/[tenant]/[provider]/route.ts",
+  "apps/web/lib/admin/status.ts",
+  "apps/web/lib/chat-outcome.ts",
+  "apps/web/lib/chat-usage.ts",
+  "apps/web/lib/oauth-http.ts",
+  "apps/web/lib/overview.ts",
+  "apps/web/lib/tick.ts",
+  "modules/delivery/server/ingest.ts",
+  "modules/git-accounts/server/callback.ts",
+  "modules/git-accounts/server/connect.ts",
+  "modules/presales/server/promote.ts",
+  "modules/time/server/bulk.ts",
+  "packages/ai/src/gateway.ts",
+  "packages/ai/tests/gateway.test.ts",
+  "packages/api/src/limits.ts",
+  "packages/api/src/rest.ts",
+  "packages/chat/src/engine.ts"
+ ],
+ "model": "opus",
+ "passes": [
+  "review",
+  "design"
+ ],
+ "prompt_chars": 54550,
+ "round": 2,
+ "since": "f595a24d",
+ "status": "clean",
+ "system_chars": 44115,
+ "tier": "review",
+ "tools": "Read,Grep,Glob",
+ "ts_end": 1794822658,
+ "ts_start": 1794822638
+}

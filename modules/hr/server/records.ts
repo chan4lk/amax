@@ -4,9 +4,9 @@ import type { Tx } from "@amax/db";
 import { assertCan, ScopeError, viewerOf, type ResourceAttrs } from "@amax/auth";
 import { isSystemContext, type ServiceContext } from "@amax/core/server";
 
-import { employmentAt, subjectOf, today } from "./inforce";
+import { employmentAt, subjectOf } from "./inforce";
 
-export { today, subjectOf };
+export { subjectOf };
 export const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "a date, e.g. 2026-11-02");
 
 /**
@@ -33,7 +33,7 @@ export async function inScopeFrom(tx: Tx, ctx: ServiceContext, action: string, p
 
 /** The person, locked, with the department in force today (for the write scope). */
 export async function personByNo(tx: Tx, employeeNo: string) {
-  const [p] = await tx.execute(sql`select p.*, emp.department from hr.person p ${employmentAt(today())} where p.employee_no = ${employeeNo} for update of p`);
+  const [p] = await tx.execute(sql`select p.*, emp.department from hr.person p ${employmentAt()} where p.employee_no = ${employeeNo} for update of p`);
   if (!p) throw new Error(`no person ${employeeNo}`);
   return p;
 }

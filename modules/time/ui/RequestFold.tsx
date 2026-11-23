@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
-import { PinButton } from "@amax/ui";
+import { PinButton, Since } from "@amax/ui";
 import type { ChangeRequest } from "../server/requests-read";
-import { Since } from "./Since";
 import { requestPin } from "./request-view";
 
 const decided = (r: ChangeRequest) => !["pending", "needs_info"].includes(r.status) && !!r.decidedAt;

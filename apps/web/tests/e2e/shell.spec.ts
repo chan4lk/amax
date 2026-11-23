@@ -51,3 +51,12 @@ test("AC5 shell matches the mock, is keyboard-complete and respects reduced moti
   const transition = await projects.evaluate((el) => getComputedStyle(el).transitionDuration);
   expect(transition.split(",").every((d) => parseFloat(d) === 0)).toBe(true);
 });
+
+test("086 AC1 the rail's logo is 44 px and sits on the icons' centre line", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/");
+  const logo = (await page.locator(".rail .logo").boundingBox())!;
+  const icon = (await page.locator(".rail a svg").first().boundingBox())!;
+  expect([logo.width, logo.height]).toEqual([44, 44]);
+  expect(Math.abs(logo.x + logo.width / 2 - (icon.x + icon.width / 2))).toBeLessThanOrEqual(1);
+});

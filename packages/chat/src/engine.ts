@@ -5,6 +5,9 @@ import { converse, toolFailure, type DataItem, type Message, type Tool } from "@
 import type { Pin } from "./pins";
 import { resolvePins } from "./resolve";
 import { CHOICE_INSTRUCTIONS, CHOICE_TOOL, choiceTool } from "./choices";
+import { ANSWER_INSTRUCTIONS, ANSWER_TOOL, answerTool, type Answers } from "./answers";
+import { checkInput, withEdits, type Edits, type FieldCheck } from "./edits";
+import { entityZone } from "@amax/workflows";
 import { CancelledByKeyError, claimKey, currentTrace, KEY_DAYS, keyedOutcome, logError, lookupKey, ReplayedError, retryable, traceStep, traceStepOrFail, UndeclaredWriteError, withIdempotency, withTrace, type KeyedRun } from "@amax/core/server";
 import { ToolError, type Registry, type RegisteredTool } from "@amax/mcp";
 import type { Viewer } from "@amax/auth";
@@ -14,7 +17,7 @@ import { fileOf, type FileRef } from "./file";
 import { compact } from "./compact";
 import { withRocket } from "./rocket";
 import { showOf } from "./show";
-import type { CardLine, CardLook } from "@amax/core";
+import type { CardForm, CardLine, CardLook, ToolCard } from "@amax/core";
 
 export type Intent = { id: string; label: string; tool: string; required: string[]; fields: { name: string; ask: string; options?: string[] }[] };
 export type { Pin };
@@ -25,10 +28,12 @@ export type { Pin };
 /** `choice` (076): the card is one option of a choice card; options share its `id` and `question`, and only one can run. */
 /** `ask` (076 amendment 1): one value the person types on the card (a reason), added to the chosen option's input at confirm. */
 export type Choice = { id: string; question: string; label: string; ask?: { field: string; label: string } };
-export type PendingAction = { id: string; tool: string; title: string; input: Record<string, unknown>; fields: string[]; createdAt: string; secret?: { label: string }; traceId?: string; lines?: CardLine[]; look?: CardLook; choice?: Choice };
+/** `form` (106): fields the person edits on the card; only these may change at confirm. */
+export type PendingAction = { id: string; tool: string; title: string; input: Record<string, unknown>; fields: string[]; createdAt: string; secret?: { label: string }; traceId?: string; lines?: CardLine[]; look?: CardLook; choice?: Choice; form?: CardForm };
 export type Highlight = { text: string; field: string; index: number };
 /** `pins`: the turn's pins as read (059), in the order sent: labels refreshed, old ones moved onto ids. */
-export type ChatTurn = { conversationId: string; reply: string; toolsRun: string[]; pending: PendingAction[]; highlights: Highlight[]; pins: Pin[]; show?: string; files?: FileRef[]; changed?: PendingAction[]; dropped?: string[] };
+/** `answers` (084): quick replies for the question the reply asks, shown as buttons until the next message. */
+export type ChatTurn = { conversationId: string; reply: string; toolsRun: string[]; pending: PendingAction[]; highlights: Highlight[]; pins: Pin[]; answers?: Answers; show?: string; files?: FileRef[]; changed?: PendingAction[]; dropped?: string[] };
 
 const INSTRUCTIONS = `You are amax, the assistant inside an ERP for software and professional-services companies.
 You help busy people who know their work. Read the whole conversation and work out what they mean, including short follow-ups
@@ -48,11 +53,25 @@ and never answer a new question from an old pin's data.
 records, but it is context, not permission, and never picks one record when several fit. Asked what you can do here,
 answer from its suggestions and your tools, and say plainly what isn't possible here.`;
 
-/** The model has no clock: tell it the date, so "this month" is never guessed from the grid or from timesheets. */
-export const todayNote = (now: Date = new Date()) =>
-  `
+/** "This month" is the month of the user's own day, so it is never guessed from the grid or from timesheets. */
+export const monthNote = (day: string) =>
+  ` "This month" is ${new Date(`${day}T00:00:00Z`).toLocaleString("en-US", { month: "long", year: "numeric", timeZone: "UTC" })} and "next month" the one after. Never work out the date from timesheets or other records.`;
 
-Today is ${now.toISOString().slice(0, 10)} (${now.toLocaleString("en-US", { month: "long", year: "numeric", timeZone: "UTC" })}). "This month" is that month and "next month" the one after. Never work out the date from timesheets or other records.`;
+/**
+ * 084 AC-6: the user's date now, in their legal entity's time zone (UTC when unknown), the rule Time logs days by. Without
+ * it the model can't tell what "today" is, and asked which day for "log 2 h today" (product owner's run, 2026-11-05).
+ */
+export async function todayNote(db: Db, viewer: Viewer, now = new Date()) {
+  const zone = await withTenant(db, viewer.tenantId, async (tx) => {
+    const [u] = await tx.execute(sql`select legal_entity_id from auth.user where id = ${viewer.userId}`);
+    return entityZone(tx, (u?.legal_entity_id as string | null) ?? null);
+  });
+  const day = new Intl.DateTimeFormat("en-CA", { timeZone: zone, year: "numeric", month: "2-digit", day: "2-digit" }).format(now);
+  const weekday = new Intl.DateTimeFormat("en-US", { timeZone: zone, weekday: "long" }).format(now);
+  return `
+
+Today is ${weekday} ${day} for the user (${zone}). Work out "today", "yesterday", "this week" and weekday names from it, and never ask for a date the user already gave that way.${monthNote(day)}`;
+}
 
 export const titleOf = (t: RegisteredTool, input: Record<string, unknown>) => {
   const head = t.description.split(/[.:(]/)[0].trim();
@@ -113,7 +132,21 @@ export const traceFor = (viewer: Viewer, traceId?: string) => ({ traceId, tenant
 async function pendingFor(t: RegisteredTool, viewer: Viewer, input: Record<string, unknown>): Promise<PendingAction> {
   const card = await t.card?.(viewer as never, input as never).catch((e: unknown) => void logError(`chat.card ${t.name}`, e));
   return { id: randomUUID(), tool: t.name, title: card?.title ?? titleOf(t, input), input, fields: Object.keys(input), createdAt: new Date().toISOString(), traceId: currentTrace()?.traceId,
-    ...(card ? { lines: card.lines, ...(card.look ? { look: card.look } : {}) } : {}), ...(t.secretInput ? { secret: t.secretInput } : {}) };
+    ...(card ? cardParts(card) : {}), ...(t.secretInput ? { secret: t.secretInput } : {}) };
+}
+
+const cardParts = (card: ToolCard) => ({ lines: card.lines, ...(card.look ? { look: card.look } : {}), ...(card.form ? { form: card.form } : {}) });
+
+/**
+ * 106: the card worded again from the input its form's edits made, so its title and receipt say what really ran. When the
+ * tool's card can't be worded, the proposed lines and receipt are dropped, never kept: they describe the input before the edits.
+ */
+export async function rewordCard(t: RegisteredTool, viewer: Viewer, action: PendingAction, input: Record<string, unknown>): Promise<PendingAction> {
+  const card = await t.card?.(viewer as never, input as never).catch((e: unknown) => void logError(`chat.card ${t.name}`, e));
+  if (card) return { ...action, input, title: card.title, ...cardParts(card) };
+  const { lines: _lines, look, ...rest } = action;
+  const { done: _done, ...kept } = look ?? {};
+  return { ...rest, input, title: titleOf(t, input), ...(look ? { look: kept } : {}) };
 }
 
 // An error from a write that was given a secret never carries it on, even if some layer echoed it.
@@ -125,6 +158,7 @@ function scrub(e: unknown, secret: string | undefined): unknown {
 
 export const AWAITING = { status: "awaiting_confirmation", note: "The user now sees a confirm card for this. Don't say it's done." };
 const NOT_PROPOSED = { status: "not_proposed", note: "No confirm card was made: amax couldn't record the request. Tell the user it didn't go through and to try again shortly." };
+const NO_FORM = { status: "not_proposed", note: "No confirm card was made: its fields couldn't be prepared. Tell the user it didn't go through and to try again shortly." };
 // 043 AC-1: a card's write runs keyed to the tool's declared service, so a tool without one can't be
 // made safe to confirm and never becomes a card.
 const serviceNames = (t: RegisteredTool | undefined) => [t?.service ?? []].flat().map((s) => s.spec.name);
@@ -154,6 +188,8 @@ export async function proposeWrite(t: RegisteredTool, viewer: Viewer, input: Rec
   // The step comes first (053): a card is shown only once its pending step is in the trace, so a
   // step that can't be written means nothing was proposed, and the model is told exactly that.
   const action = { ...(await pendingFor(t, viewer, input)), ...(choice ? { choice } : {}) };
+  // 106 final pass: an input only the looser draft accepts needs its card's fields, or the person could never complete it.
+  if (t.draft && !action.form && !t.input.safeParse(input).success) return { refused: NO_FORM };
   if (!(await traceStep({ kind: "pending", tool: t.name, args: input, detail: { actionId: action.id, ...(choice ? { choice: choice.id } : {}) } }))) return { refused: NOT_PROPOSED };
   return { action };
 }
@@ -173,7 +209,7 @@ async function runTurn(db: Db, registry: Registry, viewer: Viewer, opts: { conve
   const tools: Tool[] = registry.toolsFor(viewer).map((t) => ({
     name: t.name,
     description: t.description,
-    input: t.input,
+    input: t.draft ?? t.input,
     sensitive: t.sensitive,
     run: async (input: Record<string, unknown>) => {
       if (t.scope !== "write") {
@@ -190,6 +226,8 @@ async function runTurn(db: Db, registry: Registry, viewer: Viewer, opts: { conve
     },
   }) as Tool);
   tools.push(choiceTool(registry, viewer, (a) => pending.push(a)));
+  let answers: Answers | undefined;
+  tools.push(answerTool((a) => { answers = a; }));
   const open = (convo.pending ?? []).filter((p) => !isExpired(p) && !p.secret);
   const changed: PendingAction[] = [];
   const dropped: string[] = [];
@@ -211,14 +249,15 @@ async function runTurn(db: Db, registry: Registry, viewer: Viewer, opts: { conve
     : "";
   const messages: Message[] = [...convo.messages, { role: "user", content: [{ type: "text", text: opts.text }] }];
   const result = await converse({ tenantId: viewer.tenantId, caller: `user:${viewer.userId}`, userId: viewer.userId, conversationId: convo.id, source: "chat", purpose: opts.intent ? `chat:${opts.intent.id}` : "chat" }, {
-    instructions: INSTRUCTIONS + todayNote() + (opts.rules ? `\n\n${withRocket(opts.rules)}` : "") + CHOICE_INSTRUCTIONS + intentNote + openCardsNote(open),
+    instructions: INSTRUCTIONS + (await todayNote(db, viewer)) + (opts.rules ? `\n\n${withRocket(opts.rules)}` : "") + CHOICE_INSTRUCTIONS + ANSWER_INSTRUCTIONS + intentNote + openCardsNote(open),
     messages,
     tools,
     data,
   });
   await append(db, viewer, convo.id, { messages: result.messages.slice(convo.messages.length), pending, title: titleFrom(opts.text), pins });
   const kept = changed.filter((c) => !dropped.includes(c.id));
-  return { conversationId: convo.id, reply: result.text.trim() || echoOf(kept, dropped.length), toolsRun: result.toolsRun.filter((n) => n !== CHOICE_TOOL && !pending.some((p) => p.tool === n)), pending, highlights: highlightsFor(opts.text, pending), pins, show, files, changed: kept, dropped };
+  return { conversationId: convo.id, reply: result.text.trim() || echoOf(kept, dropped.length), toolsRun: result.toolsRun.filter((n) => n !== CHOICE_TOOL && n !== ANSWER_TOOL && !pending.some((p) => p.tool === n)), pending, highlights: highlightsFor(opts.text, pending), pins, show, files, changed: kept, dropped,
+    ...(answers && !pending.length ? { answers } : {}) };
 }
 
 /** What happened to a card: confirmed (the write ran), cancelled, failed for good, or unknown. */
@@ -241,7 +280,7 @@ export class NotPendingError extends Error {
  * and the user is asked to check before trying again (never a blind retry).
  */
 export class ActionFailedError extends Error {
-  constructor(message: string, public kind: "retry" | "failed" | "unknown") {
+  constructor(message: string, public kind: "retry" | "failed" | "unknown", public field?: string) {
     super(message);
     this.name = "ActionFailedError";
   }
@@ -307,7 +346,7 @@ const doneNote = (title: string, result: unknown) => {
 // immutable, so a confirm that never took effect must never read as a plain confirm (052 review).
 // A cancel is recorded once it has taken effect. Every decided step is best-effort except `run`
 // (traceStepOrFail): it is written before the write, so a write never runs untraced (053).
-export type ConfirmOutcome = "run" | "already_done" | "already_cancelled" | "expired" | "needs_secret" | "not_chosen" | "needs_answer";
+export type ConfirmOutcome = "run" | "already_done" | "already_cancelled" | "expired" | "needs_secret" | "not_chosen" | "needs_answer" | "needs_edits";
 const decidedStep = (action: PendingAction, decision: "confirmed" | "cancelled", outcome?: ConfirmOutcome) => {
   const step = { kind: "decided" as const, tool: action.tool, detail: { actionId: action.id, decision, ...(outcome ? { outcome } : {}) } };
   return outcome === "run" ? traceStepOrFail(step) : traceStep(step);
@@ -316,12 +355,25 @@ const inTrace = <T>(viewer: Viewer, action: PendingAction, fn: () => Promise<T>)
 
 /** "Add it": run the pending write as the user, source chat (AC-3), at most once per card. */
 /** `answer` (076 amendment 1): the value typed on a choice card for its `ask` field. */
-export async function confirmAction(db: Db, registry: Registry, viewer: Viewer, conversationId: string, actionId: string, opts: { secret?: string; answer?: string } = {}) {
+/** `edits` (106): the values of the card's form fields as the person left them. */
+type ConfirmOpts = { secret?: string; answer?: string; edits?: Edits };
+export async function confirmAction(db: Db, registry: Registry, viewer: Viewer, conversationId: string, actionId: string, opts: ConfirmOpts = {}) {
   const action = await card(db, viewer, conversationId, actionId);
   return inTrace(viewer, action, () => confirmCard(db, registry, viewer, conversationId, action, opts));
 }
 
-async function confirmCard(db: Db, registry: Registry, viewer: Viewer, conversationId: string, action: PendingAction, opts: { secret?: string; answer?: string }) {
+/** 106: a form field's check while it is edited: the tool's schema, then its own propose check, nothing written. */
+export async function checkCardEdits(db: Db, registry: Registry, viewer: Viewer, conversationId: string, actionId: string, edits: Edits): Promise<FieldCheck> {
+  const action = await card(db, viewer, conversationId, actionId);
+  const tool = registry.toolsFor(viewer).find((t) => t.name === action.tool);
+  if (!action.form || !tool) return { message: "This card has no fields to check." };
+  const checked = await checkInput(tool, viewer, withEdits(action.form, action.input, edits), true);
+  if ("refused" in checked) return checked.refused;
+  const note = await tool.note?.(viewer as never, checked.value as never);
+  return note ? { note } : {};
+}
+
+async function confirmCard(db: Db, registry: Registry, viewer: Viewer, conversationId: string, action: PendingAction, opts: ConfirmOpts) {
   const actionId = action.id;
   const key = keyOf(actionId);
   const by = viewer.userId;
@@ -363,7 +415,9 @@ async function confirmCard(db: Db, registry: Registry, viewer: Viewer, conversat
     await settleNow(db, viewer, conversationId, action, "failed", `(I couldn't run "${action.title}": it can't be confirmed in chat.)`);
     throw new ActionFailedError("this change can't be confirmed in chat", "failed");
   }
-  const input = await withAnswer(registry, viewer, action, opts.answer, () => decide("needs_answer"));
+  const formed = action.form ? await formInput(registry, viewer, action, opts.edits, () => decide("needs_edits")) : null;
+  if (formed) action = formed.action;
+  const input = formed ?? await withAnswer(registry, viewer, action, opts.answer, () => decide("needs_answer"));
   if ("failed" in input) {
     await settleNow(db, viewer, conversationId, action, "failed", `(I couldn't send "${action.title}": ${input.failed})`);
     throw new ActionFailedError(input.failed, "failed");
@@ -407,6 +461,19 @@ async function failedRun(db: Db, viewer: Viewer, conversationId: string, action:
   // The note is read back by the model: the failure kind and a reference, never the message (final review).
   await settleNow(db, viewer, conversationId, action, "failed", `(I tried "${action.title}" but ${toolFailure(action.tool, run.error, logError(`chat.confirm ${action.tool}`, run.error))})`);
   throw new ActionFailedError(message, "failed");
+}
+
+// 106: a form card's edits join its input here, only for its declared fields, and the whole input is checked again (schema,
+// then the tool's propose check). A refusal keeps the card open (retry) with the field it is about; the card is worded
+// again from the input that runs, so its receipt names what was really written.
+async function formInput(registry: Registry, viewer: Viewer, action: PendingAction, edits: Edits | undefined, refuse: () => Promise<unknown>) {
+  const tool = registry.all.find((t) => t.name === action.tool)!;
+  const checked = await checkInput(tool, viewer, withEdits(action.form!, action.input, edits));
+  if ("refused" in checked) {
+    await refuse();
+    throw new ActionFailedError(checked.refused.message ?? "check the fields", "retry", checked.refused.field);
+  }
+  return { value: checked.value, action: await rewordCard(tool, viewer, action, checked.value) };
 }
 
 // 076 amendment 1: a choice card's typed value joins the chosen option's input here, and only here. The full input is

@@ -14,6 +14,7 @@ export async function loadFixtures(db: Db, modules: Seedable[], shared: SharedFi
     for (const e of shared.entities) {
       await tx.execute(sql`insert into core.legal_entity (id, tenant_id, name, country, base_currency)
         values (${e.id}, ${tenantId}, ${e.name}, ${e.country}, ${e.baseCurrency}) on conflict do nothing`);
+      if (e.timezone) await tx.execute(sql`insert into workflows.entity_zone (legal_entity_id, tenant_id, timezone) values (${e.id}, ${tenantId}, ${e.timezone}) on conflict do nothing`);
     }
   });
   const seeded: string[] = [];

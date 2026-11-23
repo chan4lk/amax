@@ -1,0 +1,109 @@
+{
+ "counts": {
+  "blocker": 0,
+  "major": 2,
+  "minor": 1
+ },
+ "escalated": [],
+ "files": [
+  "modules/hr/server/inforce.ts",
+  "modules/hr/server/queries.ts",
+  "modules/hr/server/records.ts",
+  "modules/hr/server/stats.ts",
+  "modules/hr/server/zones.ts",
+  "modules/hr/tests/hr-screens-110.test.ts",
+  "modules/hr/ui/PeoplePage.tsx"
+ ],
+ "final": false,
+ "findings": [
+  {
+   "class": "other",
+   "file": "modules/hr/server/stats.ts",
+   "fp": "2e42a61c110f",
+   "in_delta": true,
+   "line": 25,
+   "message": "Only part of the 'one day per stat' class is fixed. The counts now use each person's own day `D`. But the year window start (`monthStart(y, 0)`), the `months` labels, the quarter `q`, and PeoplePage's `nextMonthName(today)` and `Q` label all still come from a single `day`: the latest today across every legal entity. On the whole-company view, whenever entities are on different dates across a month or year boundary, the labels and windows don't match the counts. Example: the window is `joined_on between <Jan 1 of the max day's year> and <the person's own today>`, so for people in an entity still in the old year the window is empty. Fix: derive every window and label from the same per-person day. Use `date_trunc('year', D)` as each person's window start and bucket by month relative to D. Either word the lede relatively ('next month') or work out one screen day per entity and only name a month when every shown entity shares it.",
+   "original_severity": "major",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B1",
+   "scenario": "Fixture tenant with Sri Lanka (UTC+5:30) and Australia (UTC+11), whole-company People at 2026-12-31T14:00Z. Australia is 2027-01-01 and Sri Lanka is 2026-12-31, so day=2027-01-01 and y=2027. The flows for Sri Lanka people become `joined_on between 2027-01-01 and 2026-12-31`, so all their 2026 joiners and leavers disappear. The chart shows only 'Jan' and the ticket reads 'Joiners and leavers, Q1'. Second case at 2026-11-30T14:00Z: the lede says contracts 'end in January', but a Sri Lanka fixed-term contract ending 2026-12-20 is counted in that number.",
+   "severity": "major",
+   "unclassified": false
+  },
+  {
+   "class": "other",
+   "file": "modules/hr/tests/hr-screens-110.test.ts",
+   "fp": "6e4e9d4f3352",
+   "in_delta": true,
+   "line": 33,
+   "message": "The stats variant test covers only probation due this month and December joiners, for one Sri Lanka person. Round 2 explicitly asked for contracts ending next month and the joiners/leavers quarter to be covered too, and neither is. There is also no variant with two entities on different dates, which is the case the new max-day `day` and per-person `D` can disagree on. Fix: add table rows for `contractsEndingNextMonth` (a fixed-term contract ending in January at 2026-11-30T20:00Z), for `quarter`/`leavers`, and for a mixed Sri Lanka + Australia tenant at a time when the two entities fall in different months or years. Check both the counts and the rendered PeoplePage lede and quarter label.",
+   "original_severity": "major",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B2",
+   "scenario": "Revert `month(1)`/`month(2)` in the contracts-ending subquery to the old UTC `monthStart(y, m + 1)` and the whole suite stays green. Ship the year-window mismatch above and the suite stays green.",
+   "severity": "major",
+   "unclassified": false
+  },
+  {
+   "class": "other",
+   "file": "modules/hr/server/stats.ts",
+   "fp": "6aeec5c29fb7",
+   "in_delta": true,
+   "line": 25,
+   "message": "With no `asOf` and no legal entity rows, `max(...)` is NULL, so `day` becomes the string 'null'. `new Date('nullT00:00:00Z')` is then invalid, and `monthStart(NaN, 0)` throws a RangeError from `toISOString`. The People screen and the `people_stats` MCP tool fail with an unrelated error. Before this round they fell back to UTC's date. Fix: when the day can't be worked out, return an explicit empty or 'no entities' result, or raise a clear error.",
+   "original_severity": "minor",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B6",
+   "scenario": "A tenant with no core.legal_entity rows calls people_stats \u2192 RangeError: Invalid time value.",
+   "severity": "minor",
+   "unclassified": false
+  }
+ ],
+ "fix_proof": {
+  "base": "09da7ea000ed5e140e3ff4b3755a9ed9876a0d4a",
+  "mode": "warn",
+  "reason": "no review.test_command configured, so no test could prove the fix",
+  "status": "not_proven",
+  "tests": []
+ },
+ "head": "68914bb59328f1bdce489f3dcbf1dfc0a936994d",
+ "impact": [
+  "apps/mock/public/mock/index.html",
+  "apps/web/app/(app)/settings/api/format.ts",
+  "apps/web/app/(app)/settings/audit/AuditTickets.tsx",
+  "apps/web/app/(app)/settings/keys/format.ts",
+  "apps/web/app/(app)/suggestions/page.tsx",
+  "apps/web/lib/admin/status.ts",
+  "apps/web/lib/privacy-fixtures.ts",
+  "apps/web/tests/admin/it-admin.test.ts",
+  "apps/web/tests/e2e/admin.spec.ts",
+  "apps/web/tests/e2e/global-auth.ts",
+  "apps/web/tests/e2e/suggestions.spec.ts",
+  "modules/allocations/server/forecast.ts",
+  "modules/allocations/server/grid.ts",
+  "modules/allocations/server/months.ts",
+  "modules/allocations/server/row.ts",
+  "modules/allocations/server/standing-jobs.ts",
+  "modules/allocations/server/team.ts",
+  "modules/allocations/tests/allocations.test.ts",
+  "modules/allocations/tests/scope.test.ts",
+  "modules/allocations/tests/standing-107.test.ts"
+ ],
+ "model": "opus",
+ "passes": [
+  "review",
+  "design"
+ ],
+ "prompt_chars": 71026,
+ "round": 3,
+ "since": "de5a2c72",
+ "status": "open",
+ "system_chars": 43707,
+ "tier": "review",
+ "tools": "Read,Grep,Glob",
+ "ts_end": 1794764962,
+ "ts_start": 1794764865
+}

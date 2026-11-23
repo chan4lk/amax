@@ -1,0 +1,11 @@
+{
+  "change": "106-set-up-project-card",
+  "phase": "pr",
+  "branch": "",
+  "phases": {
+    "proposal": {"status":"approved","at":"2026-11-15T06:20:12Z"},
+    "tasks": {"status":"done","at":"2026-11-15T06:31:03Z"},
+    "verify": {"status":"done","at":"2026-11-15T10:13:44Z"},
+    "pr": {"status":"done","at":"2026-11-15T10:21:42Z"}
+  }
+}

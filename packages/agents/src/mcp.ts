@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { McpToolDef } from "@amax/core";
+import type { McpToolDef, ToolCard } from "@amax/core";
 import { contextForViewer, type Viewer } from "@amax/auth";
 import { ToolError } from "@amax/mcp";
 import { acceptSuggestion, dismissSuggestion, querySuggestion } from "./decide";
@@ -16,9 +16,31 @@ const found = <T>(id: string) => (r: T | null) => r ?? Promise.reject(missing(id
 const pinOf = (r: SuggestionView | null) => (r ? { id: r.id, label: r.title, createdAt: r.createdAt } : null);
 const id = z.object({ id: z.uuid().describe("The suggestion's id") });
 
+// 081 amendment 2: the confirm card names the suggestion being decided (its title, kind and agent), not the tool and a
+// raw id, and its button and receipt say the decision ("Accept", "Accepted: Move CON-018 to Verified").
+type Verb = { button: string; past: string; tone?: "danger" };
+const VERB: Record<string, Verb> = {
+  accept: { button: "Accept", past: "Accepted" }, query: { button: "Ask the agent", past: "Asked the agent about" },
+  dismiss: { button: "Dismiss", past: "Dismissed" }, undo: { button: "Undo", past: "Undone" },
+};
+const cardFor = (verb: Verb) => async (v: Viewer, a: { id: string; note?: string; reason?: string }): Promise<ToolCard> => {
+  const s = await getSuggestion(v, a.id);
+  if (!s) return { title: `${verb.button} a suggestion`, lines: [{ label: "Suggestion", value: "not found, or not one you may decide" }] };
+  const second = verb.button === "Accept" && s.irreversible && s.status !== "approved";
+  const why = a.note ?? a.reason;
+  return {
+    title: `${verb.button}: ${s.title}`,
+    lines: [{ label: "Suggestion", value: s.title }, { label: "Kind", value: s.kindTitle }, { label: "From", value: `${s.agent.name}${s.actsFor ? ` for ${s.actsFor.name}` : ""}` },
+      ...(s.detail ? [{ label: "Why", value: s.detail }] : []), ...(why ? [{ label: verb.button === "Ask the agent" ? "Question" : "Note", value: why }] : []),
+      ...(second ? [{ label: "Then", value: "a second, different person approves it: it can't be undone" }] : [])],
+    look: { kind: `${verb.button} suggestion`, subject: s.title, detail: s.kindTitle, who: `from ${s.agent.name}`, confirm: second ? "Approve" : verb.button,
+      done: second ? `Approved, waiting for a second approver: ${s.title}` : `${verb.past}: ${s.title}`, ...(verb.tone ? { tone: verb.tone } : {}) },
+  };
+};
+
 // 006: deciding is a person's act on chat's confirm card, never an agent's call over MCP or the API.
 const decide = (name: string, description: string, input: z.ZodObject, service: ((ctx: ReturnType<typeof contextForViewer>, a: never) => Promise<unknown>) & { spec: { name: string } }) =>
-  tool({ name, description, scope: "write", permission: DECIDE, input, service, run: async (v, a, s) => {
+  tool({ name, description, scope: "write", permission: DECIDE, input, service, card: cardFor(VERB[name.split("_")[0]]) as McpToolDef["card"], run: async (v, a, s) => {
     if (s !== "chat") throw new ToolError(`${name} is a person's decision: confirm it in amax chat`, "invalid_input");
     return service(contextForViewer(v, s), a as never);
   } });

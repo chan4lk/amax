@@ -1,8 +1,0 @@
-{
-  "change": "086-allocations-bot-capacity-answers",
-  "phase": "verify",
-  "branch": "",
-  "phases": {
-    "verify": {"status":"done","at":"2026-11-17T09:29:49Z"}
-  }
-}

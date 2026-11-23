@@ -1,8 +1,0 @@
-{
-  "change": "084-allocations-take-action-record",
-  "phase": "verify",
-  "branch": "",
-  "phases": {
-    "verify": {"status":"done","at":"2026-11-17T09:29:43Z"}
-  }
-}

@@ -1,0 +1,7 @@
+# Follow-ups
+
+Deferred by the review loop: minors and pre-existing findings.
+
+- [major B1] `apps/mock/public/mock/index.html:4448` 114 says the mock 'escapes the text it puts into HTML', but this change escapes only the nav sheet and srTable. `window.amaxAddDeal` still puts chat-extracted fields (d.client, d.name, d.value, d.win, d.close) into `c.innerHTML` raw. `extract()` takes d.name and d.close from whatever the user types (`[^,.]{4,60}` and the date regex). This is the same 'DOM text reinterpreted as HTML' alert that 114 fixes elsewhere. Fix: pass every interpolated field through `window.amaxEsc`, and check the other innerHTML sinks that take data (4187 s.dataset.title, 4294/4387 p[0], 4649 p[0]/d.note, 4718 o.title/o.hint) the same way. (round 1) <!-- fp:947c5cd749f5 class:security -->
+- [minor B4] `apps/mock/public/mock/index.html:4220` The new top-level `esc` (escapes & < > " ') is a second copy of the chat's own `esc` at line 4477, which escapes only & < >. The two disagree on quotes. Today the chat copy is used only in element text, so nothing renders wrong yet. Fix: have the chat use `window.amaxEsc` and delete its local `esc`. (round 1) <!-- fp:dd5d139e5aa7 class:other -->
+- [minor B11] `packages/testing/tests/review-gate-covered.test.ts:10` Changing `() =>` to `(_h) =>` in `cover` and `later` does nothing: the parameter is never used, and `Step` already allows a zero-argument function. Revert both lines. (round 1) <!-- fp:48fe1018c589 class:other -->

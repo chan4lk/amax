@@ -3,7 +3,8 @@ import { z } from "zod";
 import type { Tx } from "@amax/db";
 import type { ServiceContext } from "@amax/core/server";
 import { CONTRACTS, EVENTS, type PersonChanged } from "../contracts";
-import { date, inScopeFrom, personByNo, today } from "./records";
+import { date, inScopeFrom, personByNo } from "./records";
+import { entityToday } from "./zones";
 
 export const changeInput = z.object({
   employeeNo: z.string(), effectiveOn: date.optional(),
@@ -50,12 +51,14 @@ async function newPeriod(tx: Tx, personId: string, on: string, set: Record<strin
 
 export async function changePersonRun(tx: Tx, input: ChangeInput, ctx: ServiceContext) {
   const p = await personByNo(tx, input.employeeNo);
-  const on = input.effectiveOn ?? today();
+  // 110 AC-1: the person's entity's own today, as addPerson and the status job decide; an entity with no zone is refused.
+  const local = await entityToday(tx, p.legal_entity_id as string);
+  const on = input.effectiveOn ?? local;
   await inScopeFrom(tx, ctx, "hr:person:update", p, on, [input.department]);
   const personSet = Object.entries(PERSON_FIELDS).filter(([k]) => input[k as keyof ChangeInput] !== undefined);
   // Title, location and work email aren't effective-dated: they change now, so the event and audit
   // must not claim another date for them.
-  if (personSet.length && on !== today()) throw new Error(`${personSet.map(([k]) => k).join(", ")} change today: leave out effectiveOn or change them separately`);
+  if (personSet.length && on !== local) throw new Error(`${personSet.map(([k]) => k).join(", ")} change today: leave out effectiveOn or change them separately`);
   const changed = Object.keys(input).filter((k) => k !== "employeeNo" && k !== "effectiveOn" && input[k as keyof ChangeInput] !== undefined);
   if (!changed.length) throw new Error("nothing to change");
   for (const [k, col] of personSet) await tx.execute(sql`update hr.person set ${sql.identifier(col)} = ${input[k as keyof ChangeInput]}, updated_at = now() where id = ${p.id}`);

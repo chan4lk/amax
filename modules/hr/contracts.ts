@@ -2,12 +2,13 @@
 // tenant transaction and take a Reader: a viewer sees only the legal entities their hr:read reaches,
 // with pay and bank masked per 002; trusted system code (a ServiceContext core issued with
 // contextFor.job, checked by isSystemContext, not by its fields) sees everything, and its pay reads are audited. Every read takes an as-of date
-// (default today) so one screen or job reads one day.
+// (default: each person's own today, in their entity's time zone, 110) so one screen or job reads one day. For an entity
+// with no time zone a read falls back to UTC's today and never refuses: HR's writes refuse it, and People names it.
 import { sql } from "drizzle-orm";
 import type { Tx } from "@amax/db";
 import { can, mask, ScopeError, type Masked, type Viewer } from "@amax/auth";
 import { appendAudit, isSystemContext, type ServiceContext } from "@amax/core/server";
-import { employmentAt, inForceOrder, subjectOf, today } from "./server/inforce";
+import { asOf, employmentAt, inForceOrder, subjectOf } from "./server/inforce";
 
 /** Who reads: a signed-in viewer, or a ServiceContext (a system job, or a call acting for a viewer). */
 export type Reader = Viewer | ServiceContext;
@@ -60,7 +61,7 @@ export type PersonChanged = { personId: string; userId: string | null; changed: 
 
 const day = (v: unknown) => (v === null || v === undefined ? null : v instanceof Date ? v.toISOString().slice(0, 10) : String(v).slice(0, 10));
 
-const people = (at: string) => sql`select p.*, emp.department, emp.manager_person_id, mgr.user_id as manager_user_id, mgr.name as manager_name from hr.person p ${employmentAt(at)}`;
+const people = (at?: string) => sql`select p.*, emp.department, emp.manager_person_id, mgr.user_id as manager_user_id, mgr.name as manager_name from hr.person p ${employmentAt(at)}`;
 
 /** @internal Row mapper shared with this module's own queries; not part of the v1 contract. */
 export const toPersonRef = (r: Record<string, unknown>): PersonRef => ({
@@ -71,7 +72,7 @@ export const toPersonRef = (r: Record<string, unknown>): PersonRef => ({
 });
 
 /** One person by employee number or id, or null when there's none the reader may see. */
-export async function getPerson(tx: Tx, reader: Reader, idOrEmployeeNo: string, on = today()): Promise<PersonRef | null> {
+export async function getPerson(tx: Tx, reader: Reader, idOrEmployeeNo: string, on?: string): Promise<PersonRef | null> {
   const [r] = await tx.execute(sql`${people(on)} where p.employee_no = ${idOrEmployeeNo} or p.id::text = ${idOrEmployeeNo}`);
   return r && sees(readerOf(reader), r) ? toPersonRef(r) : null;
 }
@@ -87,7 +88,7 @@ export async function listPeople(tx: Tx, reader: Reader, scope: PeopleScope = {}
     scope.ids ? (scope.ids.length ? sql`p.id::text in (${sql.join(scope.ids.map((i) => sql`${i}`), sql`, `)})` : sql`false`) : undefined,
   ].filter((w): w is ReturnType<typeof sql> => Boolean(w));
   const filter = where.length ? sql`where ${sql.join(where, sql` and `)}` : sql``;
-  return (await tx.execute(sql`${people(scope.on ?? today())} ${filter} order by p.name`)).filter((r) => sees(who, r)).map(toPersonRef);
+  return (await tx.execute(sql`${people(scope.on)} ${filter} order by p.name`)).filter((r) => sees(who, r)).map(toPersonRef);
 }
 
 const toPeriod = (r: Record<string, unknown>): EmploymentPeriod => ({
@@ -103,12 +104,12 @@ export async function listEmploymentPeriods(tx: Tx, reader: Reader, personIds?: 
 }
 
 /**
- * The employment in force on `on` (default today). A viewer gets pay and bank masked per 002 (null when
+ * The employment in force on `on` (default: the person's own today). A viewer gets pay and bank masked per 002 (null when
  * the person is outside their entities and isn't them); a system reader gets them unmasked, and that read is audited.
  */
-export async function getEmployment(tx: Tx, personId: string, reader: Reader, on = today()): Promise<Employment | null> {
+export async function getEmployment(tx: Tx, personId: string, reader: Reader, on?: string): Promise<Employment | null> {
   const who = readerOf(reader);
-  const [r] = await tx.execute(sql`select e.*, p.user_id,
+  const [r] = await tx.execute(sql`select e.*, p.user_id, to_char(${asOf(on)}, 'YYYY-MM-DD') as as_of,
       (select x.ends_on from hr.employment x where x.person_id = e.person_id order by x.starts_on desc limit 1) as contract_ends_on
     from hr.employment e join hr.person p on p.id = e.person_id where e.person_id::text = ${personId} ${inForceOrder(on)}`);
   if (!r || !sees(who, r)) return null;
@@ -118,7 +119,7 @@ export async function getEmployment(tx: Tx, personId: string, reader: Reader, on
     epfNumber: (r.epf_number as string | null) ?? null, bankName: (r.bank_name as string | null) ?? null, bankAccount: (r.bank_account as string | null) ?? null,
   };
   if (who.kind === "system") {
-    await appendAudit(tx, who.ctx, { action: "hr.employment.read", resource: "hr.employment", resourceId: full.id, before: null, after: { personId, on, fields: Object.keys(EMPLOYMENT_SENSITIVE) } });
+    await appendAudit(tx, who.ctx, { action: "hr.employment.read", resource: "hr.employment", resourceId: full.id, before: null, after: { personId, on: r.as_of as string, fields: Object.keys(EMPLOYMENT_SENSITIVE) } });
     return full;
   }
   return mask(who.viewer, full, EMPLOYMENT_SENSITIVE, subjectOf(r)) as Employment;
@@ -136,6 +137,6 @@ export async function personIdsForUser(tx: Tx, userId: string): Promise<string[]
 }
 
 /** Auth users who report to this user (feeds the viewer's `reports` scope for manager-visible fields). */
-export async function reportUserIds(tx: Tx, userId: string, on = today()): Promise<string[]> {
+export async function reportUserIds(tx: Tx, userId: string, on?: string): Promise<string[]> {
   return (await tx.execute(sql`select p.user_id from hr.person p ${employmentAt(on)} where mgr.user_id = ${userId} and p.user_id is not null and p.status <> 'left'`)).map((r) => r.user_id as string);
 }

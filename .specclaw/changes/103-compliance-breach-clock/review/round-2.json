@@ -1,0 +1,51 @@
+{
+ "counts": {
+  "blocker": 0,
+  "major": 0,
+  "minor": 0
+ },
+ "escalated": [],
+ "files": [
+  "apps/mock/public/mock/index.html",
+  "modules/compliance/tests/registers.test.ts"
+ ],
+ "final": true,
+ "findings": [],
+ "head": "6e1646188552f768b3c40ecf9f6043309e335da7",
+ "impact": [
+  "apps/web/app/(app)/settings/api/LimitTable.tsx",
+  "apps/web/app/(app)/settings/api/format.ts",
+  "apps/web/components/agents/DecideTable.tsx",
+  "apps/web/components/shell/SessionWatch.tsx",
+  "apps/web/lib/admin/api.ts",
+  "apps/web/lib/admin/tool.ts",
+  "apps/web/lib/agents-fixtures.ts",
+  "apps/web/proxy.ts",
+  "apps/web/tests/admin/limits.test.ts",
+  "apps/web/tests/admin/proxy-wiring.test.ts",
+  "apps/web/tests/e2e/api-seed.ts",
+  "modules/delivery/suggestions.ts",
+  "modules/helpdesk/contracts.ts",
+  "modules/helpdesk/db/migrations/0001_helpdesk.sql",
+  "modules/helpdesk/fixtures/data.ts",
+  "modules/helpdesk/fixtures/index.ts",
+  "modules/helpdesk/mcp.ts",
+  "modules/helpdesk/module.ts",
+  "modules/helpdesk/server/handlers.ts",
+  "modules/helpdesk/server/rows.ts"
+ ],
+ "model": "opus",
+ "passes": [
+  "review",
+  "design"
+ ],
+ "prompt_chars": 54427,
+ "round": 2,
+ "since": null,
+ "status": "clean",
+ "system_chars": 43247,
+ "tier": "review",
+ "tools": "Read,Grep,Glob",
+ "ts_end": 1794493399,
+ "ts_start": 1794493362
+}

@@ -1,8 +1,0 @@
-{
-  "change": "093-reports-export-month",
-  "phase": "verify",
-  "branch": "",
-  "phases": {
-    "verify": {"status":"done","at":"2026-11-15T21:02:04Z"}
-  }
-}

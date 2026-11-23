@@ -24,6 +24,9 @@ export async function notificationsDb(extra: ModuleManifest[] = []) {
   setViewerScopeResolvers(modules.flatMap((m) => (m.viewerScopes ? [m.viewerScopes] : [])));
   installAuthorizer();
   await loadFixtures(app, [{ id: "auth", fixtures: [authFixtures] }, ...modules], lumen);
+  // 088: Maya's fixture quiet hours (21:00 to 07:00 Colombo, 15:30 to 01:30 UTC) would hold her deliveries asleep on the
+  // real clock, so a test run in that window never settles. Cleared for every test; channels.test checks quiet hours itself.
+  await t.owner`delete from notifications.quiet_hours`;
   const engine = createPostgresEngine({ db: app, registry: workflowRegistry(modules) });
   setWorkflowEngine(async () => engine);
   const jobs = registryFrom(modules);

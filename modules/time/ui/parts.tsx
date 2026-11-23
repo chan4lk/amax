@@ -45,7 +45,8 @@ export function Views({ current, week }: { current: "team" | "my" | "requests"; 
   const at = (v: typeof current) => (current === v ? "page" : undefined);
   return (
     <div className="seg" role="group" aria-label="View">
-      <a href={week ? weekHref("", week) : "/time"} aria-current={at("team")}>Team</a>
+      {/* 085: ?view=team, so the tab opens Team time even for someone whose Time opens on their own week. */}
+      <a href={week ? weekHref("", week) : "/time?view=team"} aria-current={at("team")}>Team</a>
       <a href={week ? weekHref("/my", week) : "/time/my"} aria-current={at("my")}>My timesheet</a>
       <a href="/time/requests" aria-current={at("requests")}>Requests</a>
     </div>

@@ -4,7 +4,6 @@ import type { ScreenProps } from "@amax/core";
 import { Card, EmptyState, facet, PinButton } from "@amax/ui";
 import { PERSON_SECTIONS } from "../contracts";
 import { personPin } from "../pins";
-import { today } from "../server/inforce";
 import { getPersonView } from "../server/queries";
 import { readHr } from "../server/read";
 import { DocumentsCard } from "./DocumentsCard";
@@ -17,12 +16,11 @@ const installedSections = (viewer: Parameters<typeof readHr>[0]) => readHr(viewe
 export async function PersonPage({ params, viewer: raw }: ScreenProps) {
   const viewer = needViewer(raw);
   if (!viewer) return <><h1>Person</h1><SignInFirst /></>;
-  const on = today();
-  const view = await getPersonView(viewer, params.employeeNo, on);
+  const view = await getPersonView(viewer, params.employeeNo);
   if (!view) notFound();
   const { person: p } = view;
   const sections = await installedSections(viewer);
-  const [tone, label] = statusChip(p, on);
+  const [tone, label] = statusChip(p, p.asOf);
   return (
     <>
       <nav className="crumb" aria-label="Breadcrumb"><a href="/hr">People</a><span aria-hidden="true">/</span>{p.name}</nav>

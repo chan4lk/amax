@@ -16,13 +16,13 @@ test("054 AC5 allocations: ask amax to copy December into January, confirm, and 
   test.setTimeout(60_000);
   await signIn(page, "maya@lumenlabs.test", "/allocations");
   await expect(page.locator("main form, main dialog")).toHaveCount(0);
-  const kasun = page.locator("tr.total", { hasText: "Kasun, total" });
+  const kasun = page.locator(".ad-lane", { hasText: "Kasun Dias" });
   await expect(kasun).toBeVisible();
-  const heads = await page.locator("table", { has: kasun }).locator("thead th").allTextContents();
+  const heads = await page.locator(".ad-mhead > div > span").allTextContents();
   const janColumn = heads.findIndex((h) => h.startsWith("Jan"));
-  expect(janColumn).toBeGreaterThan(1);
-  const january = kasun.locator("td").nth(janColumn);
-  await expect(january).toHaveText(/^0%/);
+  expect(janColumn).toBeGreaterThanOrEqual(0);
+  const january = kasun.locator(".ad-trow span").nth(janColumn);
+  await expect(january).toHaveText("–");
   await expect(page.getByRole("button", { name: "Ask amax to copy a month" })).toHaveCount(0);
   await page.keyboard.press("Control+k");
   await page.getByLabel("Message amax").fill("Copy Delivery team allocations from December (2026-12) to the next month");
@@ -31,5 +31,5 @@ test("054 AC5 allocations: ask amax to copy December into January, confirm, and 
   await card.getByRole("button", { name: "Add it" }).click();
   await expect(card).toContainText("Done:");
   await page.reload();
-  await expect(january).not.toHaveText(/^0%/);
+  await expect(january).not.toHaveText("–");
 });

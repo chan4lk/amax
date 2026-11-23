@@ -1,11 +1,11 @@
 import type { Viewer } from "@amax/auth";
 import { ToolError } from "@amax/mcp";
-import { getProjectRef } from "@amax/delivery/contracts";
+import { getProjectRef, getProposalRef } from "@amax/delivery/contracts";
 import { ctxFor } from "./context";
 import { bySource, logTime } from "./log";
 import { read } from "./read";
 
-type Log = { projectKey: string; hours: number; day: string; billable?: boolean; note?: string; agent?: string; clientRef?: string };
+type Log = { projectKey: string; hours: number; day: string; billable?: boolean; note?: string; agent?: string; clientRef?: string; proposalKey?: string };
 
 /**
  * 071 AC-8: `log_time` with a `clientRef` logs once. A retry with the same input returns the first entry, writing
@@ -17,11 +17,12 @@ export async function logOnce(v: Viewer, a: Log, s: "mcp" | "chat" | "api") {
   if (!a.clientRef) return run();
   const ref = `mcp:${a.clientRef}`;
   const replay = async () => {
-    const found = await read(v, async (tx) => ({ had: await bySource(tx, v.userId, ref), project: await getProjectRef(tx, a.projectKey) }));
+    const found = await read(v, async (tx) => ({ had: await bySource(tx, v.userId, ref), project: await getProjectRef(tx, a.projectKey),
+      proposal: a.proposalKey ? await getProposalRef(tx, a.proposalKey) : null }));
     if (!found.had) return null;
     // Every field of the input, note and agent included (071 review round 1): anything else is a different entry.
     const same = found.had.projectId === found.project?.id && found.had.day === a.day && found.had.hours === a.hours && found.had.billable === (a.billable ?? true)
-      && found.had.note === (a.note ?? null) && found.had.agent === (a.agent ?? null);
+      && found.had.note === (a.note ?? null) && found.had.agent === (a.agent ?? null) && found.had.proposalId === (found.proposal?.id ?? null);
     if (!same) throw new ToolError("clientRef already used for a different entry", "invalid_input");
     return { id: found.had.id, day: found.had.day, hours: found.had.hours, replayed: true };
   };

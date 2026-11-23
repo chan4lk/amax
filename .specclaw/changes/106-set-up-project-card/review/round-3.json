@@ -1,0 +1,108 @@
+{
+ "counts": {
+  "blocker": 0,
+  "major": 1,
+  "minor": 2
+ },
+ "escalated": [],
+ "files": [
+  "apps/web/components/chat/FormConfirm.tsx",
+  "apps/web/components/chat/form-values.ts",
+  "apps/web/lib/chat-outcome.ts",
+  "apps/web/tests/card-chips-106.test.ts",
+  "apps/web/tests/card-form-106.test.ts",
+  "packages/chat/src/edits.ts"
+ ],
+ "final": false,
+ "findings": [
+  {
+   "class": "other",
+   "file": "apps/web/tests/card-chips-106.test.ts",
+   "fp": "781ccbf89b03",
+   "in_delta": true,
+   "line": 12,
+   "message": "The new test only draws FormChips once, with a value already set (renderToStaticMarkup). It never takes the steps that the sentinel and the new `otherOn` state exist for: picking '+ new\u2026' while the value is still empty, then typing one key at a time, including typing a name that matches a listed option while the text field is open. The fix moved 'is the text field open' from the value (the \" \" sentinel) into `useState`, and no test exercises that state change. The only case that checks the field opening is the single e2e case ('Northwind Traders'). Fix: add a test that drives the component: click '+ new\u2026' with value '' and check the text field shows; type 'C','Co',\u2026,'Contoso' and check the text field stays open and the Contoso chip is not checked; type 'Northwind ' and then 'Northwind T' key by key. Use the Playwright e2e for this, or add a DOM renderer to vitest; there is none in apps/web today.",
+   "original_severity": "major",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B2",
+   "scenario": "Swap the `otherOn` state for the value-derived check `other = !listed && value !== \"\"` (the sentinel-era rule without the \" \" sentinel). Clicking '+ new\u2026' then sends onChange(''), so the text field disappears and the person can't type a new client. Typing 'Contoso' into the open field also closes it and checks the chip. All five cases in card-chips-106.test.ts still pass.",
+   "severity": "major",
+   "unclassified": false
+  },
+  {
+   "class": "other",
+   "file": "apps/web/lib/chat-outcome.ts",
+   "fp": "ccd521b2ae0e",
+   "in_delta": true,
+   "line": 3,
+   "message": "A server-side lib (called by the 'use server' action checkCardField) now imports CHECK_FAILED from a client component folder (components/chat/form-values). This makes the server outcome mapping depend on the UI folder. Move CHECK_FAILED next to FieldCheck in @amax/chat (packages/chat/src/edits.ts) and import it from there on both sides.",
+   "original_severity": "minor",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B11",
+   "scenario": "",
+   "severity": "minor",
+   "unclassified": false
+  },
+  {
+   "class": "other",
+   "file": "apps/web/components/chat/form-values.ts",
+   "fp": "243ee4520729",
+   "in_delta": true,
+   "line": 19,
+   "message": "Formatting slip: `generalOf =(form` is missing the space after `=`. The diff touched this line with no change to what it does. Restore `generalOf = (form`.",
+   "original_severity": "minor",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B11",
+   "scenario": "",
+   "severity": "minor",
+   "unclassified": false
+  }
+ ],
+ "fix_proof": {
+  "base": "c3a3a4d7e838e05e266560936fd32a5509fa8aca",
+  "mode": "warn",
+  "reason": "no review.test_command configured, so no test could prove the fix",
+  "status": "not_proven",
+  "tests": []
+ },
+ "head": "3858029ad19a676333dc1bb6166d845da58d5a9e",
+ "impact": [
+  "apps/mock/public/mock/index.html",
+  "apps/web/app/actions/chat.ts",
+  "apps/web/components/chat/ConfirmCard.tsx",
+  "apps/web/components/workflows/SchedulesCard.tsx",
+  "apps/web/lib/admin/workflows.ts",
+  "apps/web/lib/chat-move.ts",
+  "apps/web/lib/platform-workflows.ts",
+  "apps/web/lib/privacy-fixtures.ts",
+  "apps/web/tests/admin/api-reveal.test.ts",
+  "apps/web/tests/chat-move.test.ts",
+  "apps/web/tests/chat-outcome.test.ts",
+  "apps/web/tests/e2e/delivery.spec.ts",
+  "deploy/ci/k3d-drill.sh",
+  "deploy/helm/amax/values.yaml",
+  "modules/allocations/server/services.ts",
+  "modules/career/server/tag.ts",
+  "modules/compliance/mcp.ts",
+  "modules/compliance/server/chain.ts",
+  "modules/compliance/server/evidence.ts",
+  "modules/compliance/server/incidents.ts"
+ ],
+ "model": "opus",
+ "passes": [
+  "review",
+  "design"
+ ],
+ "prompt_chars": 62385,
+ "round": 3,
+ "since": "b1fb9c7f",
+ "status": "open",
+ "system_chars": 43770,
+ "tier": "review",
+ "tools": "Read,Grep,Glob",
+ "ts_end": 1794731386,
+ "ts_start": 1794731297
+}

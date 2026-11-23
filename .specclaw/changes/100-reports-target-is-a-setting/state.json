@@ -1,8 +1,0 @@
-{
-  "change": "100-reports-target-is-a-setting",
-  "phase": "verify",
-  "branch": "",
-  "phases": {
-    "verify": {"status":"done","at":"2026-11-16T09:14:28Z"}
-  }
-}

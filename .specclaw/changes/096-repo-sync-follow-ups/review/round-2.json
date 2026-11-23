@@ -1,0 +1,84 @@
+{
+ "counts": {
+  "blocker": 0,
+  "major": 1,
+  "minor": 1
+ },
+ "escalated": [],
+ "files": [
+  "modules/delivery/server/repo-time.ts",
+  "modules/delivery/server/services.ts",
+  "modules/delivery/sync/authors.ts",
+  "modules/delivery/sync/import.ts",
+  "modules/delivery/sync/sha.ts",
+  "modules/delivery/sync/withdraw.ts",
+  "modules/delivery/tests/repo-sync-096.test.ts",
+  "plugins/amax/scripts/read-specclaw.mjs"
+ ],
+ "final": false,
+ "findings": [
+  {
+   "file": "modules/delivery/server/repo-time.ts",
+   "fp": "11e58e2becb5",
+   "in_delta": true,
+   "line": 24,
+   "message": "The releasedAt fix is an instance fix. It adds `repoInstant`, which is a second copy of the reader's `isTime` + `new Date(at).toISOString()` (sync/specclaw.ts:108-111, `phaseTimesOf`). The two copies run on different hosts. `phaseTimesOf` runs in the reader (the plugin on the developer's machine, or wherever the self-sync runs), so a state.json `at` with no offset is read in that machine's time zone. `repoInstant` runs in `desired()` on the server for a push, so the same raw `phases.archived.at` is read in the server's time zone. A change's Released date and its `archived` phase time then disagree. The new test writes in the same host dependence: it expects `new Date(\"2026-10-17T03:12:41\").toISOString()`, which passes on any host and so proves nothing. `Date.parse` also accepts V8's non-ISO legacy formats, which goes against B6. Fix: keep one normaliser, used by both the reader (phaseTimesOf, createdOf) and desired(). Make it explicit about a value with no offset (for example, read it as UTC the way createdOf reads a bare day, or treat it as unknown), and accept only ISO 8601 date and date-time forms. Pin the test to a fixed expected instant, not one computed from the host's time zone.",
+   "original_severity": "major",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B4",
+   "scenario": "The plugin runs on a laptop in Asia/Colombo (UTC+05:30) and the server runs in UTC. state.json has archived {status:\"done\", at:\"2026-10-17T03:12:41\"}. The push stores phaseTimes.archived = 2026-10-16T21:42:41Z but released_at = 2026-10-17T03:12:41Z: one proposal, two different archive instants 5.5 h apart. Separately, releasedAt \"1\" or \"Oct 17\" parses and is stored as 2001-01-01 or 2001-10-17 instead of null.",
+   "severity": "major"
+  },
+  {
+   "file": "modules/delivery/sync/sha.ts",
+   "fp": "363317326261",
+   "in_delta": true,
+   "line": 18,
+   "message": "The 'one read rule' gives two answers. `isRead` needs a non-empty ref before `@<sha>` (`search > 0`), but `refOf` (withdraw.ts) and the author walk use the bare `AT_SHA`, which also matches a source with no ref. The new rule also stops rejecting whitespace, which the old READ did, so arbitrary text ending in `@<sha>` now counts as a read. Fix: put the ref requirement into the shared regex (for example `^(?=\\S)(\\S+)@(SHA)$`) so every caller applies the same rule.",
+   "original_severity": "minor",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B4",
+   "scenario": "Source \"@4f2c9a1\": isRead gives false, so the phase read is dropped, but refOf gives \"\", so withdrawal sees the ref \"\" and the author walk takes the sha 4f2c9a1. Source \"the repo@4f2c9a1\": isRead now gives true, although the AC-3 test treats \"the repo\" as made-up text.",
+   "severity": "minor"
+  }
+ ],
+ "head": "976462a42e8b63ec1656cf7bfb51ac2a3599f4e5",
+ "impact": [
+  "apps/web/lib/admin/mcp.ts",
+  "apps/web/lib/admin/secrets.ts",
+  "modules/allocations/module.ts",
+  "modules/career/mcp.ts",
+  "modules/delivery/contracts.ts",
+  "modules/delivery/mcp.ts",
+  "modules/delivery/module.ts",
+  "modules/delivery/server/commit-time.ts",
+  "modules/delivery/server/proposal-detail.ts",
+  "modules/delivery/server/push.ts",
+  "modules/delivery/server/tasks.ts",
+  "modules/delivery/tests/ci-095.test.ts",
+  "modules/delivery/tests/delivery.test.ts",
+  "modules/delivery/tests/repo-dates-094.test.ts",
+  "modules/time/suggestions.ts",
+  "modules/time/tests/commit-dedup.test.ts",
+  "modules/time/tests/commit-draft-008.test.ts",
+  "modules/time/tests/corrections-flow.test.ts",
+  "modules/time/tests/proposal-time.test.ts",
+  "modules/time/tests/weekend.test.ts"
+ ],
+ "model": "opus",
+ "passes": [
+  "review",
+  "design"
+ ],
+ "prompt_chars": 68907,
+ "round": 2,
+ "since": "b07c849c",
+ "status": "open",
+ "system_chars": 43188,
+ "tier": "review",
+ "tools": "Read,Grep,Glob",
+ "ts_end": 1794320067,
+ "ts_start": 1794319975
+}

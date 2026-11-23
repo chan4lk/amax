@@ -1,8 +1,0 @@
-{
-  "change": "090-allocations-switch-speed",
-  "phase": "verify",
-  "branch": "",
-  "phases": {
-    "verify": {"status":"done","at":"2026-11-15T19:17:16Z"}
-  }
-}

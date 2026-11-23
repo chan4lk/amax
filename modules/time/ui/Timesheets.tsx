@@ -1,11 +1,10 @@
 import Link from "next/link";
-import { PinButton } from "@amax/ui";
+import { PinButton, Since } from "@amax/ui";
 import type { GridRow, TeamGrid } from "../server/grid";
 import { dayLabel } from "../week";
 import { AskButton } from "./AskButton";
 import { DayCell } from "./DayCell";
 import { Filters } from "./Filters";
-import { Since } from "./Since";
 import { remindAllPrompt } from "./prompts";
 import { avatar, DayHead, dayName, initials, STATUS, Util } from "./parts";
 

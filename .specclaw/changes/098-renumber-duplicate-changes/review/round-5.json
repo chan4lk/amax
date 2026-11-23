@@ -1,0 +1,82 @@
+{
+ "counts": {
+  "blocker": 0,
+  "major": 0,
+  "minor": 1
+ },
+ "escalated": [],
+ "files": [
+  "apps/mock/public/mock/index.html",
+  "packages/testing/tests/change-numbers.test.ts",
+  "packages/testing/tests/review-gate-moves.test.ts",
+  "scripts/check-review-gate.mjs",
+  "scripts/review-gate/moves.mjs",
+  "scripts/review-gate/rules.mjs"
+ ],
+ "final": true,
+ "findings": [
+  {
+   "file": ".specclaw/changes/073-time-workflow-enhancements/change.md",
+   "fp": "c919f26ea496",
+   "in_delta": false,
+   "line": 327,
+   "message": "This PR renamed the folders but did not update every reference to the old numbers. 073's `## Verify` still names the covered changes 074-dev-demo-data and 075-team-time-status-band. 099-dev-demo-data and 100-team-time-status-band still declare `**Review:** covered-by 073-time-workflow-enhancements`. The move skip only helps the PR that does the renumbering. On any later fork PR that touches 099 or 100, `judgeCovered` will not find the change named in its cover's Verify, so the PR fails the gate. It fails closed, so no review is skipped. The product owner already recorded this as open when stopping the review at pass 4. Fix: in a records-only commit, add the new numbers (099, 100) to 073's Verify line, or record that 099 and 100 need their own loop. This is a records issue, so it is minor under the severity calibration.",
+   "original_severity": "minor",
+   "pass": "review",
+   "pre_existing": true,
+   "rule": "B1",
+   "scenario": "A fork PR edits .specclaw/changes/099-dev-demo-data/tasks.md \u2192 judgeCovered looks for '099-dev-demo-data' in 073's ## Verify and does not find it \u2192 the gate fails although 073's loop reviewed these commits.",
+   "severity": "minor"
+  },
+  {
+   "file": "scripts/review-gate/moves.mjs",
+   "fp": "746f9ee6931f",
+   "in_delta": true,
+   "line": 1,
+   "message": "The change-number pattern now has more than one copy. `NUMBERED` here and the folder filter in change-numbers.test.ts use `\\d{3,}`, but `CHANGE_DIR` in rules.mjs:4 uses exactly `\\d{3}`. A four-digit folder counts as a change for move pairing and for the duplicate-number test, but `touchedChangeDirs` never sees it. Fix: export one pattern from rules.mjs (or a shared module) and import it in moves.mjs and the test.",
+   "original_severity": "minor",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B4",
+   "scenario": "A fork PR adds .specclaw/changes/1000-foo/ plus code \u2192 touchedChangeDirs ignores 1000-foo \u2192 'code changed with no specclaw change: propose first', while moves.mjs and the 098 number test treat 1000-foo as a change.",
+   "severity": "minor"
+  }
+ ],
+ "head": "38b4582f5acc7baca8a5ecdd2ccbf106286e278f",
+ "impact": [
+  ".github/actions/setup/action.yml",
+  "apps/mock/app/globals.css",
+  "apps/web/app/(app)/layout.tsx",
+  "apps/web/app/(app)/overview.css",
+  "apps/web/app/(app)/settings/retention/retention.css",
+  "apps/web/app/(public)/welcome/welcome.css",
+  "apps/web/app/layout.tsx",
+  "apps/web/app/signin/page.tsx",
+  "apps/web/components/marketing/ThemeToggle.tsx",
+  "apps/web/components/shell/theme.ts",
+  "apps/web/lib/profile.ts",
+  "apps/web/lib/registry.ts",
+  "apps/web/tests/e2e/delivery-visual.spec.ts",
+  "apps/web/tests/e2e/marketing.spec.ts",
+  "apps/web/tests/e2e/shell.spec.ts",
+  "modules/delivery/ui/delivery.css",
+  "modules/learning/tests/e2e/diff.ts",
+  "modules/presales/tests/e2e/diff.ts",
+  "packages/auth/src/viewer.ts",
+  "packages/ui/src/styles/index.css"
+ ],
+ "model": "opus",
+ "passes": [
+  "review",
+  "design"
+ ],
+ "prompt_chars": 67855,
+ "round": 5,
+ "since": null,
+ "status": "clean",
+ "system_chars": 43056,
+ "tier": "review",
+ "tools": "Read,Grep,Glob",
+ "ts_end": 1794330747,
+ "ts_start": 1794330632
+}

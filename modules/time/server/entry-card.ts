@@ -1,12 +1,13 @@
 import { sql } from "drizzle-orm";
 import type { Viewer } from "@amax/auth";
 import type { CardLine, ToolCard } from "@amax/core";
-import { getProjectRef } from "@amax/delivery/contracts";
+import { getProjectRef, getProposalRef } from "@amax/delivery/contracts";
 import { dayLabel, isoWeekOf, isWeekend } from "../week";
 import { refuse, storedEntry, type StoredEntry } from "./card";
 import { entityOf } from "./chain";
 import { lockRefusal, possibleDuplicate, workDay } from "./guards";
 import { allocationRefusal, dateRefusal } from "./rules";
+import { proposalRefusal } from "./proposal-ref";
 import { read } from "./read";
 import type { WeekRow } from "./weeks";
 
@@ -24,16 +25,17 @@ function forOther(e: StoredEntry, reason: string | undefined): { head: CardLine[
 // 073: the card says whose record it is, and the For line then repeats nothing.
 const whose = (e: StoredEntry) => (e.own ? "for you" : `for ${e.personName}`);
 
-type Fix = { entryId: string; hours?: number; billable?: boolean; note?: string; projectKey?: string; reason?: string };
+type Fix = { entryId: string; hours?: number; billable?: boolean; note?: string; projectKey?: string; reason?: string; proposalKey?: string | null };
 
 export async function correctCard(v: Viewer, a: Fix): Promise<ToolCard> {
   const e = await storedEntry(v, a.entryId);
   const moved = a.projectKey ? (await read(v, (tx) => getProjectRef(tx, a.projectKey!)))?.name ?? a.projectKey : e.projectName;
+  const proposal = a.proposalKey === undefined ? [] : [{ label: "Proposal", value: a.proposalKey ? (await read(v, (tx) => getProposalRef(tx, a.proposalKey!)))?.key ?? a.proposalKey : "none" }];
   const { head, tail } = forOther(e, a.reason);
   const look = { kind: "Fix hours", figure: h(a.hours ?? e.hours), subject: moved, detail: dayLabel(e.day), who: whose(e), confirm: "Save the fix", done: `Saved the fix · ${moved}, ${dayLabel(e.day)}` };
   return { title: `Fix ${e.projectName}, ${dayLabel(e.day)}`, look, lines: [...head,
     ...change("Hours", h(e.hours), h(a.hours ?? e.hours)), ...change("Billable", yesNo(e.billable), yesNo(a.billable ?? e.billable)),
-    ...change("Note", e.note ?? "none", a.note ?? e.note ?? "none"), ...change("Project", e.projectName, moved), ...tail] };
+    ...change("Note", e.note ?? "none", a.note ?? e.note ?? "none"), ...change("Project", e.projectName, moved), ...proposal, ...tail] };
 }
 
 export async function deleteCard(v: Viewer, a: { entryId: string; reason?: string }): Promise<ToolCard> {
@@ -43,17 +45,18 @@ export async function deleteCard(v: Viewer, a: { entryId: string; reason?: strin
     look: { kind: "Remove hours", figure: h(e.hours), subject: e.projectName, detail: dayLabel(e.day), who: whose(e), confirm: `Remove ${h(e.hours)}`, tone: "danger", done: `Removed ${h(e.hours)} · ${e.projectName}, ${dayLabel(e.day)}` } };
 }
 
-type Log = { projectKey: string; hours: number; day: string; billable?: boolean; note?: string; weekend?: boolean };
+type Log = { projectKey: string; hours: number; day: string; billable?: boolean; note?: string; weekend?: boolean; proposalKey?: string };
 
 export async function logCard(v: Viewer, a: Log): Promise<ToolCard> {
-  const { name, twin } = await read(v, async (tx) => {
+  const { name, twin, proposal } = await read(v, async (tx) => {
     const p = await getProjectRef(tx, a.projectKey);
-    return { name: p?.name ?? a.projectKey, twin: p ? await possibleDuplicate(tx, v.userId, p.id, a.day, a.note) : null };
+    return { name: p?.name ?? a.projectKey, twin: p ? await possibleDuplicate(tx, v.userId, p.id, a.day, a.note) : null, proposal: a.proposalKey ? await getProposalRef(tx, a.proposalKey) : null };
   });
+  const on = proposal ? [{ label: "Proposal", value: `${proposal.key} ${proposal.title}` }] : [];
   const warn = twin ? [{ label: "Already logged", value: `${name}, ${dayLabel(a.day)}, ${h(twin.hours)}, same note` }] : [];
   const look = { kind: "Log time", figure: h(a.hours), subject: name, detail: `${dayLabel(a.day)}${isWeekend(a.day) ? " · weekend" : ""}`, who: "for you", confirm: `Log ${h(a.hours)}`, done: `Logged ${h(a.hours)} · ${name}, ${dayLabel(a.day)}` };
   return { title: `Log ${h(a.hours)} to ${name}, ${dayLabel(a.day)}${isWeekend(a.day) ? " (weekend)" : ""}`, look,
-    lines: [...(a.billable === false ? [{ label: "Billable", value: "no" }] : []), ...(a.note ? [{ label: "Note", value: a.note }] : []), ...warn] };
+    lines: [...on, ...(a.billable === false ? [{ label: "Billable", value: "no" }] : []), ...(a.note ? [{ label: "Note", value: a.note }] : []), ...warn] };
 }
 
 /** Amendment 2: no log card for a weekend, or for a week the viewer can't add to now (009's lock rule). */
@@ -67,7 +70,8 @@ export async function proposeLog(v: Viewer, a: Log) {
   // 071 AC-10/AC-11: no card that the entry rules would refuse; chat says why (and which projects are allowed).
   const rule = await read(v, async (tx) => {
     const p = await getProjectRef(tx, a.projectKey);
-    return p ? (await allocationRefusal(tx, v.tenantId, v.userId, p.id, a.day)) ?? (await dateRefusal(tx, v.userId, a.day)) : null;
+    const named = p && a.proposalKey ? proposalRefusal(await getProposalRef(tx, a.proposalKey), a.proposalKey, p.id, p.key) : null;
+    return p ? named ?? (await allocationRefusal(tx, v.tenantId, v.userId, p.id, a.day)) ?? (await dateRefusal(tx, v.userId, a.day)) : null;
   });
   if (rule) refuse(rule);
 }

@@ -51,6 +51,11 @@ mark.x{background:none;color:inherit;outline:2px dashed var(--f,#6A6681);outline
 .c-suggest{display:flex;flex-wrap:wrap;gap:6px;padding:8px 20px 0;margin:0;list-style:none}
 .c-suggest button{cursor:pointer;border:1px solid var(--line);background:var(--card)}
 .c-suggest button:hover,.c-suggest button:focus-visible{border-color:var(--violet)}
+/* 084: quick replies under amax's reply; a click sends the answer. */
+.c-answers{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.c-answers button{cursor:pointer;border:1px solid var(--line);background:var(--card)}
+.c-answers button:hover,.c-answers button:focus-visible{border-color:var(--violet)}
+.c-answers button:disabled{cursor:default;opacity:.6}
 .pinchip{display:inline-flex;align-items:center;gap:6px;max-width:100%;background:var(--card);border:1.5px solid var(--line-2);border-radius:10px;padding:4px 6px 4px 9px;font-size:12.5px;font-weight:600}
 .pinchip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:240px}
 .pinchip button{border:0;background:none;color:var(--ink-3);cursor:pointer;font-size:15px;line-height:1;padding:0 2px}
@@ -179,6 +184,26 @@ body.picking .pinnable:hover{outline:2px dashed var(--violet);outline-offset:2px
    scroll by wheel, trackpad, touch and keyboard. A wide table in a reply keeps its sideways bar: it's the only sign of more columns. */
 .chat :is(.c-log,.c-history,textarea){scrollbar-width:none;-ms-overflow-style:none}
 .chat :is(.c-log,.c-history,textarea)::-webkit-scrollbar{display:none;width:0;height:0}
+.cf{display:flex;flex-direction:column;gap:12px}
+.cf-field{display:flex;flex-direction:column;gap:4px}
+.cf-field label,.cf-chips legend{font-size:12.5px;font-weight:600;color:var(--ink);padding:0;margin:0 0 4px}
+.cf-text{height:36px;border:0;border-radius:10px;padding:0 12px;background:var(--card);color:var(--ink);font:500 14px var(--font);box-shadow:0 0 0 1.5px var(--line-2)}
+.cf-text.up{text-transform:uppercase;width:120px}
+.cf-text[aria-invalid="true"]{box-shadow:0 0 0 1.5px var(--chip-bad)}
+.cf-text:focus-visible{outline:2px solid var(--violet);outline-offset:1px}
+.cf-hint{margin:0;min-height:16px;font-size:12px;color:var(--chip-good)}
+.cf-field .err,.cf-chips .err{margin:0;font-size:12px}
+.cf-chips{border:0;padding:0;margin:0;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.cf-chips legend{width:100%}
+.cf-chips .chip{cursor:pointer;height:auto;min-height:32px;padding-top:6px;padding-bottom:6px;white-space:normal;text-align:left;line-height:1.35;position:relative;max-width:100%}
+.cf-chips .chip.on{background:var(--violet-soft);color:var(--chip-agent);box-shadow:inset 0 0 0 1.5px var(--chip-agent)}
+.cf-chips .chip input{position:absolute;opacity:0;width:1px;height:1px}
+.cf-chips .chip:focus-within{outline:2px solid var(--violet);outline-offset:2px}
+.cf-chips .cf-text{flex:1 1 160px}
+.cf-more{border-top:1px solid var(--line);padding-top:10px;display:flex;flex-direction:column;gap:12px}
+.cf-more summary{cursor:pointer;font-size:12.5px;font-weight:600;color:var(--chip-agent)}
+.cf-more summary:focus-visible{outline:2px solid var(--violet);outline-offset:2px}
+@media (prefers-reduced-motion:no-preference){.cf-chips .chip{transition:background .15s}}
 .m .over{color:var(--chip-bad);font-weight:700}
 .m .c-good{color:var(--chip-good);font-weight:700}.m .c-none{color:var(--chip-warn);font-weight:600}.m .c-fte{color:var(--chip-agent);font-weight:700}
 .m .b p.warn{color:var(--chip-bad);border-left:3px solid var(--chip-bad);padding-left:10px;font-weight:600}
