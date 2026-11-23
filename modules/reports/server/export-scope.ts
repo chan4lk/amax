@@ -1,12 +1,13 @@
 import { listAllocations } from "@amax/allocations/contracts";
 import { listProjectRefs } from "@amax/delivery/contracts";
+import { hasModule } from "@amax/core/server";
 import { listPeople } from "@amax/hr/contracts";
 import type { Viewer } from "@amax/auth";
 import type { PersonUtilisation, TeamUtilisation } from "../contracts";
 import { briefingOf } from "./briefing";
 import { ExportRefused } from "./export-types";
 import type { Pulse } from "./pulse-types";
-import { read } from "./read";
+import { installed, read } from "./read";
 
 export const teamOf = (rows: PersonUtilisation[], base: TeamUtilisation): TeamUtilisation => {
   const counted = rows.filter((r) => r.availableHours !== null && !r.hoursIncomplete && !r.noTime);
@@ -27,6 +28,7 @@ export function narrow(p: Pulse, rows: PersonUtilisation[], team: TeamUtilisatio
 
 export async function projectOf(v: Viewer, month: string, wanted: string) {
   return read(v, async (tx) => {
+    if (!hasModule("delivery", await installed(tx, "delivery.project")) || !hasModule("allocations", await installed(tx, "allocations.allocation"))) throw new ExportRefused("A project report needs the Delivery and Allocations modules, and one of them is switched off.");
     const ref = (await listProjectRefs(tx)).find((x) => [x.id, x.key.toLowerCase(), x.name.toLowerCase()].includes(wanted.toLowerCase()));
     if (!ref) throw new ExportRefused(`There's no project called "${wanted}".`);
     const { rows } = await listAllocations(tx, v, { from: `${month}-01`, to: `${month}-01`, projectIds: [ref.id] });
