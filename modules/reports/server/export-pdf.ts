@@ -1,4 +1,4 @@
-import PDFDocument from "pdfkit";
+import PDFDocument from "pdfkit/js/pdfkit.standalone.js";
 import type { Block, Table } from "./export-blocks";
 import { drawChart } from "./export-chart";
 import type { MdReport } from "./export-md";
