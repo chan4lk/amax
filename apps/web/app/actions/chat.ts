@@ -13,7 +13,7 @@ import { checkFailure, doneOutcome, outcomeOf, type CardOutcome } from "../../li
 import { pageInfo, type PageInfo, type PinnedArgs } from "../../lib/page-context";
 import { installed } from "../../lib/registry";
 import { sameUser, SignedInElsewhere } from "../../lib/same-user";
-import { notPlanned, withUnplanned } from "../../lib/take-action";
+import { planNote, withUnplanned } from "../../lib/take-action";
 import { chatIntents, getDb, toolRegistry } from "../../lib/server";
 
 export type ChatResult = ({ ok: true; usage: string | null } & ChatTurn) | { ok: false; error: string };
@@ -154,9 +154,9 @@ export async function takeAction(conversationId: string | undefined, suggestionI
     if (!s) return { ok: false, error: "That suggestion isn't there any more." };
     const p = s.proposed as { personId?: string; projectKey?: string; month?: string; percent?: number };
     const [who] = s.target.label.split(", ");
-    const grid = (await toolRegistry().call(viewer, "list_allocations", { everyone: true }, { source: "chat" }).catch(() => null)) as Parameters<typeof notPlanned>[0] | null;
-    const unplanned = grid && p.personId && p.month ? notPlanned(grid, p.personId, p.month) : [];
-    const text = `${s.title.replace(who, `**${who}**`)}. ${withUnplanned(s.detail ?? "", unplanned)}${grid ? "" : " The plan couldn't be read just now, so the projects with nothing planned are not listed."} What would you like to do?`;
+    const grid = (await toolRegistry().call(viewer, "list_allocations", { everyone: true }, { source: "chat" }).catch(() => null)) as Parameters<typeof planNote>[0];
+    const { unplanned, note } = planNote(grid, p.personId, p.month);
+    const text = `${s.title.replace(who, `**${who}**`)}. ${withUnplanned(s.detail ?? "", unplanned)}${note} What would you like to do?`;
     const context = `The person pressed Take action on this Allocation check suggestion: ${s.title}. ${s.detail ?? ""} The check's change: ${who} on ${p.projectKey} for ${String(p.month).slice(0, 7)} at ${p.percent}%. If they agree, make one allocate card with exactly that person, project, month and percent.`;
     const id = await askFirst(getDb()!, viewer, { conversationId, context, question: text });
     return { ok: true, conversationId: id, text };
