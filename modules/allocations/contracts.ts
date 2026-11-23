@@ -12,8 +12,10 @@ export type Allocation = { id: string; personId: string; projectId: string | nul
 
 export const EVENTS = { allocationSet: "allocations.allocation.set", monthCopied: "allocations.month.copied", fixSuggested: "allocations.fix.suggested", monthSettled: "allocations.month.settled" } as const;
 export type MonthSettled = { personUserId: string; month: string };
-export type AllocationSet = { personId: string; projectId: string | null; work: string | null; months: string[]; percent: number; by: string;
-  personUserId: string | null; project: string; month: string; total: number; over: boolean; byUser: string };
+/** Emitted for every allocate call: the months written, and percent 0 when the rows were removed. */
+/** `standing` (107): set or ended until further notice; `months` are the ones written ahead (none when it ended). */
+export type AllocationSet = { personId: string; projectId: string | null; work: string | null; months: string[]; percent: number; by: string; standing?: boolean;
+  personUserId?: string | null; project?: string; month?: string; total?: number; over?: boolean; byUser?: string };
 export type FixSuggested = { suggestionId: string; personUserId: string | null; projectId: string; project: string; month: string; total: number; percent: number };
 /** The audited Copy to next month bulk action. */
 export type MonthCopied = { team: string; from: string; to: string; rows: number; by: string };

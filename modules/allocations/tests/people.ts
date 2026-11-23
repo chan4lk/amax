@@ -4,7 +4,7 @@ import type { Grid, GridPerson } from "../server/grid";
 
 export const months = ["2026-12-01", "2027-01-01", "2027-02-01"];
 
-const line = (label: string, key: string, percents: number[], manages = false) => ({ projectId: key, projectKey: key, label, manages, editable: true, percents });
+const line = (label: string, key: string, percents: number[], manages = false) => ({ projectId: key, projectKey: key, label, manages, editable: true, percents, standing: false });
 
 export const person = (id: string, name: string, totals: number[], lines = [line("Contoso Portal", "CON", totals)]): GridPerson =>
   ({ personId: id, employeeNo: id, name, initials: name.slice(0, 2), title: "Engineer", lines, totals, capacity: [100, 100, 100] });

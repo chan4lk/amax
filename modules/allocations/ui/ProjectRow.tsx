@@ -15,12 +15,12 @@ export function ProjectRow({ person, line, months, order, framed }: Props) {
   return (
     <div className="ad-prow pinnable">
       <PinButton pin={{ label: `${person.name}, ${line.label}`, tool: "get_allocation", args }} />
-      <span className={framed(runs[0].from) ? "ad-plabel framed" : "ad-plabel"} style={{ left: pct(runs[0].from, count), color }}>{line.label}</span>
+      <span className={framed(runs[0].from) ? "ad-plabel framed" : "ad-plabel"} style={{ left: pct(runs[0].from, count), color }} title={line.standing ? "On this project until further notice" : undefined}>{line.standing ? `${line.label} · ongoing` : line.label}</span>
       {runs.map((range) => (
         <div key={range.from} className="ad-pbar a-grow" style={{ left: `calc(${pct(range.from, count)} + 4px)`, width: `calc(${pct(range.to - range.from + 1, count)} - 8px)`, background: color, ["--i" as string]: order }}>
           {months.slice(range.from, range.to + 1).map((m, k) => {
             const value = line.percents[range.from + k];
-            return <span key={m.month} className={m.forecast ? "fc" : undefined} title={`${person.name} · ${line.label} · ${monthLabel(m.month)}: ${value}%`}>{value}%</span>;
+            return <span key={m.month} className={m.forecast ? "fc" : undefined} title={`${person.name} · ${line.label} · ${monthLabel(m.month)}: ${value}%${line.standing ? " · until further notice" : ""}`}>{value}%</span>;
           })}
         </div>
       ))}

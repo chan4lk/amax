@@ -11,6 +11,13 @@ Plan people across projects by month, and see over-allocation and the bench ahea
 - **Rules:** capacity = the team's FTE on the 15th of each month (hr employment periods); demand = allocated percent / 100 plus unstaffed forecast demand; bench = members employed that month with nothing allocated; a person is over-allocated when their total is above their FTE. Months after the current quarter are a forecast.
 - **MCP tools** (`mcp.ts`): read `get_capacity_forecast`, `list_allocations`; write `allocate`, `copy_allocations_to_next_month`
 - **Chat intents** (`chat.ts`): Allocate (`allocations.allocate`)
+- **Add someone (107):** the project's Team page leads with its PM and an Ask amax button. `allocate` answers with a form
+  card (likely people not on the project this month, most free first; a percent; This month or Until further notice,
+  100% until further notice on an internal project). Someone who can sign in but has no HR record is named, to be added
+  to HR first (`add_person`, whose receipt offers the project next). **Until further notice** (`standing: true`) is an
+  `allocations.standing` row whose month rows are written 12 months ahead, so every reader counts it; the monthly
+  `allocations.standing-extend` schedule writes the next month, never over one set by hand; `percent: 0` with
+  `standing: true` ends it from that month.
 - **Permissions:** `allocations:read` (Leadership, HR, PM); `allocations:allocate@managed` and `allocations:copy` (PM; Copy to next month only copies rows on projects the viewer may allocate, and reports rows already planned (`skipped`) apart from rows it may not copy (`forbidden`))
 - **Viewer scopes:** contributes the projects a user is allocated to this month (`assignedProjects`)
 - **Data:** `allocations.member` (team, skill), `allocation` (person, project or other work, month, percent), `forecast` (unstaffed demand), all RLS on `tenant_id`. No personal fields of its own: people are hr ids.

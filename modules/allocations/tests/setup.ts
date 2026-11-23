@@ -9,7 +9,7 @@ import type { ModuleManifest } from "@amax/core";
 import allocations from "../module";
 
 // The modules allocations depends on, loaded the way the app's registry loads installed modules.
-const installed = (id: string): Promise<ModuleManifest> => import(`@amax/${id}/module`).then((m) => m.default);
+export const installed = (id: string): Promise<ModuleManifest> => import(`@amax/${id}/module`).then((m) => m.default);
 
 export const T = lumen.tenant.id;
 export const TODAY = new Date("2026-10-16T12:00:00Z");

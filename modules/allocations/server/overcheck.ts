@@ -10,9 +10,9 @@ import { monthsBetween, personOf } from "./services";
 
 type Ask = { person: string; projectKey?: string; work?: string; month: string; through?: string; percent: number; overOk?: boolean };
 
-export async function overCheck(v: Viewer, a: Ask) {
-  if (a.overOk || a.percent <= 0) return;
-  const over = await readAlloc(v, async (tx) => {
+export async function overLines(v: Viewer, a: Ask) {
+  if (a.percent <= 0) return [];
+  return readAlloc(v, async (tx) => {
     const person = await personOf(tx, ctxFor(v, "chat"), a.person);
     const projects = await listProjectRefs(tx);
     const said = (a.projectKey ?? a.work ?? "").trim().toLowerCase();
@@ -27,7 +27,17 @@ export async function overCheck(v: Viewer, a: Ask) {
       return total > 100 ? [`**${person.name}** would be at ${total}% in ${monthWords(m)} (${[...others(m).map((r) => `${name(r)} ${r.percent}%`), `${project?.name ?? a.work} ${a.percent}%`].join(", ")})`] : [];
     });
   });
+}
+
+export async function overCheck(v: Viewer, a: Ask) {
+  if (a.overOk) return;
+  const over = await overLines(v, a);
   if (over.length) throw new ToolError(`${over.join("; ")}. Tell the user that in one line and ask "Are you sure?". Only if they say yes, call allocate again with the same values and overOk: true`, "invalid_input");
+}
+
+export async function overNote(v: Viewer, a: Ask) {
+  const over = await overLines(v, a);
+  return over.length ? `${over.join("; ").replace(/\*\*/g, "")}. You can still add them.` : undefined;
 }
 
 type Slot = { person: string; projectKey?: string; work?: string; month: string; through?: string };

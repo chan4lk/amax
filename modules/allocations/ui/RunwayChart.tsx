@@ -22,7 +22,7 @@ export function RunwayChart({ f, onHover, onLeave, onPress }: Props) {
       onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onPress(i, e.currentTarget); } }} />
   );
   return (
-    <svg className="a-chart" viewBox="0 0 860 336" role="img" aria-label="Capacity against demand in FTE, by month">
+    <svg className="a-chart" viewBox="0 0 860 336" role="group" aria-label="Capacity against demand in FTE, by month">
       <defs>
         <pattern id="a-fc" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="4" height="8" className="a-fc-stripe" /></pattern>
         <linearGradient id="a-dem" x1="0" y1="0" x2="0" y2="1"><stop offset="0" className="a-dem-top" /><stop offset="1" className="a-dem-bottom" /></linearGradient>
