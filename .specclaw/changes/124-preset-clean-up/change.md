@@ -1,6 +1,7 @@
 # Code this branch added follows specclaw's base preset
 
 **Change:** 124-preset-clean-up · **Created:** 2026-11-17
+**Review:** module-end
 
 ## Problem
 
@@ -32,4 +33,4 @@ No screen changes. This is a behaviour-neutral clean-up of code the branch added
 - AC-4: pass — files already over 80 lines on main (engine.ts, Chat.tsx, module.ts, actions/chat.ts, services.ts, BellMenu.tsx, status.test.ts) were not split.
 
 The preset check still reports 3,000-odd violations in old code, which this change does not touch. Quality scan (duplication and complexity) was not run in this change.
-
+- Review: one loop over the whole PR, run with --since main, covers 116-allocations-usability, 117-allocations-take-action-record, 118-allocations-bot-facts, 119-allocations-bot-capacity-answers, 120-allocations-demo-look, 121-allocations-switch-speed, 122-rocket-mode-chat-context, 123-allocations-rows-on-demand, 125-reports-delivery-pulse, 126-reports-export, 127-reports-group-switch, 128-reports-demo-look, 129-reports-export-month, 130-reports-person-plan, 131-reports-extra-hours, 132-reports-several-people, 133-reports-load-only-what-is-asked, 134-reports-same-months-as-allocations, 135-reports-no-unasked-reports, 136-reports-target-is-a-setting, 137-reports-pm-sets-target (each declares covered-by 124-preset-clean-up).

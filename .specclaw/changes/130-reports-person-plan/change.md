@@ -1,6 +1,7 @@
 # Reports: a person's projects and allocation percentages in the report
 
 **Change:** 130-reports-person-plan · **Created:** 2026-11-16
+**Review:** covered-by 124-preset-clean-up
 
 ## Problem
 

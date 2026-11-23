@@ -1,6 +1,7 @@
 # Allocations bot: capacity, FTE and demand answered correctly, in colour
 
 **Change:** 119-allocations-bot-capacity-answers · **Created:** 2026-11-07
+**Review:** covered-by 124-preset-clean-up
 
 ## Problem
 

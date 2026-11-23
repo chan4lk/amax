@@ -1,6 +1,7 @@
 # Reports: delivery pulse
 
 **Change:** 125-reports-delivery-pulse · **Created:** 2026-11-05
+**Review:** covered-by 124-preset-clean-up
 
 ## Problem
 

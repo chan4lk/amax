@@ -1,6 +1,7 @@
 # Reports: Your people and Everyone, the graph following the choice
 
 **Change:** 127-reports-group-switch · **Created:** 2026-11-09
+**Review:** covered-by 124-preset-clean-up
 
 ## Problem
 

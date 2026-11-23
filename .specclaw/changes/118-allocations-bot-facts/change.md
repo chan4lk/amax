@@ -1,6 +1,7 @@
 # Allocations bot: right date, right group, right numbers
 
 **Change:** 118-allocations-bot-facts · **Created:** 2026-11-06
+**Review:** covered-by 124-preset-clean-up
 
 ## Problem
 

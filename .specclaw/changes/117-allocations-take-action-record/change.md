@@ -1,6 +1,7 @@
 # Allocations: Take action shows the record, and a PM can't change other people's lines
 
 **Change:** 117-allocations-take-action-record · **Created:** 2026-11-06
+**Review:** covered-by 124-preset-clean-up
 
 ## Problem
 

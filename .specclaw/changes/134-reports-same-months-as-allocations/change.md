@@ -1,6 +1,7 @@
 # Reports: Coming up lists the same months, and so the same people, as Allocations
 
 **Change:** 134-reports-same-months-as-allocations · **Created:** 2026-11-16
+**Review:** covered-by 124-preset-clean-up
 
 ## Problem
 

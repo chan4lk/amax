@@ -1,6 +1,7 @@
 # Allocations: a fast switch, a whole Fix chip and a whole month box
 
 **Change:** 121-allocations-switch-speed · **Created:** 2026-11-16
+**Review:** covered-by 124-preset-clean-up
 
 ## Problem
 

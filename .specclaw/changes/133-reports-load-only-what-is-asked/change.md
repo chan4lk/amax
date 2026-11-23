@@ -1,6 +1,7 @@
 # Reports export: read only the people and months the report is about
 
 **Change:** 133-reports-load-only-what-is-asked · **Created:** 2026-11-16
+**Review:** covered-by 124-preset-clean-up
 
 ## Problem
 

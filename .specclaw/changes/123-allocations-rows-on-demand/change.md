@@ -1,6 +1,7 @@
 # Allocations: the board builds rows as you scroll to them
 
 **Change:** 123-allocations-rows-on-demand · **Created:** 2026-11-16
+**Review:** covered-by 124-preset-clean-up
 
 ## Problem
 

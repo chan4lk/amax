@@ -1,6 +1,7 @@
 # The rocket-mode page skill and how the chat uses pins and page rules
 
 **Change:** 122-rocket-mode-chat-context · **Created:** 2026-11-16
+**Review:** covered-by 124-preset-clean-up
 
 ## Problem
 

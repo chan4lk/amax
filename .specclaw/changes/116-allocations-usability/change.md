@@ -1,6 +1,7 @@
 # Allocations: the screen shows, chat does
 
 **Change:** 116-allocations-usability · **Created:** 2026-10-23
+**Review:** covered-by 124-preset-clean-up
 
 ## Problem
 

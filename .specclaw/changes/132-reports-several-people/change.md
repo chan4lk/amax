@@ -1,6 +1,7 @@
 # Reports: one report for several named people
 
 **Change:** 132-reports-several-people · **Created:** 2026-11-16
+**Review:** covered-by 124-preset-clean-up
 
 ## Problem
 
