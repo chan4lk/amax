@@ -156,7 +156,7 @@ export async function takeAction(conversationId: string | undefined, suggestionI
     const [who] = s.target.label.split(", ");
     const grid = (await toolRegistry().call(viewer, "list_allocations", { everyone: true }, { source: "chat" }).catch(() => null)) as Parameters<typeof notPlanned>[0] | null;
     const unplanned = grid && p.personId && p.month ? notPlanned(grid, p.personId, p.month) : [];
-    const text = `${s.title.replace(who, `**${who}**`)}. ${withUnplanned(s.detail ?? "", unplanned)} What would you like to do?`;
+    const text = `${s.title.replace(who, `**${who}**`)}. ${withUnplanned(s.detail ?? "", unplanned)}${grid ? "" : " The plan couldn't be read just now, so the projects with nothing planned are not listed."} What would you like to do?`;
     const context = `The person pressed Take action on this Allocation check suggestion: ${s.title}. ${s.detail ?? ""} The check's change: ${who} on ${p.projectKey} for ${String(p.month).slice(0, 7)} at ${p.percent}%. If they agree, make one allocate card with exactly that person, project, month and percent.`;
     const id = await askFirst(getDb()!, viewer, { conversationId, context, question: text });
     return { ok: true, conversationId: id, text };
