@@ -2,8 +2,10 @@ import { declarePayload, defineModule } from "@amax/core";
 import { chatSuggestions } from "./chat-suggestions";
 import { reportRules } from "./chat-rules";
 import { EVENTS, type HolidaySet, type TargetSet } from "./contracts";
+import { REPORT_EXPORT_SLOT } from "@amax/core/server";
 import { reportsFixtures } from "./fixtures";
 import { mcpTools } from "./mcp";
+import { reportExport } from "./server/export-slot";
 import { hoursCorrectedHandler, hoursDeletedHandler, hoursHandler } from "./server/hours";
 import { weekStatusHandlers } from "./server/status";
 import { ReportsPage } from "./ui/ReportsPage";
@@ -24,6 +26,7 @@ export default defineModule({
   routes: [{ path: "", title: "Reports", component: ReportsPage }],
   mcpTools,
   chatSuggestions,
+  provides: { [REPORT_EXPORT_SLOT]: reportExport },
   chatRules: reportRules,
   // The hours read model mirrors time.entry (logged, corrected and deleted entries, 070): kept as long as timesheets are (seven years from the day).
   retention: [
