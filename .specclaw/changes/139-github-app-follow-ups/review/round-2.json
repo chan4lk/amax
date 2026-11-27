@@ -1,0 +1,106 @@
+{
+ "counts": {
+  "blocker": 0,
+  "major": 2,
+  "minor": 1
+ },
+ "escalated": [],
+ "files": [
+  "modules/git-accounts/server/app.ts",
+  "modules/git-accounts/server/read.ts",
+  "modules/git-accounts/tests/follow-ups-117.test.ts",
+  "modules/git-accounts/tests/setup.ts"
+ ],
+ "final": false,
+ "findings": [
+  {
+   "class": "other",
+   "file": "modules/git-accounts/server/read.ts",
+   "fp": "148f7033e20c",
+   "in_delta": true,
+   "line": 35,
+   "message": "This is an instance fix of the 'could not check' finding. `appUsable` now returns null when it can't read the credential, but `githubAppStatus` folds null into the passing result: `incomplete` is false, so `configured` stays true. 'Could not check' now reads as 'configured and usable' where it used to read as 'unusable'. That is the other half of B3. The status has no unknown or unavailable state, and the earlier finding asked for one: show the existing unavailable wording through `asRefusal`, or return a third state such as `checked: false` or `usable: \"unknown\"`. The Integrations chip and chat suggestions must not then offer Rotate/Remove as if the value had been checked. Fix: carry the null through to an explicit unknown field in the status. Have its consumers (chat-suggestions.ts and the Integrations chip) show 'couldn't check' rather than Configured.",
+   "original_severity": "major",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B3",
+   "scenario": "The stored value is 'only-the-secret-\u2026' (incomplete) and the KMS is down. get_github_app_status returns { configured: true, incomplete: false }. Integrations shows the app as configured, and chat offers 'Rotate the GitHub app secret' / 'Remove the GitHub app' for a value that was never read and is in fact unusable.",
+   "severity": "major",
+   "unclassified": false
+  },
+  {
+   "class": "other",
+   "file": "modules/git-accounts/tests/follow-ups-117.test.ts",
+   "fp": "9187d788d17c",
+   "in_delta": true,
+   "line": 63,
+   "message": "The outage test checks only the first read during the outage. It never checks recovery, although the earlier finding asked for 'KMS unavailable for the first status read and later recovers'. So the 'never kept' half of the fix is untested. Deleting `checks.delete(ctx.tenantId)` from the catch in app.ts would cache the null promise until the next rotation, and this test would stay green. There is also only one failure variant (kms null): there is no row for a refused use (ForbiddenError) or another useSecret error. Fix: make it a table over the failure kinds. After each failure, restore the KMS (or stop the refusal) and assert that the next status() reports `incomplete: true` for the incomplete value. Restore the secrets config afterwards rather than relying on the test running last.",
+   "original_severity": "major",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B2",
+   "scenario": "Mutation: remove `checks.delete(ctx.tenantId)` from the catch in appUsable. The KMS fails once, then recovers. Every later status read returns the cached null, so incomplete stays false and the incomplete credential shows as configured until it is rotated. The suite still passes.",
+   "severity": "major",
+   "unclassified": false
+  },
+  {
+   "class": "other",
+   "file": "modules/git-accounts/server/app.ts",
+   "fp": "f4e35947bdab",
+   "in_delta": true,
+   "line": 46,
+   "message": "On failure the catch calls `checks.delete(ctx.tenantId)` without checking which entry it is deleting. If the credential was rotated while the read was in flight, and a newer check for the same tenant has already replaced the entry, the old read's failure deletes the newer entry. That forces an extra audited read. Delete only when the stored entry is still this one, e.g. `if (checks.get(id)?.answer === answer) checks.delete(id)`.",
+   "original_severity": "minor",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B12",
+   "scenario": "Check A (rotatedAt t1) is in flight. A rotation happens, and check B (t2) stores its entry. A then fails, deletes B's entry, and the next status read opens the secret again.",
+   "severity": "minor",
+   "unclassified": false
+  }
+ ],
+ "fix_proof": {
+  "base": "480d8fbd703cfcf69ac22b6da22e84e2a7a1dc0a",
+  "mode": "warn",
+  "reason": "no review.test_command configured, so no test could prove the fix",
+  "status": "not_proven",
+  "tests": []
+ },
+ "head": "8dd1f9305255bf38ac8038e4611611e1b760ede1",
+ "impact": [
+  ".github/workflows/ci.yml",
+  "apps/mock/public/mock/index.html",
+  "apps/web/components/agents/RunCard.tsx",
+  "apps/web/components/chat/ChoiceCard.tsx",
+  "apps/web/components/marketing/queues.ts",
+  "apps/web/lib/admin/secrets.ts",
+  "apps/web/lib/backup-workflows.ts",
+  "apps/web/lib/page-context.ts",
+  "apps/web/tests/admin/secret-116.test.ts",
+  "apps/web/tests/dev-seed.test.ts",
+  "apps/web/tests/marketing-queue.test.ts",
+  "apps/web/tests/pin-refs.test.ts",
+  "deploy/helm/amax/values.yaml",
+  "deploy/podman/amax-restore-drill.container",
+  "modules/allocations/css.d.ts",
+  "modules/career/contracts.ts",
+  "modules/career/css.d.ts",
+  "modules/compliance/fixtures/data.ts",
+  "modules/compliance/mcp.ts",
+  "packages/core/src/secrets/use.ts"
+ ],
+ "model": "opus",
+ "passes": [
+  "review",
+  "design"
+ ],
+ "prompt_chars": 60225,
+ "round": 2,
+ "since": "480d8fbd",
+ "status": "open",
+ "system_chars": 44212,
+ "tier": "review",
+ "tools": "Read,Grep,Glob",
+ "ts_end": 1794837065,
+ "ts_start": 1794836994
+}

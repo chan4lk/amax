@@ -1,7 +1,7 @@
 import type { Viewer } from "@amax/auth";
 import { listSuggestions } from "@amax/agents/server";
 import type { ProposalRow } from "./queries";
-import { hasNoOwner, isReadyToVerify, overEstimate } from "./readiness";
+import { isReadyToVerify, needsOwner, overEstimate } from "./readiness";
 
 /**
  * 081 amendment 11 (AC-95): why an open proposal needs someone, in the order the list shows them. One rule for the
@@ -29,7 +29,7 @@ export function needsOf(p: ProposalRow, suggested: Set<string>): Need[] {
   if (suggested.has(p.id)) out.push("suggested");
   if (isReadyToVerify(p)) out.push("ready");
   if (overEstimate(p)) out.push("over");
-  if (hasNoOwner(p)) out.push("unassigned");
+  if (needsOwner(p)) out.push("unassigned");
   return out;
 }
 

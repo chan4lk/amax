@@ -1,0 +1,10 @@
+{
+  "change": "146-release-chat-card",
+  "phase": "verify",
+  "branch": "",
+  "phases": {
+    "proposal": {"status":"approved","at":"2026-11-26T08:27:07Z"},
+    "tasks": {"status":"done","at":"2026-11-26T08:27:28Z"},
+    "verify": {"status":"done","at":"2026-11-26T09:34:02Z"}
+  }
+}

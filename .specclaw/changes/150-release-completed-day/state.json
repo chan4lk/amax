@@ -1,0 +1,10 @@
+{
+  "change": "150-release-completed-day",
+  "phase": "verify",
+  "branch": "",
+  "phases": {
+    "proposal": {"status":"approved","at":"2026-11-26T13:38:13Z"},
+    "tasks": {"status":"done","at":"2026-11-26T13:40:05Z"},
+    "verify": {"status":"done","at":"2026-11-26T14:24:04Z"}
+  }
+}

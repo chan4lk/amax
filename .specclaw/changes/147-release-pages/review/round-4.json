@@ -1,0 +1,73 @@
+{
+ "counts": {
+  "blocker": 0,
+  "major": 0,
+  "minor": 1
+ },
+ "escalated": [],
+ "files": [
+  "modules/delivery/tests/release-detail-125.test.ts"
+ ],
+ "final": false,
+ "findings": [
+  {
+   "class": "other",
+   "file": "modules/delivery/tests/release-detail-125.test.ts",
+   "fp": "6a958f912d07",
+   "in_delta": true,
+   "line": 76,
+   "message": "This is a class fix: the table now completes releases through recordDeployment and voids them through voidDeployment. It also checks the day and the On time/Late word together, and the 'day before' rows always expect Late. The midnight boundary is not pinned, though. The completion instant is the database's now(), and `now` here is the test host's clock, so which rows fall next to a zone's midnight depends on the hour the suite runs. Kiritimati catches a UTC-versus-zone drift only from about 10:00 UTC onwards, and Pago Pago only before about 11:00 UTC. Every run is still covered by one of them, but a failure shows up in different rows at different hours, and one CI log can't be compared with another. Fix: if the deployment service accepts an injected clock (clockOf or a deployment `at`), complete at fixed instants on either side of each zone's midnight. If it doesn't, add a comment saying which zone covers which UTC hours.",
+   "original_severity": "minor",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B2",
+   "scenario": "Make completeOnDeployment judge `completion` by the UTC day. A run at 05:00 UTC fails only in the Pago_Pago rows. A run at 15:00 UTC fails only in the Kiritimati rows. The failing rows change with the time of day.",
+   "severity": "minor",
+   "unclassified": false
+  }
+ ],
+ "fix_proof": {
+  "base": "3238fd6fa0873e6c0148ae35602fdd8202d8af11",
+  "mode": "warn",
+  "reason": "no review.test_command configured, so no test could prove the fix",
+  "status": "not_proven",
+  "tests": []
+ },
+ "head": "bb53f3791a9a04c281aba187df6ec24a3e077137",
+ "impact": [
+  "apps/mock/app/layout.tsx",
+  "apps/mock/public/mock/index.html",
+  "apps/mock/scripts/copy-mock.mjs",
+  "apps/web/app/(app)/overview.css",
+  "apps/web/app/(app)/settings/hub.css",
+  "apps/web/app/(app)/settings/settings.css",
+  "apps/web/app/(app)/suggestions/suggestions.css",
+  "apps/web/app/(public)/welcome/welcome.css",
+  "apps/web/app/layout.tsx",
+  "apps/web/tests/card-checks-124.test.ts",
+  "apps/web/tests/card-chips-106.test.ts",
+  "apps/web/tests/chat-markdown.test.ts",
+  "apps/web/tests/e2e/api-visual.spec.ts",
+  "apps/web/tests/e2e/backups-visual.spec.ts",
+  "apps/web/tests/e2e/delivery-visual.spec.ts",
+  "apps/web/tests/e2e/delivery.spec.ts",
+  "apps/web/tests/e2e/marketing-theme.spec.ts",
+  "apps/web/tests/e2e/retention-visual.spec.ts",
+  "apps/web/tests/e2e/secrets.spec.ts",
+  "apps/web/tests/e2e/shell.spec.ts"
+ ],
+ "model": "opus",
+ "passes": [
+  "review",
+  "design"
+ ],
+ "prompt_chars": 56731,
+ "round": 4,
+ "since": "934f8cfe",
+ "status": "clean",
+ "system_chars": 44265,
+ "tier": "review",
+ "tools": "Read,Grep,Glob",
+ "ts_end": 1795698931,
+ "ts_start": 1795698870
+}

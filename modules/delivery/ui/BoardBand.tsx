@@ -1,6 +1,7 @@
 import { facet, PinButton, type PinRef } from "@amax/ui";
 import { releaseHref } from "../contracts";
 import { day, releasePin, stagePin } from "../pins";
+import { DEPLOYMENT_STATUSES, StageWord } from "../server/deployment-status";
 import { releaseBand, tasksBand, type ReleaseLike } from "./band";
 
 // 081 amendment 4 (AC-42, revised 2026-11-04): the board leads with what its lanes don't already say: the release the
@@ -12,7 +13,7 @@ type Props = {
   done: number; total: number; closedBy: { agents: number; people: number; automation: number };
 };
 
-export const STAGE_WORD: Record<string, string> = { deployed: "Deployed", testing: "Testing", "rolled-back": "Rolled back", todo: "Not yet" };
+export const STAGE_WORD: Record<string, string> = { ...Object.fromEntries(DEPLOYMENT_STATUSES.map((s) => [s, StageWord(s)])), todo: "Not yet" };
 
 type TrackStage = { environment: string; environmentId?: string; deploymentId?: string | null; isProd: boolean; status: string | null; at: string | null };
 
@@ -87,5 +88,6 @@ const SHAPES: Record<string, React.ReactNode> = {
   deployed: <path d="M3.5 8.5l3 3 6-7" fill="none" strokeWidth="2.2" />,
   testing: <circle cx="8" cy="8" r="4" />,
   "rolled-back": <path d="M4 4l8 8M12 4l-8 8" fill="none" strokeWidth="2.2" />,
+  failed: <path d="M4 4l8 8M12 4l-8 8" fill="none" strokeWidth="2.2" />,
 };
 export const Glyph = ({ kind }: { kind: string }) => <svg viewBox="0 0 16 16" aria-hidden="true" fill="currentColor" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">{SHAPES[kind]}</svg>;

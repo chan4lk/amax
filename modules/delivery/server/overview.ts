@@ -7,6 +7,7 @@ import { ForbiddenError, getRuntime } from "@amax/core/server";
 import { ACTIVE, clockOf, endOfDay, listReleases, phaseCounts, type ReleaseRow } from "./queries";
 import { isReadyToVerify, overEstimate, ownerShownIn } from "./readiness";
 import type { Phase } from "../contracts";
+import { StageWord, unsuccessful } from "./deployment-status";
 import { proposalInProd } from "./in-prod";
 
 const read = <T>(v: Viewer, fn: (tx: Tx) => Promise<T>) => {
@@ -31,14 +32,14 @@ export const deliveryPerformance = (v: Viewer) =>
   });
 
 const passed = (r: ReleaseRow) => r.stages.filter((s) => s.status === "deployed").length;
-const rolledBack = (r: ReleaseRow) => [...r.stages].sort((a, b) => b.position - a.position).find((s) => s.status === "rolled-back");
+const unsuccessfulStage = (r: ReleaseRow) => [...r.stages].sort((a, b) => b.position - a.position).find((s) => unsuccessful(s.status));
 const open = (r: ReleaseRow) => !r.stages.some((s) => s.isProd && s.status === "deployed");
 const releasePin = (r: ReleaseRow) => ({ label: `${r.projectName} ${r.version}`, tool: "get_release", args: { releaseId: r.id } });
 const day = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" }) : "");
 
 function stageNote(r: ReleaseRow) {
-  const back = rolledBack(r);
-  if (back) return `Rolled back from ${back.environment} on ${day(back.at)}`;
+  const back = unsuccessfulStage(r);
+  if (back) return `${StageWord(back.status!)} ${back.status === "rolled-back" ? "from" : "in"} ${back.environment} on ${day(back.at)}`;
   const stages = [...r.stages].sort((a, b) => a.position - b.position);
   const at = stages.filter((s) => s.status).at(-1), next = stages.find((s) => !s.status);
   return `${at ? `In ${at.environment}` : "Not deployed yet"}${next ? `, ${next.environment} next` : ""}`;
@@ -84,7 +85,7 @@ export async function yourProposals(tx: Tx, v: Viewer) {
 }
 
 const rollbacks = (releases: ReleaseRow[]): OverviewWaiting[] => releases.filter(open).flatMap((r) => {
-  const back = rolledBack(r);
+  const back = unsuccessfulStage(r);
   return back ? [{ id: `delivery:release:${r.id}`, title: `${r.version} failed in ${back.environment}`, detail: back.note, context: r.projectName, raisedBy: "Pipeline", agent: false,
     since: back.at ?? new Date(0).toISOString(), action: `Retry ${back.environment}`, prompt: `Retry ${r.projectName} ${r.version} in ${back.environment}`, pin: releasePin(r) }] : [];
 });
@@ -93,13 +94,13 @@ const rollbacks = (releases: ReleaseRow[]): OverviewWaiting[] => releases.filter
 export async function deliveryOverview(v: Viewer): Promise<OverviewPart> {
   const [counts, perf, releases, toApprove, mine] = await Promise.all([phaseCounts(v), deliveryPerformance(v), listReleases(v), read(v, (tx) => proposalsToApprove(tx, v)), read(v, (tx) => yourProposals(tx, v))]);
   // Releases that need watching first: a rollback, then the furthest along; never-deployed ones wait their turn.
-  const ready = releases.filter((r) => open(r) && r.stages.some((s) => s.status)).sort((a, b) => Number(Boolean(rolledBack(b))) - Number(Boolean(rolledBack(a))) || passed(b) - passed(a)).slice(0, 2);
+  const ready = releases.filter((r) => open(r) && r.stages.some((s) => s.status)).sort((a, b) => Number(Boolean(unsuccessfulStage(b))) - Number(Boolean(unsuccessfulStage(a))) || passed(b) - passed(a)).slice(0, 2);
   const panels: OverviewPanel[] = [
     { kind: "metric", key: "delivery.performance", title: "Delivery performance", slot: "aside", order: 20, label: "Proposals shipped to Prod this month", value: String(perf.thisMonth), change: perf.change,
       person: perf.top ? { name: perf.top.name, note: `${perf.top.tasks} tasks closed this month${perf.top.byAgents ? `, ${perf.top.byAgents} by agents for them` : ""}` } : null,
       pin: { label: "Proposals shipped", tool: "list_proposals", args: { phase: "released" } } },
     { kind: "progress", key: "delivery.readiness", title: "Release readiness", slot: "aside", order: 40, pin: { label: "Releases", tool: "list_releases", args: {} },
-      items: ready.map((r) => ({ id: r.id, label: `${r.projectName.split(" ")[0]} ${r.version}`, done: passed(r), total: r.stages.length, note: stageNote(r), problem: Boolean(rolledBack(r)), pin: releasePin(r) })) },
+      items: ready.map((r) => ({ id: r.id, label: `${r.projectName.split(" ")[0]} ${r.version}`, done: passed(r), total: r.stages.length, note: stageNote(r), problem: Boolean(unsuccessfulStage(r)), pin: releasePin(r) })) },
     ...(mine.length ? [{ kind: "list" as const, key: "delivery.mine", title: "Your proposals", slot: "aside" as const, order: 10, items: mine,
       href: "/delivery/proposals?owner=me", hrefLabel: "All your proposals", pin: { label: "Your proposals", tool: "list_proposals", args: { mine: true } } }] : []),
   ];

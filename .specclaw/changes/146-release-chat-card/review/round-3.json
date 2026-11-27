@@ -1,0 +1,107 @@
+{
+ "counts": {
+  "blocker": 0,
+  "major": 0,
+  "minor": 2
+ },
+ "escalated": [],
+ "files": [
+  "apps/web/lib/chat-move.ts",
+  "apps/web/tests/chat-move.test.ts",
+  "modules/delivery/server/release-card.ts",
+  "modules/delivery/server/services.ts",
+  "modules/delivery/tests/release-card-124.test.ts"
+ ],
+ "final": false,
+ "findings": [
+  {
+   "class": "other",
+   "file": "modules/delivery/mcp.ts",
+   "fp": "12f375b85c2b",
+   "in_delta": true,
+   "line": 122,
+   "message": "This round makes the tag_release service use the shared `Version` schema, which trims and refuses blank versions. The tool's own input still says `newVersion: z.string()`, and it has no `propose` check. In chat, the model's arguments are checked against that loose input, so `tagCard` shows the raw value (write-cards.ts:40). That means the card and the service still disagree. A blank tag gets a confirm card that can never succeed, and a padded tag shows text the service won't store. Fix: use `Version` for `newVersion` in the tool input too, so the gateway trims it before the card is built and refuses a blank one before any card appears.",
+   "original_severity": "minor",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B1",
+   "scenario": "In chat, 'Tag RTK l2 as \"   \"' \u2192 a 'Re-tag RTK l2 as    ' card is shown \u2192 Re-tag fails with 'the release needs a version'. ' l2b ' shows the card text 'RTK l2 is now  l2b ' while 'l2b' is stored.",
+   "severity": "minor",
+   "unclassified": false
+  },
+  {
+   "class": "other",
+   "file": "apps/web/lib/chat-move.ts",
+   "fp": "50560256da6d",
+   "in_delta": true,
+   "line": 7,
+   "message": "Same-site path checks now exist twice with different rules. `inApp` (a regex, now used by chat-move) and `localPath` in apps/web/lib/local-path.ts (it parses the URL and compares origins) both decide whether a path stays on this site. They can disagree. For example, `localPath` accepts '/a b' and percent-encodes it, while `inApp` refuses it. Fix: build one on top of the other, or pick one rule for both.",
+   "original_severity": "minor",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B4",
+   "scenario": "A path with a space or a non-ASCII character: `localPath('/x y')` \u2192 '/x%20y' (accepted); `inApp('/x y')` \u2192 false (refused).",
+   "severity": "minor",
+   "unclassified": false
+  },
+  {
+   "class": "other",
+   "file": "modules/delivery/server/services.ts",
+   "fp": "63753b86cff1",
+   "in_delta": false,
+   "line": 455,
+   "message": "`tagRelease` updates `version` without checking whether the new version is already taken. When it is, the write hits the unique (project_id, version) constraint and comes back as a raw database error. `createRelease` refuses the same case with a clear message (line 181). Because the new version is now trimmed, a padded tag that used to be stored as a separate version now collides too. Fix: refuse with `${projectKey} already has a release ${newVersion}` when the version is taken.",
+   "original_severity": "minor",
+   "pass": "review",
+   "pre_existing": true,
+   "rule": "B12",
+   "scenario": "RTK has v1 and v2. tag_release { version: 'v2', newVersion: ' v1 ' } \u2192 a raw unique-violation error instead of 'RTK already has a release v1'.",
+   "severity": "minor",
+   "unclassified": false
+  }
+ ],
+ "fix_proof": {
+  "base": "97b81c3072d751c4495044344a84c4bfbb137435",
+  "mode": "warn",
+  "reason": "no review.test_command configured, so no test could prove the fix",
+  "status": "not_proven",
+  "tests": []
+ },
+ "head": "b3980987e2e8b059fd9411c0c32eba23b81ad8e6",
+ "impact": [
+  ".github/workflows/ci.yml",
+  "apps/mock/public/mock/index.html",
+  "apps/web/app/signin/page.tsx",
+  "apps/web/playwright.auth.config.ts",
+  "apps/web/scripts/dev-seed.ts",
+  "apps/web/scripts/dev-tick.ts",
+  "apps/web/scripts/dev.ts",
+  "apps/web/tests/admin/fixture.ts",
+  "apps/web/tests/dev-seed.test.ts",
+  "apps/web/tests/dev-tick.test.ts",
+  "apps/web/tests/e2e/git-accounts.spec.ts",
+  "apps/web/tests/local-path.test.ts",
+  "deploy/ci/k3d-drill.sh",
+  "deploy/helm/amax/templates/_helpers.tpl",
+  "deploy/helm/amax/values.yaml",
+  "modules/delivery/sync/estimate.ts",
+  "modules/delivery/tests/estimate-104.test.ts",
+  "modules/git-accounts/tests/problem-117.test.ts",
+  "modules/git-accounts/tests/setup.ts",
+  "modules/git-accounts/tests/state-119.test.ts"
+ ],
+ "model": "opus",
+ "passes": [
+  "review",
+  "design"
+ ],
+ "prompt_chars": 56721,
+ "round": 3,
+ "since": "1659b280",
+ "status": "clean",
+ "system_chars": 44135,
+ "tier": "review",
+ "tools": "Read,Grep,Glob",
+ "ts_end": 1795684769,
+ "ts_start": 1795684646
+}

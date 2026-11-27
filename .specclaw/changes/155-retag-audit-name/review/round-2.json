@@ -1,0 +1,51 @@
+{
+ "counts": {
+  "blocker": 0,
+  "major": 0,
+  "minor": 0
+ },
+ "escalated": [],
+ "files": [
+  "modules/delivery/server/services.ts",
+  "modules/delivery/tests/retag-name-154.test.ts"
+ ],
+ "final": true,
+ "findings": [],
+ "head": "03287ea439ff01507c0b4f3cd6bf014ea9ad1b71",
+ "impact": [
+  "apps/web/app/actions/chat-history.ts",
+  "apps/web/components/chat/Chat.tsx",
+  "apps/web/lib/chat-outcome.ts",
+  "apps/web/tests/chat-move.test.ts",
+  "modules/delivery/mcp.ts",
+  "modules/delivery/server/release-tracking.ts",
+  "modules/delivery/tests/ingest-112.test.ts",
+  "modules/delivery/tests/release-card-124.test.ts",
+  "modules/delivery/tests/release-review-123.test.ts",
+  "modules/delivery/tests/release-tracking-123-writes.test.ts",
+  "modules/delivery/tests/releases.test.ts",
+  "modules/delivery/tests/stable-pins.test.ts",
+  "modules/delivery/tests/sync-push-091.test.ts",
+  "modules/delivery/tests/sync-push.test.ts",
+  "modules/presales/pins.ts",
+  "modules/time/server/sheet.ts",
+  "packages/auth/tests/git-identity-108.test.ts",
+  "packages/core/src/module.ts",
+  "packages/core/tests/ac3-service.test.ts",
+  "packages/core/tests/ac4-jobs.test.ts"
+ ],
+ "model": "opus",
+ "passes": [
+  "review",
+  "design"
+ ],
+ "prompt_chars": 56766,
+ "round": 2,
+ "since": null,
+ "status": "clean",
+ "system_chars": 44144,
+ "tier": "review",
+ "tools": "Read,Grep,Glob",
+ "ts_end": 1795781231,
+ "ts_start": 1795781204
+}

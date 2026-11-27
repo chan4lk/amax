@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import type { Edits, FieldCheck, PendingAction } from "@amax/chat";
+import { CopyValue } from "./CopyValue";
 import { FormConfirm } from "./FormConfirm";
 
 // 073: the confirm card. What it is and whose record it touches, the one figure to check, the details as an aligned list,
@@ -17,8 +18,9 @@ const MAX_LINES = 5;
 const tidy = (v: string) => (v === "yes" || v === "no" ? v[0].toUpperCase() + v.slice(1) : v);
 
 /** The details as an aligned list, folding past MAX_LINES (076: the choice card shows the picked option's too). */
-export function Lines({ lines }: { lines: { label: string; value: string }[] }) {
-  const row = (l: { label: string; value: string }, i: number) => <div key={i} className="cc-row"><dt>{l.label}</dt><dd>{tidy(l.value)}</dd></div>;
+type Line = { label: string; value: string; copy?: boolean };
+export function Lines({ lines }: { lines: Line[] }) {
+  const row = (l: Line, i: number) => <div key={i} className="cc-row"><dt>{l.label}</dt><dd>{tidy(l.value)}{l.copy && <> <CopyValue value={l.value} label={l.label} /></>}</dd></div>;
   if (lines.length <= MAX_LINES + 1) return <dl className="cc-lines">{lines.map(row)}</dl>;
   return (
     <dl className="cc-lines">

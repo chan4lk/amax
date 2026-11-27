@@ -10,9 +10,13 @@ const mockUrl = (id: string) => `${pathToFileURL(join(import.meta.dirname, "../.
 
 const SECTIONS: { id: string; path: string; regions: string[] }[] = [
   { id: "001-amax-foundation-projects", path: "/delivery", regions: [".row.head", ".tickets .ticket", ".cols.even > .card", ".card.flush .card-head", ".card.flush tbody tr"] },
-  { id: "001-amax-foundation-project", path: "/delivery/p/CON", regions: [".crumb", ".row.head", ".tabs", ".board .lane"] },
+  // 144: the project header is one header on every tab (144-project-tabs-layout: the name in a row with the agent-first
+  // (i), its h1 without 001's bottom margin, 6 px shorter), so 001's header no longer applies. No visual check against
+  // 144's mock replaces it (that mock shows another project); 144's e2e checks the header's layout and behaviour on every tab.
+  { id: "001-amax-foundation-project", path: "/delivery/p/CON", regions: [".crumb", ".tabs", ".board .lane"] },
   { id: "001-amax-foundation-proposals", path: "/delivery/proposals", regions: ["h1", ".lede", ".cols.even > .card:first-child", ".cols.even > .card:last-child", ".card.flush .card-head", ".card.flush tbody tr"] },
-  { id: "001-amax-foundation-releases", path: "/delivery/releases", regions: ["h1", ".lede", ".card.map", ".card.flush .card-head", ".card.flush tbody tr"] },
+  // 147: the list's rows follow 147-release-pages (name, category, status, dates, progress), not 001's rows.
+  { id: "001-amax-foundation-releases", path: "/delivery/releases", regions: ["h1", ".lede", ".card.map", ".card.flush .card-head"] },
 ];
 
 // Known gaps, each with its reason; every other region must be within 2%.

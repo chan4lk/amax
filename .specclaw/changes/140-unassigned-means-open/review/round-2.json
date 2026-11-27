@@ -1,0 +1,108 @@
+{
+ "counts": {
+  "blocker": 0,
+  "major": 1,
+  "minor": 1
+ },
+ "escalated": [],
+ "files": [
+  "modules/delivery/server/pin-offers.ts",
+  "modules/delivery/server/proposal-card.ts",
+  "modules/delivery/server/proposal-kinds.ts",
+  "modules/delivery/tests/owner-accept-118.test.ts",
+  "modules/delivery/tests/owner-render-118.test.ts",
+  "modules/delivery/ui/ProposalPage.tsx"
+ ],
+ "final": false,
+ "findings": [
+  {
+   "class": "other",
+   "file": "modules/delivery/tests/owner-accept-118.test.ts",
+   "fp": "e7366b5020e4",
+   "in_delta": true,
+   "line": 40,
+   "message": "The new accept guard is a fix for the round-1 B4 major, but its test has only two rows: still open and released since. B2 asks for the named case plus at least two others. Missing rows: a proposal withdrawn after the suggestion was made (setOwnerIn refuses it, with a different message), and one that got a named owner since (the hasNoOwner branch). Also, the 'released' row sets the phase with a direct owner SQL update instead of the real move or release path, so the test never shows the guard firing on a state the service actually produces. Fix: add the withdrawn row and the named-since row. Reach the released state through the real service and leave the agent's tidy unrun, so the race the guard exists for is the thing the test drives.",
+   "original_severity": "major",
+   "pass": "design",
+   "pre_existing": false,
+   "rule": "B2",
+   "scenario": "Delete the `needsOwner` line in proposal-kinds.ts \u2192 the released row fails, as it should. But change setOwnerIn's withdrawn refusal, or move the guard's order \u2192 the table still passes, because neither the withdrawn path nor the owned-since path has a row.",
+   "severity": "major",
+   "unclassified": false
+  },
+  {
+   "class": "other",
+   "file": "modules/delivery/server/agent.ts",
+   "fp": "0fd81a36e12f",
+   "in_delta": false,
+   "line": 67,
+   "message": "The round-1 finding asked that the chip, the pin offer, the agent's Suggested owner and its accept guard all follow one rule. The offer and the accept guard now call `needsOwner`. The agent still decides whether to suggest an owner with its own copy of that rule: `open(p)` (line 25: not withdrawn and phase not released) combined with `hasNoOwner`. The two copies agree today, so there is no wrong behaviour yet. If `needsOwner` changes (for example, to also exclude verified proposals), the agent will keep making suggestions that the accept guard then refuses. Fix: have the agent call `needsOwner({ ownerUserId, ownerName, phase, withdrawn: isWithdrawn(p) })` when it decides whether to suggest, and in tidy() when it decides which suggestions to take back.",
+   "original_severity": "minor",
+   "pass": "review",
+   "pre_existing": true,
+   "rule": "B4",
+   "scenario": "",
+   "severity": "minor",
+   "unclassified": false
+  },
+  {
+   "class": "other",
+   "file": "modules/delivery/server/proposal-card.ts",
+   "fp": "916eef602a8a",
+   "in_delta": true,
+   "line": 92,
+   "message": "When `proposalNow` finds no row (the key doesn't exist, or the viewer can't see it), `was` falls back to \"Unassigned\". The card then shows a missing proposal as an open one that needs an owner, instead of saying it wasn't found. Fix: show \"\u2013\" (the card's existing placeholder for a missing title) or say the proposal wasn't found.",
+   "original_severity": "minor",
+   "pass": "design",
+   "pre_existing": false,
+   "rule": "B6",
+   "scenario": "update_proposal is called with key CON-999, which doesn't exist \u2192 the confirm card says 'From: Unassigned \u2192 To: Nimal'.",
+   "severity": "minor",
+   "unclassified": false
+  }
+ ],
+ "fix_proof": {
+  "base": "26d9ce7bc4b477d9c4e5be9fb73fc963b76ddd80",
+  "mode": "warn",
+  "reason": "no review.test_command configured, so no test could prove the fix",
+  "status": "not_proven",
+  "tests": []
+ },
+ "head": "7756e36f434f73bc44419d86b6d9bc55f8f519c6",
+ "impact": [
+  "apps/mock/public/mock/index.html",
+  "apps/web/components/marketing/HowStage.tsx",
+  "apps/web/tests/admin/limits.test.ts",
+  "apps/web/tests/tick.test.ts",
+  "modules/allocations/contracts.ts",
+  "modules/allocations/server/standing.ts",
+  "modules/delivery/server/agent.ts",
+  "modules/delivery/server/lifecycle.ts",
+  "modules/delivery/server/queries.ts",
+  "modules/delivery/server/services.ts",
+  "modules/delivery/tests/authors-091.test.ts",
+  "modules/delivery/tests/owner-091.test.ts",
+  "modules/delivery/tests/proposal-agent.test.ts",
+  "modules/delivery/tests/proposal-owner-a6.test.ts",
+  "modules/delivery/tests/reopen-task-081.test.ts",
+  "modules/experience/mcp.ts",
+  "modules/experience/module.ts",
+  "modules/experience/server/fixes.ts",
+  "modules/experience/suggestions.ts",
+  "modules/experience/tests/fixes.test.ts"
+ ],
+ "model": "opus",
+ "passes": [
+  "review",
+  "design"
+ ],
+ "prompt_chars": 72778,
+ "round": 2,
+ "since": "7f361d55",
+ "status": "open",
+ "system_chars": 44198,
+ "tier": "review",
+ "tools": "Read,Grep,Glob",
+ "ts_end": 1794892534,
+ "ts_start": 1794892438
+}

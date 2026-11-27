@@ -1,11 +1,10 @@
 import { notFound } from "next/navigation";
 import { can, roleLabel } from "@amax/auth";
-import { withTenant } from "@amax/db";
-import { hasSecret } from "@amax/core/secrets";
 import { installed } from "../../../../lib/registry";
 import { connectedClients, toolCatalogue } from "@amax/mcp/admin";
 import { PinButton } from "@amax/ui";
 import { AskButton } from "../../../../components/settings/AskButton";
+import { GitHubAppCard, type GitHubAppStatus } from "../../../../components/settings/GitHubAppCard";
 import { getDb, toolRegistry } from "../../../../lib/server";
 import { getViewer } from "../../../../lib/viewer";
 import "../settings.css";
@@ -14,8 +13,6 @@ export const metadata = { title: "Integrations" };
 export const dynamic = "force-dynamic";
 
 const CLIENTS = { label: "Connected clients", tool: "list_mcp_clients", args: {} };
-// Review round 2: the card's own record, answered whether or not the app is set up.
-const GITHUB_APP = { label: "GitHub accounts", tool: "get_github_app_status", args: {} };
 
 // Chat-first (047): revoking a client is an "Ask amax" chip; chat confirms revoke_mcp_client.
 export default async function IntegrationsPage() {
@@ -24,20 +21,14 @@ export default async function IntegrationsPage() {
   const tools = toolCatalogue(toolRegistry(), viewer.tenantId);
   const clients = await connectedClients(getDb()!, viewer.tenantId);
   const modules = [...new Set(tools.map((t) => t.module))];
-  // 108 AC-1: whether people can connect their GitHub accounts here; the app's credential is added in chat.
-  const gitAccounts = installed.some((m) => m.id === "git-accounts");
-  const githubApp = gitAccounts && await withTenant(getDb()!, viewer.tenantId, (tx) => hasSecret(tx, "github-oauth"));
+  const gitAccounts = installed.some((m) => m.id === "git-accounts") && can(viewer, "git-accounts:read");
+  // 116 AC-4: the app's state through the same read tool chat and MCP use; its rotation date and the callback URL GitHub needs.
+  const app = gitAccounts ? await toolRegistry().call(viewer, "get_github_app_status", {}, { source: "chat" }) as GitHubAppStatus : null;
   return (
     <>
       <nav className="crumb" aria-label="Breadcrumb"><a href="/settings">Settings</a><span>/</span>Integrations</nav>
       <div className="row head"><div><h1>Integrations</h1><p className="lede">Every amax capability is an MCP tool with the same permissions as the screens. Claude and other MCP clients connect at <code>/api/mcp</code> with OAuth; each person approves the scopes. Changes happen in chat. Pin anything, then ask.</p></div></div>
-      {gitAccounts && (
-        <div className="card pinnable" style={{ marginBottom: 28 }}>
-          <div className="card-head"><h2>GitHub accounts</h2><PinButton inline pin={GITHUB_APP} /><span className={`chip${githubApp ? " good" : ""}`}>{githubApp ? "Set up" : "Not configured"}</span></div>
-          <p className="muted" style={{ fontSize: 13, margin: "0 0 10px" }}>{githubApp ? "People connect their GitHub accounts from Git accounts in their profile menu." : "Add the GitHub OAuth app's client id and secret, as one credential \"<client id>:<client secret>\", so people can connect their GitHub accounts."}</p>
-          {!githubApp && <AskButton label="Ask amax · Add the GitHub app" prompt="Add the github-oauth credential" pin={GITHUB_APP} tool="put_secret" name="Ask amax to add the GitHub accounts app" />}
-        </div>
-      )}
+      {app && <GitHubAppCard app={app} />}
       <div className="card flush pinnable" style={{ marginBottom: 28 }}>
         <div className="card-head"><h2>Connected clients</h2><PinButton inline pin={CLIENTS} /><span className="muted" style={{ fontSize: 13 }}>{clients.length} active</span></div>
         <div className="scroll-x"><table className="tbl">

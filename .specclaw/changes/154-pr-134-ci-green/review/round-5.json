@@ -1,0 +1,79 @@
+{
+ "counts": {
+  "blocker": 0,
+  "major": 1,
+  "minor": 0
+ },
+ "escalated": [],
+ "files": [
+  "apps/web/playwright.auth.config.ts",
+  "apps/web/playwright.config.ts",
+  "apps/web/tests/e2e-configs-154.test.ts",
+  "apps/web/tests/e2e/delivery-visual.spec.ts",
+  "apps/web/tests/e2e/release-pages.spec.ts",
+  "apps/web/tests/e2e/releases.spec.ts",
+  "apps/web/tests/e2e/sections.spec.ts",
+  "modules/delivery/README.md",
+  "modules/delivery/db/migrations/0029_release_completing_deferrable.sql",
+  "modules/delivery/server/services.ts",
+  "modules/delivery/tests/release-completed-day-128.test.ts",
+  "modules/delivery/tests/retag-name-154.test.ts",
+  "packages/core/src/backup/restore.ts",
+  "packages/core/tests/backup-restore-order-154.test.ts"
+ ],
+ "final": true,
+ "findings": [
+  {
+   "class": "law",
+   "file": "modules/delivery/server/services.ts",
+   "fp": "524ba0d4ad26",
+   "in_delta": true,
+   "line": 477,
+   "message": "tagRelease now also renames the release: when its name equals the old version, the name follows the re-tag (line 472). The audit row still records only the version (`before: { version }`, `after: { version }`), so it never shows the name change. The module standard says every write is audited. Fix: in the same UPDATE, return the name before and after (or read the name from `r`), and put `name` in both `before` and `after` when it changed.",
+   "original_severity": "major",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "module-standard (every write is audited) / B1",
+   "scenario": "Re-tag CON v2.4.0 (a release from before 145, named \"v2.4.0\") to v2.4.1. delivery.release.name changes from \"v2.4.0\" to \"v2.4.1\", and that name heads the release page. The delivery.release.tag audit row reads before {version:\"v2.4.0\"}, after {version:\"v2.4.1\"}, with no trace of the name change.",
+   "severity": "major",
+   "unclassified": false
+  }
+ ],
+ "head": "0b3dcd25ce92fc585d6a535ac7c99daf5ce93bfd",
+ "impact": [
+  ".github/workflows/ci.yml",
+  "apps/mock/package.json",
+  "apps/web/scripts/dev.ts",
+  "apps/web/tests/dev-tick.test.ts",
+  "apps/web/tests/e2e/git-accounts.spec.ts",
+  "apps/web/tests/tick.test.ts",
+  "deploy/ci/drill.yaml",
+  "deploy/helm/amax/templates/deployment.yaml",
+  "deploy/helm/amax/templates/ingress.yaml",
+  "deploy/helm/amax/templates/service.yaml",
+  "deploy/helm/amax/templates/worker.yaml",
+  "deploy/helm/amax/values.yaml",
+  "modules/career/tests/e2e/playwright.config.ts",
+  "modules/compliance/tests/e2e/playwright.config.ts",
+  "modules/expenses/tests/e2e/playwright.config.ts",
+  "modules/experience/tests/e2e/playwright.config.ts",
+  "modules/finance/tests/e2e/playwright.config.ts",
+  "modules/git-accounts/tests/setup.ts",
+  "modules/helpdesk/server/identity.ts",
+  "modules/helpdesk/tests/e2e/playwright.config.ts"
+ ],
+ "model": "opus",
+ "passes": [
+  "review",
+  "design"
+ ],
+ "prompt_chars": 88710,
+ "round": 5,
+ "since": null,
+ "status": "open",
+ "system_chars": 44198,
+ "tier": "review",
+ "tools": "Read,Grep,Glob",
+ "ts_end": 1795779723,
+ "ts_start": 1795779662
+}

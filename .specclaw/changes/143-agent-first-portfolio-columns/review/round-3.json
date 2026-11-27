@@ -1,0 +1,111 @@
+{
+ "counts": {
+  "blocker": 0,
+  "major": 3,
+  "minor": 0
+ },
+ "escalated": [
+  "2e22b6c705ab"
+ ],
+ "files": [
+  "modules/delivery/server/in-prod.ts",
+  "modules/delivery/server/pin-offers.ts",
+  "modules/delivery/server/portfolio.ts",
+  "modules/delivery/server/queries.ts",
+  "modules/delivery/tests/afx.ts",
+  "modules/delivery/tests/portfolio-121-clock.test.ts",
+  "modules/delivery/tests/portfolio-121-facts.test.ts"
+ ],
+ "final": false,
+ "findings": [
+  {
+   "class": "other",
+   "file": "modules/delivery/server/portfolio.ts",
+   "fp": "917ff012db39",
+   "in_delta": true,
+   "line": 32,
+   "message": "The null-clock fix covers only one case. When every input is null, LAST_PROGRESS still ends in `coalesce(..., p.updated_at)`. That is the done task, the commit, both repo phase times and created_at, which 0012 left null for older proposals. Round 1 already showed updated_at is not progress, because every spec-sync upsert sets it to now(). So 'could not tell when it last moved' still reads as recent and the build shows on-track. Fix: report an unknown last-progress time as its own state. Show it as 'unknown' or flag the row instead of using updated_at. Add the case 'no created_at, no repoPhases, no tasks or commits' to the AC-3 table. The new table only has the null case where repoPhases.tasks is set.",
+   "original_severity": "major",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B3",
+   "scenario": "A pre-0012 proposal has created_at null, is in building, has no done task, no commit_ledger row and no meta.repoPhases. A sync re-pushes it today. LAST_PROGRESS = updated_at = now, so health shows 'on-track' although nothing has moved in months.",
+   "severity": "major",
+   "unclassified": false
+  },
+  {
+   "class": "other",
+   "file": "modules/delivery/server/portfolio.ts",
+   "fp": "2e22b6c705ab",
+   "in_delta": true,
+   "line": 30,
+   "message": "The phase-change fix covers only one case. The clock now counts repoPhases.proposal and repoPhases.tasks, which are the repo's propose and plan times. The move into building is still not counted, and neither is any phase change made in amax (a move tool, or a manual project). The previous finding asked for the time of the move into building. Fix: count the time the proposal entered its current phase, from the recorded `delivery.proposal.phase_changed` event or a stored phase-change time. Add a test row: planned long ago, moved to building today, no tasks or commits \u2192 on-track.",
+   "original_severity": "major",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B1",
+   "scenario": "A proposal is created and planned on 2026-10-01 (repoPhases.tasks = 2026-10-01). It moves to building on 2026-11-20 and has no done task or commit yet. greatest() gives 2026-10-01, which is more than 14 days ago, so the project shows 'at-risk: unchanged for 14+ days' on the day the build starts.",
+   "severity": "major",
+   "unclassified": false
+  },
+  {
+   "class": "other",
+   "file": "modules/delivery/server/portfolio.ts",
+   "fp": "e0d994f5584b",
+   "in_delta": true,
+   "line": 31,
+   "message": "phaseAt parses stored repo phase times a second way: a raw `::timestamptz` cast in SQL. The project's single rule for reading these times is instant() in sync/instant.ts. It reads ISO only, treats a value with no offset as UTC, and returns null (unknown) for anything else. Here, a plain-string entry (the legacy shape that entries() still accepts) with no offset is read in the database session's time zone. A string that instant() would reject makes the cast throw, and that fails the whole portfolio query. Fix: read the times the way instant() does (normalise them where they are written, or guard the cast and treat a bad value as unknown), and test a value with no offset and a malformed one.",
+   "original_severity": "major",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B4",
+   "scenario": "A legacy row has meta.repoPhases.tasks = \"2026-10-01T09:00\". The session time zone is not UTC, so the clock moves by that offset compared with the UI's instant(). A legacy value such as \"2026-02-30\" raises 'date/time field value out of range', and getProject or the Projects list errors for the whole project set.",
+   "severity": "major",
+   "unclassified": false
+  }
+ ],
+ "fix_proof": {
+  "base": "6784225b6ffadc4433f7b8cc0fe28f0d8b4581f2",
+  "mode": "warn",
+  "reason": "no review.test_command configured, so no test could prove the fix",
+  "status": "not_proven",
+  "tests": []
+ },
+ "head": "fc2896ba787aae7f1b0ffa6676907396833ee11f",
+ "impact": [
+  "apps/web/components/marketing/Board.tsx",
+  "modules/delivery/pin-suggestions.ts",
+  "modules/delivery/server/overview.ts",
+  "modules/delivery/server/services.ts",
+  "modules/delivery/tests/mine-a9.test.ts",
+  "modules/delivery/tests/owner-render-118.test.ts",
+  "modules/delivery/tests/portfolio-121.test.ts",
+  "modules/delivery/tests/proposal-agent.test.ts",
+  "modules/delivery/ui/ProjectsPage.tsx",
+  "modules/expenses/server/view.ts",
+  "modules/finance/server/totals.ts",
+  "modules/helpdesk/fixtures/data.ts",
+  "modules/helpdesk/fixtures/index.ts",
+  "modules/presales/fixtures/data.ts",
+  "modules/presales/fixtures/index.ts",
+  "modules/time/server/decide-card.ts",
+  "modules/time/server/decide-request.ts",
+  "modules/time/server/request-card.ts",
+  "modules/time/server/request.ts",
+  "modules/time/server/requests-read.ts"
+ ],
+ "model": "opus",
+ "passes": [
+  "review",
+  "design"
+ ],
+ "prompt_chars": 72949,
+ "round": 3,
+ "since": "eed37a0a",
+ "status": "escalate",
+ "system_chars": 44062,
+ "tier": "review",
+ "tools": "Read,Grep,Glob",
+ "ts_end": 1795174034,
+ "ts_start": 1795173924
+}

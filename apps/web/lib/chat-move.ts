@@ -1,9 +1,10 @@
 // Client-safe: no server imports, so the chat panel can use it.
+import { inApp } from "./in-app";
 
 /** A write that renames the record a page is named by (a re-tag) returns where that page went (057). */
 export type Moved = { from: string; to: string };
 
-const local = (x: unknown): x is string => typeof x === "string" && /^\/(?![/\\])/.test(x);
+const local = (x: unknown): x is string => typeof x === "string" && inApp(x);
 
 /** The `moved` of a tool result, only when both ends are same-site paths. */
 export function movedOf(result: unknown): Moved | undefined {

@@ -3,6 +3,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import type { CardField, CardForm as Form } from "@amax/core";
 import type { FieldCheck } from "@amax/chat";
+import { FormChecks } from "./FormChecks";
 import { FormChips } from "./FormChips";
 import { generalOf, hintOf, type Values } from "./form-values";
 
@@ -27,6 +28,7 @@ function TextField({ field, values, error, ok, disabled, onValue }: { field: Ext
 function Field({ field, values, check, verified, disabled, onValue }: Omit<Props, "form"> & { field: CardField }) {
   const error = check.field === field.name ? check.message : undefined;
   if (field.kind === "chips") return <FormChips field={field} value={values[field.name] ?? ""} error={error} disabled={disabled} onChange={(v) => onValue(field.name, v)} />;
+  if (field.kind === "checks") return <FormChecks field={field} values={values} error={error} disabled={disabled} onChange={(v) => onValue(field.name, v)} />;
   return <TextField field={field} values={values} error={error} ok={verified} disabled={disabled} onValue={onValue} />;
 }
 

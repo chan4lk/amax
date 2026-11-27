@@ -4,10 +4,11 @@ import { listProposals, listReleases, today } from "../server/queries";
 import { ProjectSectionPage } from "./ProjectSections";
 import { ProposalsTable } from "./ProposalsPage";
 import { ReleasesCards } from "./ReleasesPage";
+import { LoadSafe } from "./LoadSafe";
+import { listHref } from "../server/release-list";
 import { needViewer } from "./parts";
 import { attention, isNeed, suggestedIds } from "../server/attention";
 import { AttentionStrip, listQuery, needPin } from "./Attention";
-import { AgentFirstLine } from "./AgentFirstLine";
 
 export function ProjectProposals(props: ScreenProps) {
   const viewer = needViewer(props.viewer);
@@ -23,10 +24,8 @@ export function ProjectProposals(props: ScreenProps) {
         const att = attention(rows, await suggestedIds(viewer!, rows));
         const root = projectHref(p.key, "proposals"), base = phase ? `${root}/${phase}` : root;
         return <>
-          {/* 094 AC-8: an agent-first project's Proposals tab says where its proposals come from, as its board does. */}
-          {p.agentFirst && p.repoUrl && <div className="actions"><AgentFirstLine repoUrl={p.repoUrl} /></div>}
           <AttentionStrip counts={att.counts} active={need} href={(n) => `${base}${listQuery({ q, owner: mine ? "me" : undefined, need: n })}`} pin={(n) => needPin(n, { projectKey: p.key, projectName: p.name, mine })} />
-          <ProposalsTable rows={att.ordered} needs={att.needs} need={need} me={viewer!.userId} phase={phase} root={root} q={q} page={asked} title="Proposals" mine={mine} />
+          <ProposalsTable rows={att.ordered} needs={att.needs} need={need} me={viewer!.userId} phase={phase} root={root} q={q} page={asked} title="Proposals" mine={mine} withProject={false} />
         </>;
       }}
     </ProjectSectionPage>
@@ -38,8 +37,12 @@ export function ProjectReleases(props: ScreenProps) {
   return (
     <ProjectSectionPage {...props} section="releases" title="Releases">
       {async (p) => {
-        const [releases, now] = await Promise.all([listReleases(viewer!, { projectKey: p.key }), today(viewer!)]);
-        return <ReleasesCards viewer={viewer!} releases={releases} now={now} root={projectHref(p.key, "releases")} map={props.searchParams?.map} projectKey={p.key} />;
+        const root = projectHref(p.key, "releases");
+        return (
+          <LoadSafe what="releases" retry={listHref(root, props.searchParams ?? {})} load={() => Promise.all([listReleases(viewer!, { projectKey: p.key }), today(viewer!)])}>
+            {([releases, now]) => <ReleasesCards viewer={viewer!} releases={releases} now={now} root={root} sp={props.searchParams} projectKey={p.key} projectName={p.name} />}
+          </LoadSafe>
+        );
       }}
     </ProjectSectionPage>
   );

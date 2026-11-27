@@ -42,11 +42,12 @@ test("AC2 AC3 AC4 sections show only this project's records, the team from alloc
   await signIn(page, "/delivery/p/CON/releases");
   const releases = page.locator(".card.flush tbody tr");
   expect(await releases.count()).toBeGreaterThan(0);
-  for (const row of await releases.all()) await expect(row).toContainText("Contoso Portal");
+  // 144, 147: a project's own tabs leave out the Project column, so each row is this project's by its link.
+  for (const row of await releases.all()) await expect(row.locator("a.rowlink").first()).toHaveAttribute("href", /^\/delivery\/releases\/CON\//);
   await page.goto("/delivery/p/CON/proposals");
   const proposals = page.locator(".card.flush tbody tr");
   expect(await proposals.count()).toBeGreaterThan(0);
-  for (const row of await proposals.all()) await expect(row).toContainText("Contoso Portal");
+  for (const row of await proposals.all()) await expect(row.locator(".prop-cell a").first()).toHaveAttribute("href", /^\/delivery\/proposals\/CON-/);
   await page.goto("/delivery/p/CON/team");
   const team = page.locator(".card.flush tbody tr");
   expect(await team.count()).toBeGreaterThan(0);

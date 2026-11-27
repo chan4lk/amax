@@ -1,0 +1,74 @@
+{
+ "counts": {
+  "blocker": 0,
+  "major": 0,
+  "minor": 1
+ },
+ "escalated": [],
+ "files": [
+  "modules/delivery/README.md",
+  "modules/delivery/mcp.ts",
+  "modules/delivery/server/release-card.ts",
+  "modules/delivery/server/release-proposals.ts",
+  "modules/delivery/server/services.ts",
+  "modules/delivery/tests/completed-release-moves-129.test.ts",
+  "modules/delivery/tests/release-card-124.test.ts",
+  "modules/delivery/tests/release-tracking-123.test.ts",
+  "modules/delivery/tests/releases.test.ts"
+ ],
+ "final": true,
+ "findings": [
+  {
+   "class": "other",
+   "file": "modules/delivery/tests/completed-release-moves-129.test.ts",
+   "fp": "dbd4c609d71a",
+   "in_delta": true,
+   "line": 36,
+   "message": "The test starts the card check `proposeRelease` and `createRelease` for the same new version `to` at the same time, then awaits them. In the reassign row, `createRelease` succeeds and commits the `to` release. If that commit lands before `proposeRelease` runs its `taken` query (release-card.ts:71), the card is refused with \"RTK already has a release t3\" on the version field instead of resolving to undefined. So the test passes or fails depending on timing. Fix: await `proposeRelease` before you call `createRelease`.",
+   "original_severity": "minor",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B12",
+   "scenario": "Row 'a completed release, with reassign': createRelease(t3) commits first \u2192 proposeRelease(version t3) throws 'RTK already has a release t3' \u2192 `expect(card).resolves.toBeUndefined()` fails, though the code is correct.",
+   "severity": "minor",
+   "unclassified": false
+  }
+ ],
+ "head": "5324fbd929e71f8bb1cf92f47ed02afdc6aa8c0b",
+ "impact": [
+  ".github/workflows/codeql.yml",
+  ".github/workflows/dependency-review.yml",
+  "apps/mock/public/mock/index.html",
+  "apps/web/lib/backup-workflows.ts",
+  "deploy/ci/drill.yaml",
+  "modules/allocations/tests/scope.test.ts",
+  "modules/allocations/tests/standing-race-107.test.ts",
+  "modules/compliance/contracts.ts",
+  "modules/compliance/tests/standard.test.ts",
+  "modules/delivery/db/migrations/0026_release_status_engine.sql",
+  "modules/delivery/server/release-edit-card.ts",
+  "modules/delivery/tests/chat-043.test.ts",
+  "modules/delivery/tests/chat.test.ts",
+  "modules/experience/server/wire.ts",
+  "modules/git-accounts/server/github.ts",
+  "modules/hr/tests/records.test.ts",
+  "modules/inbox-agent/server/record.ts",
+  "modules/inbox-agent/server/wire.ts",
+  "modules/keyflow/server/http.ts",
+  "modules/keyflow/server/record.ts"
+ ],
+ "model": "opus",
+ "passes": [
+  "review",
+  "design"
+ ],
+ "prompt_chars": 86203,
+ "round": 2,
+ "since": null,
+ "status": "clean",
+ "system_chars": 44184,
+ "tier": "review",
+ "tools": "Read,Grep,Glob",
+ "ts_end": 1795716002,
+ "ts_start": 1795715942
+}

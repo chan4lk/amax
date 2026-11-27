@@ -6,7 +6,7 @@ import { ReleasePage } from "../ui/ReleasePage";
 import { ReleasesPage } from "../ui/ReleasesPage";
 import { proposalDb } from "./proposal-db";
 
-const html = async (node: unknown) => (await import("react-dom/server")).renderToStaticMarkup((await node) as never);
+const html = async (node: unknown) => new Response((await (await import("react-dom/static")).prerender((await node) as never)).prelude).text();
 const crumb = (page: string) => [...(page.match(/<nav class="crumb"[^>]*>(.*?)<\/nav>/)?.[1] ?? "").matchAll(/(?:<a href="([^"]+)">([^<]+)<\/a>)|(?:<span>\/<\/span>([^<]+)$)/g)]
   .map((m) => (m[1] ? `${m[2]} → ${m[1]}` : m[3]));
 const tabs = (page: string) => page.match(/<nav class="tabs" aria-label="Sections">(.*?)<\/nav>/)?.[1] ?? "";

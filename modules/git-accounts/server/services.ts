@@ -15,7 +15,9 @@ export const disconnectGitHub = defineService({
     if (!gone.length) throw refuse("GitHub isn't connected");
     const removed = gone.map((g) => ({ login: g.login, email: g.email }));
     const logins = [...new Set(removed.map((r) => r.login))];
-    return { result: { logins, removed: removed.length }, resourceId: userId, before: { removed }, after: { removed: removed.length },
+    // 116 AC-7: counts per login in the audit record, never the addresses.
+    const before = { removed: logins.map((login) => ({ login, emails: removed.filter((r) => r.login === login && r.email).length })) };
+    return { result: { logins, removed: removed.length }, resourceId: userId, before, after: { removed: removed.length },
       events: logins.map((login) => ({ name: EVENTS.disconnected, payload: { userId, login, emails: removed.filter((r) => r.login === login && r.email).length } })) };
   },
 });
@@ -26,8 +28,9 @@ export const unlinkIdentity = defineService({
   async run(tx, input) {
     const g = await unlinkGitIdentity(tx, input.identityId);
     if (!g) throw refuse("no such Git identity", "not_found");
-    const before = { userId: g.userId, provider: g.provider, login: g.login, email: g.email };
-    return { result: { unlinked: `${g.login}${g.email ? ` (${g.email})` : ""}` }, resourceId: input.identityId, before,
+    // 116 AC-7, AC-8: neither the audit record nor the Admin's answer names the address; only its owner reads it.
+    const before = { userId: g.userId, provider: g.provider, login: g.login, hadEmail: Boolean(g.email) };
+    return { result: { unlinked: `${g.login}${g.email ? " and its email" : ""}` }, resourceId: input.identityId, before,
       events: [{ name: EVENTS.disconnected, payload: { userId: g.userId, login: g.login, emails: g.email ? 1 : 0 } }] };
   },
 });

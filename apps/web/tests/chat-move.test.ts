@@ -21,6 +21,9 @@ describe("057 chat follows a renamed record's page", () => {
     ["another site", { moved: { from: moved.from, to: "https://evil.example/x" } }, undefined],
     ["a protocol-relative URL", { moved: { from: moved.from, to: "//evil.example/x" } }, undefined],
     ["a backslash URL", { moved: { from: moved.from, to: "/\\evil.example" } }, undefined],
+    ["a tab after the slash (124)", { moved: { from: moved.from, to: "/\t/evil.example" } }, undefined],
+    ["a newline after the slash (124)", { moved: { from: moved.from, to: "/\n/evil.example" } }, undefined],
+    ["a control character (124)", { moved: { from: "/\u0000/evil.example", to: moved.to } }, undefined],
   ])("movedOf: %s", (_n, result, want) => expect(movedOf(result)).toEqual(want));
 });
 

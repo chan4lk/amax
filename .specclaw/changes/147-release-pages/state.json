@@ -1,0 +1,10 @@
+{
+  "change": "147-release-pages",
+  "phase": "verify",
+  "branch": "",
+  "phases": {
+    "proposal": {"status":"approved","at":"2026-11-26T09:44:30Z"},
+    "tasks": {"status":"done","at":"2026-11-26T09:44:51Z"},
+    "verify": {"status":"done","at":"2026-11-26T13:21:03Z"}
+  }
+}

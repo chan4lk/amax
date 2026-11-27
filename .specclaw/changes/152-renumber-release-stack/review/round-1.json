@@ -1,0 +1,46 @@
+{
+ "counts": {
+  "blocker": 0,
+  "major": 0,
+  "minor": 1
+ },
+ "escalated": [],
+ "files": [
+  "apps/mock/public/mock/index.html",
+  "apps/web/tests/e2e/delivery-visual.spec.ts"
+ ],
+ "final": false,
+ "findings": [
+  {
+   "class": "other",
+   "file": "apps/mock/public/mock/index.html",
+   "fp": "a0d6e4bf7689",
+   "in_delta": true,
+   "line": 3813,
+   "message": "The rename changed the section ids and data-change values to 138\u2013151, but the visible ledes and the HTML banner comments still use the old numbers. Examples: '116: an Admin sets up\u2026', '<!-- 122 Project tabs layout -->' on the section now id'd 144, '123: a release gets a name\u2026' on 145, and '129: the New release card\u2026' on 151. The same applies to the '// 125:' prefix in apps/web/tests/e2e/delivery-visual.spec.ts:15, which now sits beside a reference to 147-release-pages. Fix: update each lede prefix and banner comment to the new number, the same way the ids were updated.",
+   "original_severity": "minor",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B1",
+   "scenario": "A reader opens #145-releases-and-proposal-entries in the mock and sees '123: \u2026'. They look for .specclaw/changes/123-*, which this rename moved to 145, so the lede points at the wrong change.",
+   "severity": "minor",
+   "unclassified": false
+  }
+ ],
+ "head": "382e1d491b154d4619aaa4c29082b87bf6f049cb",
+ "impact": [],
+ "model": "opus",
+ "passes": [
+  "review",
+  "design"
+ ],
+ "prompt_chars": 82044,
+ "round": 1,
+ "since": null,
+ "status": "clean",
+ "system_chars": 44175,
+ "tier": "review",
+ "tools": "Read,Grep,Glob",
+ "ts_end": 1795756885,
+ "ts_start": 1795756840
+}

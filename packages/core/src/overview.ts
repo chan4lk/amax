@@ -10,7 +10,8 @@ export type OverviewTicket = { key: string; order: number; tone: OverviewTone; l
  * A decision waiting on the viewer. `since` is when it started waiting (oldest shows first);
  * `prompt` is what "Ask amax" fills in, with the record pinned. Never a direct write.
  */
-export type OverviewWaiting = { id: string; title: string; detail: string | null; context: string; raisedBy: string; agent: boolean; since: string; action: string; prompt: string; pin: OverviewPin };
+/** `snoozeDays` (116): a nudge, not a decision; "Not now" hides it that many days in the person's browser. */
+export type OverviewWaiting = { id: string; title: string; detail: string | null; context: string; raisedBy: string; agent: boolean; since: string; action: string; prompt: string; pin: OverviewPin; snoozeDays?: number };
 
 /** A read-only select that changes a panel through the URL. Only listed values are accepted. */
 export type OverviewFilter = { param: string; label: string; value: string; options: { value: string; label: string }[] };

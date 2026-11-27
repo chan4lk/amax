@@ -24,7 +24,7 @@ describe.skipIf(!hasDb)("081 a proposal's owner hears every step of its life fro
     for (const to of ["planned", "building"]) await call("move_proposal", { key, to });
     await call("mark_task_done", { key, task: "T1" });
     await call("move_proposal", { key, to: "verified" });
-    await call("create_release", { projectKey: "CON", version: "v9.0.0", proposalKeys: [key] });
+    await call("create_release", { name: "Test release", category: "UAT", startDate: "2026-10-01", targetDate: "2026-12-31", projectKey: "CON", version: "v9.0.0", proposalKeys: [key] });
     await call("record_deployment", { projectKey: "CON", version: "v9.0.0", environment: "Prod" });
     await call("void_deployment", { projectKey: "CON", version: "v9.0.0", environment: "Prod", reason: "Flow check" });
     const { key: other } = (await call("create_proposal", { projectKey: "CON", title: "Flow check withdrawn", ownerUserId: nimal.userId })) as { key: string };

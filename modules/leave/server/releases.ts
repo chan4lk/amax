@@ -2,7 +2,7 @@ import { sql } from "drizzle-orm";
 import { z } from "zod";
 import type { EventHandlerDef } from "@amax/core";
 import { contextFor, defineService, type ServiceOutcome } from "@amax/core/server";
-import { EVENTS as DELIVERY, getProjectRef, type ReleaseDeployed } from "@amax/delivery/contracts";
+import { EVENTS as DELIVERY, getProjectRef, unsuccessfulDeployment, type ReleaseDeployed } from "@amax/delivery/contracts";
 import { WINDOW_DAYS } from "./clash";
 import { addDays, todayOf } from "./days";
 
@@ -20,7 +20,7 @@ export const syncReleaseWindow = defineService({
     if (!project) return { result: { open: false, from: null, to: null }, resourceId: a.projectId };
     const from = await todayOf(tx), to = addDays(from, WINDOW_DAYS);
     await tx.execute(sql`insert into leave.release_window (tenant_id, project_id, project_key, project_title, version, environment, retry, starts_on, ends_on)
-      values (${ctx.tenantId}, ${project.id}, ${project.key}, ${project.name}, ${a.version}, ${a.environment}, ${a.status === "rolled-back"}, ${from}, ${to})
+      values (${ctx.tenantId}, ${project.id}, ${project.key}, ${project.name}, ${a.version}, ${a.environment}, ${unsuccessfulDeployment(a.status)}, ${from}, ${to})
       on conflict (tenant_id, project_id, version) do update set environment = excluded.environment, retry = excluded.retry, starts_on = excluded.starts_on, ends_on = excluded.ends_on`);
     return { result: { open: true, from, to }, resourceId: project.id, after: { version: a.version, environment: a.environment, from, to } };
   },

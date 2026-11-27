@@ -11,6 +11,7 @@ import { authFixtures } from "@amax/auth/fixtures";
 import { createRegistry } from "@amax/mcp";
 import { loadFixtures, lumen } from "@amax/testing";
 import gitAccounts from "../module";
+import { forgetAppCheck } from "../server/app";
 
 export const T = lumen.tenant.id;
 
@@ -25,7 +26,10 @@ function fakeGitHub(): Promise<Server> {
     req.on("end", () => {
       if (req.url === "/login/oauth/access_token") {
         const b = JSON.parse(body || "{}");
-        const ok = b.client_id === "app-id" && b.client_secret === "app-secret" && ["good", "nologin", "noemails", "hang", "reset", "noverified", "many", "slownoverified"].includes(b.code);
+        if (b.code === "mismatch") return send(200, { error: "redirect_uri_mismatch" });
+        // 117 review round 1: a wrong client id or secret is GitHub's incorrect_client_credentials; an unknown code is bad_verification_code.
+        if (b.client_id !== "app-id" || b.client_secret !== "app-secret-fake-0000000000") return send(200, { error: "incorrect_client_credentials" });
+        const ok = ["good", "nologin", "noemails", "hang", "reset", "noverified", "many", "slownoverified"].includes(b.code);
         return ok ? send(200, { access_token: `gho_${b.code}` }) : send(200, { error: "bad_verification_code" });
       }
       const token = String(req.headers.authorization ?? "").replace("Bearer ", "");
@@ -53,7 +57,8 @@ export async function gitAccountsDatabase() {
   const t = await migratedDatabase();
   const app = t.app();
   configureRuntime({ db: app, auditKey: "k".repeat(32) });
-  configureSecrets({ kms: localKms(new Uint8Array(randomBytes(32))) });
+  const kms = localKms(new Uint8Array(randomBytes(32)));
+  configureSecrets({ kms });
   setGrants([gitAccounts]);
   installAuthorizer();
   await loadFixtures(app, [{ id: "auth", fixtures: [authFixtures] }, gitAccounts], lumen);
@@ -65,8 +70,9 @@ export async function gitAccountsDatabase() {
     const [u] = await withTenant(app, T, (tx) => tx.execute(sql`select id from auth.user where email = ${`${key}@lumenlabs.test`}`));
     return (await withTenant(app, T, (tx) => viewerForUser(tx, T, u.id as string)))!;
   };
-  const setUpApp = () => putSecret(contextFor.job(T, "seed"), { connector: "github-oauth", value: "app-id:app-secret" });
+  // 119: the app's check is dropped when the app is written, as set_github_app does.
+  const setUpApp = () => putSecret(contextFor.job(T, "seed"), { connector: "github-oauth", value: "app-id:app-secret-fake-0000000000" }).finally(() => forgetAppCheck(T));
   const tx = <R>(fn: (tx: Tx) => Promise<R>) => withTenant(app, T, fn);
   const drop = async () => { github.close(); await t.drop(); };
-  return { t, app, registry, as, tx, setUpApp, origin, drop };
+  return { t, app, registry, as, tx, setUpApp, origin, drop, kms };
 }

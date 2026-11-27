@@ -14,7 +14,7 @@ import { COLOR, needViewer, PHASE_UI, PhaseChip, SignInFirst, Stk } from "./part
 import { ProposalPage } from "./ProposalPage";
 import { ProposalSearch } from "./ProposalSearch";
 import { attention, isNeed, NEED_LABEL, suggestedIds, type Need } from "../server/attention";
-import { hasNoOwner } from "../server/readiness";
+import { hasNoOwner, ownerLabel } from "../server/readiness";
 import { AttentionStrip, listQuery, needPin } from "./Attention";
 
 // 081 AC-15: every phase of the lifecycle, Planned included.
@@ -95,7 +95,7 @@ function FilterChip({ name, href, clears = "all projects" }: { name: string; hre
   );
 }
 
-export function ProposalsTable({ rows: all, needs, need, me, phase, root, project, q, page: asked, projects, title, mine = false }: { rows: ProposalRow[]; needs?: Map<string, Need[]>; need?: Need; me?: string; phase?: Phase; root: string; project?: string; q?: string; page: number; projects?: { key: string; name: string }[]; title?: string; mine?: boolean }) {
+export function ProposalsTable({ rows: all, needs, need, me, phase, root, project, q, page: asked, projects, title, mine = false, withProject = true }: { rows: ProposalRow[]; needs?: Map<string, Need[]>; need?: Need; me?: string; phase?: Phase; root: string; project?: string; q?: string; page: number; projects?: { key: string; name: string }[]; title?: string; mine?: boolean; withProject?: boolean }) {
   // 081 amendment 11 (AC-96): a tile's need narrows the table only.
   const rows = need && needs ? all.filter((p) => needs.get(p.id)?.includes(need)) : all;
   const page = Math.min(asked, Math.max(1, Math.ceil(rows.length / PAGE)));
@@ -128,7 +128,7 @@ export function ProposalsTable({ rows: all, needs, need, me, phase, root, projec
           {mine && <FilterChip name="Mine" href={`${base}${query({ project, q })}`} clears="everyone's proposals" />}
           {need && <FilterChip name={NEED_LABEL[need]} href={`${base}${query({ project, q, owner, need: undefined })}`} clears="every proposal" />}
           <ProposalSearch base={base} project={project} q={q} owner={owner} need={need} options={rows.map((p) => ({ key: p.key, title: p.title }))} />
-          <a className="btn" href={csvHref([["Proposal", "Title", "Project", "Phase", "Tasks done", "Tasks", "Hours", "Release", "Shipped to", "Owner"], ...rows.map((p) => [p.key, p.title, p.projectName, p.phase, String(p.tasksDone), String(p.tasksTotal), String(p.hours), p.release ?? "", shippedToLabel(p) ?? "", p.ownerName ?? ""])])} download="proposals.csv">
+          <a className="btn" href={csvHref([["Proposal", "Title", "Project", "Phase", "Tasks done", "Tasks", "Hours", "Release", "Shipped to", "Owner"], ...rows.map((p) => [p.key, p.title, p.projectName, p.phase, String(p.tasksDone), String(p.tasksTotal), String(p.hours), p.release ?? "", shippedToLabel(p) ?? "", ownerLabel(p)])])} download="proposals.csv">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m-4-4 4 4 4-4M5 20h14" /></svg>Export
           </a>
         </div>
@@ -136,10 +136,10 @@ export function ProposalsTable({ rows: all, needs, need, me, phase, root, projec
       <div className="scroll-x">
         <table className="tbl">
           <caption className="sr">Proposals</caption>
-          <thead><tr><th>Proposal</th><th>Project</th><th>Phase</th><th>Tasks</th><th className="num">Time</th><th>Release</th><th>Shipped to</th><th>Owner</th></tr></thead>
+          <thead><tr><th>Proposal</th>{withProject && <th>Project</th>}<th>Phase</th><th>Tasks</th><th className="num">Time</th><th>Release</th><th>Shipped to</th><th>Owner</th></tr></thead>
           <tbody>
             {/* AC-101: nothing matched says so inside the table. */}
-            {shown.length === 0 && <tr><td colSpan={8} className="muted">{empty}</td></tr>}
+            {shown.length === 0 && <tr><td colSpan={withProject ? 8 : 7} className="muted">{empty}</td></tr>}
             {shown.map((p) => {
               const pct = p.tasksTotal ? Math.round((p.tasksDone / p.tasksTotal) * 100) : 0;
               return (
@@ -150,13 +150,13 @@ export function ProposalsTable({ rows: all, needs, need, me, phase, root, projec
                       {needs?.get(p.id)?.map((n) => <span key={n} className={`chip ${NEED_CHIP[n]}`}>{NEED_LABEL[n]}</span>)}
                       {me !== undefined && p.ownerUserId === me && <span className="chip yours">Yours</span>}
                     </span>}</td>
-                  <td data-label="Project"><span className="dot" style={{ background: COLOR[p.projectColor] }} /><a className="quiet" href={projectHref(p.projectKey)}>{p.projectName}</a></td>
+                  {withProject && <td data-label="Project"><span className="dot" style={{ background: COLOR[p.projectColor] }} /><a className="quiet" href={projectHref(p.projectKey)}>{p.projectName}</a></td>}
                   <td data-label="Phase"><PhaseChip phase={p.phase} /></td>
                   <td data-label="Tasks">{p.tasksTotal > 0 ? <div className="meter" role="img" aria-label={`${p.tasksDone} of ${p.tasksTotal} tasks`}><i style={{ width: `${pct}%`, background: pct === 100 ? "var(--mint)" : "var(--violet)" }} /></div> : <span className="muted">–</span>}</td>
                   <td data-label="Time" className="num">{Number(p.hours.toFixed(2))} h</td>
                   <td data-label="Release">{p.release ? <a className="quiet" href={releaseHref({ projectKey: p.projectKey, version: p.release })}>{p.release}</a> : <span className="muted">None</span>}</td>
                   <td data-label="Shipped to">{p.phase === "released" ? <span className={shippedToLabel(p) === "Prod" ? "chip good" : "chip"}>{shippedToLabel(p)}</span> : p.shippedTo ? p.shippedTo : <span className="muted">Not yet</span>}</td>
-                  <td data-label="Owner">{hasNoOwner(p) ? <span className="muted">Unassigned</span> : p.ownerName}<PinButton pin={proposalPin(p)} /></td>
+                  <td data-label="Owner">{hasNoOwner(p) ? <span className="muted">{ownerLabel(p)}</span> : p.ownerName}<PinButton pin={proposalPin(p)} /></td>
                 </tr>
               );
             })}

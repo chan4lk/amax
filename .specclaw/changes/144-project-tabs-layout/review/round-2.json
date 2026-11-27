@@ -1,0 +1,78 @@
+{
+ "counts": {
+  "blocker": 0,
+  "major": 0,
+  "minor": 0
+ },
+ "escalated": [],
+ "files": [
+  "modules/allocations/tests/team-header-122.test.ts",
+  "modules/allocations/ui/ProjectTeamPage.tsx",
+  "modules/delivery/contracts.ts",
+  "modules/delivery/module.ts",
+  "modules/delivery/ui/ProjectHeaderSlot.tsx",
+  "modules/delivery/ui/ProjectPage.tsx"
+ ],
+ "final": false,
+ "findings": [
+  {
+   "class": "other",
+   "file": "modules/delivery/README.md",
+   "fp": "e8d48b58df32",
+   "in_delta": false,
+   "line": 9,
+   "message": "The README still describes the old contract: it says a project-tab module 'renders `provided(PROJECT_HEADER_SLOT)[0]`', as if the slot held a component. This diff changes the slot to a `ProjectHeaderSlot` object with `load(viewer, key)` and `Header({ head, section, title, actions })`. A consumer has to call `load`, treat null as Project not found, and then render `Header`. Update the README line to match `contracts.ts:148-152`. The open contract-test follow-up should also name `ProjectHeaderSlot` and `projectHeaderSlot` instead of `ProjectHeaderComponent` and `ProjectHeaderFor`.",
+   "original_severity": "minor",
+   "pass": "review",
+   "pre_existing": true,
+   "rule": "B1",
+   "scenario": "A new module adds a project tab by following the README \u2192 it renders `provided(PROJECT_HEADER_SLOT)[0]` as a JSX component \u2192 the type fails, or at runtime the object is not a valid component.",
+   "severity": "minor",
+   "unclassified": false
+  }
+ ],
+ "fix_proof": {
+  "base": "503bd210de6c2a7ee35c2ecb861f51eca480a164",
+  "mode": "warn",
+  "reason": "no review.test_command configured, so no test could prove the fix",
+  "status": "not_proven",
+  "tests": []
+ },
+ "head": "a1e47c0fca172796708ac19330848800cc06d353",
+ "impact": [
+  ".github/workflows/ci.yml",
+  "apps/mock/public/mock/index.html",
+  "apps/web/app/(app)/settings/ai/page.tsx",
+  "apps/web/app/(app)/settings/ai/usage/UsageTables.tsx",
+  "apps/web/app/(app)/settings/ai/usage/page.tsx",
+  "apps/web/app/(app)/settings/api/format.ts",
+  "apps/web/app/(app)/settings/api/page.tsx",
+  "apps/web/app/(app)/settings/audit/TraceTimeline.tsx",
+  "apps/web/app/(app)/settings/audit/page.tsx",
+  "apps/web/app/(app)/settings/backups/ExportsCard.tsx",
+  "apps/web/app/(app)/settings/backups/page.tsx",
+  "apps/web/app/(app)/settings/integrations/page.tsx",
+  "apps/web/app/(app)/settings/keys/format.ts",
+  "apps/web/app/(app)/settings/keys/keys.css",
+  "apps/web/app/(app)/settings/keys/page.tsx",
+  "apps/web/app/(app)/settings/retention/PurgedCard.tsx",
+  "apps/web/app/(app)/settings/retention/RequestsCard.tsx",
+  "apps/web/app/(app)/settings/retention/page.tsx",
+  "apps/web/app/(app)/settings/settings.css",
+  "apps/web/app/(app)/settings/workflows/page.tsx"
+ ],
+ "model": "opus",
+ "passes": [
+  "review",
+  "design"
+ ],
+ "prompt_chars": 65356,
+ "round": 2,
+ "since": "503bd210de",
+ "status": "clean",
+ "system_chars": 44199,
+ "tier": "review",
+ "tools": "Read,Grep,Glob",
+ "ts_end": 1795425408,
+ "ts_start": 1795425284
+}

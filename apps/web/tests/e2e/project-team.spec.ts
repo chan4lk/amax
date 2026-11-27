@@ -34,7 +34,7 @@ test("107 AC6 AC7 AC9 AC11, 109 AC4 a new project's team: Add your team?, someon
   await expect(add).toContainText("Added");
 
   await page.goto("/delivery/p/TMT/team");
-  await expect(page.getByRole("heading", { name: "PM: Maya Fernando" })).toBeVisible();
+  await expect(page.locator("main .team-lead")).toContainText(/Maya Fernando\s*Project manager/);
   await expect(page.getByRole("button", { name: "Ask amax · Add someone to TMT" })).toBeVisible();
   await expect(page.getByText("until further notice")).toBeVisible();
   const { violations } = await new AxeBuilder({ page }).include("main").withTags(["wcag2a", "wcag2aa", "wcag21aa"]).analyze();
@@ -66,5 +66,5 @@ test("107 AC6 AC7 AC9 AC11, 109 AC4 a new project's team: Add your team?, someon
   await pm.getByRole("button", { name: "Make PM" }).click();
   await expect(pm).toContainText("Sahan Kumara is the PM of TMT");
   await page.reload();
-  await expect(page.getByRole("heading", { name: "PM: Sahan Kumara" })).toBeVisible();
+  await expect(page.locator("main .team-lead")).toContainText(/Sahan Kumara\s*Project manager/);
 });

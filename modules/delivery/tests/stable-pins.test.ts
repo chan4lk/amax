@@ -15,6 +15,7 @@ import delivery from "../module";
 import { deploymentPin, environmentPin, historyPin, proposalPin, releasePin } from "../pins";
 import { getProposal, getRelease, listEnvironments, listReleases } from "../server/queries";
 import { createRelease, syncProposal, tagRelease, upsertEnvironment } from "../server/services";
+import { tracked } from "./release-fields";
 
 const T = lumen.tenant.id;
 
@@ -95,13 +96,13 @@ describe.skipIf(!hasDb)("059 stable pins (Postgres)", () => {
       { label: "CON Prod", tool: "get_environment", args: { projectKey: "CON", name: "Prod" } },
       { label: "CON-013 Dark mode", tool: "get_proposal", args: { key: "CON-013" } },
     ];
-    await createRelease(contextForViewer(sahan, "job"), { projectKey: "CON", version: "v9.0.0", proposalKeys: [] });
+    await createRelease(contextForViewer(sahan, "job"), { ...tracked("prod"), projectKey: "CON", version: "v9.0.0", proposalKeys: [] });
     const reused = (await release("v9.0.0")).id;
     // Saved before 059: straight into the row, as an older build left it.
     const [c] = await q(sql`insert into chat.conversation (tenant_id, user_id, pins) values (${T}, ${sahan.userId}, ${JSON.stringify(old)}::jsonb) returning id`);
     // Then the release is re-tagged and its old tag reused, and the sync gives the key to a new proposal.
     await tagRelease(contextForViewer(sahan, "job"), { projectKey: "CON", version: "v9.0.0", newVersion: "v9.0.1" });
-    await createRelease(contextForViewer(sahan, "job"), { projectKey: "CON", version: "v9.0.0", proposalKeys: [] });
+    await createRelease(contextForViewer(sahan, "job"), { ...tracked("prod"), projectKey: "CON", version: "v9.0.0", proposalKeys: [] });
     await sync("CON-013");
     const gone = { ...old[0], label: UNAVAILABLE, unavailable: true };
     const want = [gone, environmentPin(env), { ...old[2], label: UNAVAILABLE, unavailable: true }];

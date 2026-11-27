@@ -5,7 +5,8 @@ import manifest from "../module";
 import { chatSuggestions } from "../chat-suggestions";
 import { ctxFor } from "../server/context";
 import { createProposalCard, moveCard, proposeCreate, taskCard, updateCard } from "../server/proposal-card";
-import { createReleaseCard, deploymentCard, environmentCard, linkCard, removeEnvironmentCard, taskDoneCard, unlinkCard, voidCard, withdrawCard } from "../server/write-cards";
+import { releaseCard } from "../server/release-card";
+import { deploymentCard, environmentCard, linkCard, removeEnvironmentCard, taskDoneCard, unlinkCard, voidCard, withdrawCard } from "../server/write-cards";
 import { syncProposal } from "../server/services";
 import { ProjectPage } from "../ui/ProjectPage";
 import { ProposalsPage } from "../ui/ProposalsPage";
@@ -82,7 +83,7 @@ describe.skipIf(!hasDb)("081 creating proposals from chat (Postgres)", () => {
   });
 
   it("AC39 the cards for the other pins' offers name the change, and their receipts what was done", async () => {
-    expect(await createReleaseCard(maya, { projectKey: "FLT", version: "v1.9.0" })).toMatchObject({ title: "Create release v1.9.0 of FLT", look: { done: "Done: created FLT v1.9.0" } });
+    expect(await releaseCard(maya, { projectKey: "FLT", version: "v1.9.0", name: "Fleet beta" })).toMatchObject({ title: "New release for FLT · Fleet Tracker", look: { done: "Created Fleet beta (v1.9.0) · 0 proposals" } });
     expect(await deploymentCard(maya, { projectKey: "FLT", version: "v1.9.0", environment: "Dev" })).toMatchObject({ title: "Record FLT v1.9.0 in Dev",
       lines: [{ label: "Release", value: "FLT v1.9.0" }, { label: "Environment", value: "Dev" }, { label: "Status", value: "deployed" }], look: { done: "Done: recorded FLT v1.9.0 in Dev" } });
     expect((await voidCard(maya, { projectKey: "FLT", version: "v1.9.0", environment: "Dev", reason: "wrong build" })).lines).toContainEqual({ label: "Reason", value: "wrong build" });
@@ -94,7 +95,7 @@ describe.skipIf(!hasDb)("081 creating proposals from chat (Postgres)", () => {
     expect((await linkCard(maya, { projectKey: "FLT", repoUrl: "https://github.com/example/fleet", defaultBranch: "main" })).look?.done).toBe("Done: FLT syncs from https://github.com/example/fleet");
     expect((await unlinkCard(maya, { projectKey: "CON" })).title).toBe("Unlink CON's repo");
     // Each button names its verb, never chat's generic "Add it" (found preparing the demo).
-    const confirms = await Promise.all([createReleaseCard(maya, { projectKey: "FLT", version: "v1.9.0" }), deploymentCard(maya, { projectKey: "FLT", version: "v1.9.0", environment: "Dev" }),
+    const confirms = await Promise.all([releaseCard(maya, { projectKey: "FLT", version: "v1.9.0" }), deploymentCard(maya, { projectKey: "FLT", version: "v1.9.0", environment: "Dev" }),
       environmentCard(maya, { projectKey: "FLT", name: "Sandbox" }), removeEnvironmentCard(maya, { projectKey: "FLT", name: "Sandbox" }), taskDoneCard(maya, { key: "CON-014", task: "T1" }),
       linkCard(maya, { projectKey: "FLT", repoUrl: "https://github.com/example/fleet" }), unlinkCard(maya, { projectKey: "CON" })]);
     // 106 AC-9: the link card's button reads "Link the repo", as its mock section shows.

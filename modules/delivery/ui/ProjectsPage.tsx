@@ -4,6 +4,7 @@ import { projectPin } from "../pins";
 import { listProjects, weeklyThroughput } from "../server/queries";
 import { ART_SPRITE } from "./art";
 import { axisMax, Donut, LineChart } from "./charts";
+import { marginLabel } from "../server/portfolio";
 import { Avatar } from "./Avatar";
 import { ClientFilter } from "./ClientFilter";
 import { FilterMenu } from "./FilterMenu";
@@ -88,12 +89,12 @@ export async function ProjectsPage({ viewer: raw, searchParams = {} }: ScreenPro
                 return (
                   <tr key={p.id} className="pinnable">
                     <td data-label="Project"><a className="rowlink" href={`/delivery/p/${p.key}`}><span className="dot" style={{ background: COLOR[p.color] }} /><b>{p.name}</b></a><small>{p.client}, {BILLING[p.billing]}</small></td>
-                    <td data-label="Manager"><div className="who"><Avatar initials={initials(p.managerName)} name={p.managerName} tone={AVATAR[i % AVATAR.length]} />{shortName(p.managerName)}</div></td>
-                    <td data-label="Sprint">{p.sprint ?? "–"}</td>
-                    <td data-label="Progress"><div className="row"><div className="meter" style={{ flex: 1 }}><i style={{ width: `${done}%`, background: done > 75 ? "var(--mint)" : COLOR[p.color] }} /></div>{p.sprintDone} of {p.sprintTotal}</div></td>
-                    <td data-label="Health"><span className={`chip ${tone}`}>{label}</span></td>
-                    <td data-label="Margin" className="num">{p.marginPct === null ? "–" : `${p.marginPct.toFixed(1)}%`}</td>
-                    <td data-label="Next release">{p.nextRelease ?? "–"}</td>
+                    <td data-label="Manager">{p.managerName ? <div className="who"><Avatar initials={initials(p.managerName)} name={p.managerName} tone={AVATAR[i % AVATAR.length]} />{shortName(p.managerName)}</div> : <span className="muted">No manager</span>}</td>
+                    <td data-label="Sprint">{p.sprint ?? "–"}{p.openProposals !== null && <small>{p.openProposals} open</small>}</td>
+                    <td data-label="Progress">{p.agentFirst && !p.openProposals ? <span className="muted">Nothing open</span> : <div className="row"><div className="meter" style={{ flex: 1 }}><i style={{ width: `${done}%`, background: done > 75 ? "var(--mint)" : COLOR[p.color] }} /></div>{p.sprintDone} of {p.sprintTotal}</div>}</td>
+                    <td data-label="Health"><span className={`chip ${tone}`} title={p.healthReason ? `${label}: ${p.healthReason}` : undefined}>{label}</span>{p.healthReason && <small>{p.healthReason}</small>}</td>
+                    <td data-label="Margin" className={p.billing === "internal" ? "num muted" : "num"}>{marginLabel(p.billing, p.marginPct)}</td>
+                    <td data-label="Next release">{p.nextRelease ?? "–"}{p.nextReleaseNote && <small>{p.nextReleaseNote}</small>}</td>
                     <td data-label="" className="num"><a className="btn sm" href={`/delivery/p/${p.key}`}>Open board</a><PinButton pin={projectPin(p)} /></td>
                   </tr>
                 );

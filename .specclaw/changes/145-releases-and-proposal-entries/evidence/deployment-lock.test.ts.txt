@@ -1,0 +1,63 @@
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { hasDb } from "@amax/db/testdb";
+import { configureRuntime } from "@amax/core/server";
+import type { Db } from "@amax/db";
+import { createProject, createRelease, recordDeployment, upsertEnvironment } from "../server/services";
+import { getRelease } from "../server/queries";
+import { OPEN, releaseDb } from "./release-db";
+
+// 129: a deployment to QA and making QA the Prod environment, at once. Each interleaving is forced: the first service
+// pauses inside its transaction right after the named query, and the other runs for real against it.
+describe.skipIf(!hasDb)("129 a deployment and an environment change at once (Postgres)", () => {
+  let db: Awaited<ReturnType<typeof releaseDb>>;
+  let n = 0;
+  const hold = (at: RegExp) => {
+    let entered!: () => void, open!: () => void;
+    const inside = new Promise<void>((r) => { entered = r; });
+    const gate = new Promise<void>((r) => { open = r; });
+    let armed = true;
+    const text = (q: { queryChunks?: { value?: unknown }[] }) => (q.queryChunks ?? []).map((c) => (Array.isArray(c?.value) ? c.value.join("") : "")).join("");
+    const wrapTx = (tx: Db) => new Proxy(tx, { get: (target, prop) => prop !== "execute" ? Reflect.get(target, prop) : async (q: never) => {
+      const out = await target.execute(q);
+      if (armed && at.test(text(q))) { armed = false; entered(); await gate; }
+      return out;
+    } });
+    const app = db.app as Db;
+    const wrapped = new Proxy(app, { get: (target, prop) => prop !== "transaction" ? Reflect.get(target, prop)
+      : (fn: (tx: Db) => Promise<unknown>) => target.transaction((tx) => fn(wrapTx(tx as never))) });
+    configureRuntime({ db: wrapped as Db, auditKey: "k".repeat(32) });
+    return { inside, release: () => { armed = false; open(); configureRuntime({ db: app, auditKey: "k".repeat(32) }); } };
+  };
+  beforeAll(async () => {
+    db = await releaseDb();
+  }, 120_000);
+  afterAll(() => db?.t.drop());
+
+  it.each([
+    { first: "deployment", paused: "after reading the Prod environment", at: /from delivery\.environment where project_id = .* and is_prod/s },
+    { first: "environment change", paused: "after its environment write", at: /update delivery\.environment set name/s },
+    { first: "environment change", paused: "after looking for a deployment there", at: /status = 'deployed' and voided_at is null order by at limit 1/s },
+  ])("AC-2 the $first first, paused $paused: the release completes on the QA deployment, once", async ({ first, at }) => {
+    const k = `DL${++n}`;
+    await createProject(db.admin(), { key: k, name: k, client: "x", billing: "internal" });
+    await createRelease(db.admin(), { ...OPEN, projectKey: k, version: "v1", category: "prod" });
+    const deploy = () => recordDeployment(db.admin(), { projectKey: k, version: "v1", environment: "QA" });
+    const change = () => upsertEnvironment(db.admin(), { projectKey: k, name: "QA", isProd: true });
+    const h = hold(at);
+    let a: Promise<unknown> = Promise.resolve(), b: Promise<unknown> = Promise.resolve();
+    try {
+      a = first === "deployment" ? deploy() : change();
+      await h.inside;
+      b = first === "deployment" ? change() : deploy();
+      await new Promise((r) => setTimeout(r, 200));
+    } finally {
+      h.release();
+    }
+    const settled = await Promise.allSettled([a, b]);
+    expect(settled.map((s) => s.status)).toEqual(["fulfilled", "fulfilled"]);
+    const release = (await getRelease(db.sahan, k, "v1"))!;
+    const qa = release.history.find((d) => d.environment === "QA")!;
+    expect([release.status, release.completingDeploymentId]).toEqual(["completed", qa.id]);
+    expect(release.statusHistory.filter((s) => s.to === "completed")).toHaveLength(1);
+  });
+});

@@ -36,7 +36,7 @@
 .tcard .chip.yours{font-size:11px;padding:1px 7px}
 .prog{height:6px;border-radius:6px;background:var(--sunken);margin:0 0 12px;overflow:hidden}
 .prog i{display:block;height:100%;border-radius:6px;background:var(--violet)}
-.map svg{width:100%;max-width:1000px;min-width:760px;height:auto;display:block}
+.map>svg{width:100%;max-width:1000px;min-width:760px;height:auto;display:block}
 .map .station{fill:var(--card);stroke-width:3.5}
 .map .lbl{fill:var(--ink);font:600 14px var(--font)}
 .map .env{fill:var(--ink-3);font:600 13px var(--font)}
@@ -279,7 +279,7 @@
 .dv-track li>small{color:var(--ink-2);font-size:12px}
 .dv-track .deployed{--c:var(--chip-good)}
 .dv-track .testing{--c:var(--chip-agent)}
-.dv-track .rolled-back{--c:var(--chip-bad)}
+.dv-track .rolled-back,.dv-track .failed{--c:var(--chip-bad)}
 .dv-track .todo{--c:var(--line-2)}
 /* Review 081 round 1 (R3): each step and timeline line pins its own record; the pin sits in its top-right corner, shown on hover or focus. */
 .dv-track li.pinnable .pin,.dv-timeline li.pinnable .pin{top:4px;right:0;width:26px;height:26px}
@@ -430,3 +430,41 @@ a.quiet:hover,a.quiet:focus-visible{text-decoration:underline;text-underline-off
   .list-head>.actions{justify-content:flex-start}
   .prop-cell{min-width:0}
 }
+/* 122: one project header on every tab, so the tab bar never moves; a card head that keeps one line. */
+.dv-head .dv-title{align-items:center}
+.dv-head .dv-title h1{margin:0}
+.dv-head .dv-info{margin:0 0 0 8px}
+.dv-head .row.head{align-items:center}
+.card-head.start{justify-content:flex-start;flex-wrap:nowrap;align-items:baseline}
+.card-head.start>.note{margin-left:auto;font-size:13px;color:var(--ink-3);white-space:nowrap}
+.dv-empty-line{margin:0;font-size:13.5px;color:var(--ink-2)}
+@media (max-width:600px){
+  .dv-head .row.head{align-items:flex-start}
+  .card-head.start{flex-wrap:wrap}
+  .card-head.start>.note{margin-left:0;flex-basis:100%}
+}
+.rel-filters{display:flex;flex-wrap:wrap;gap:10px 16px;padding:0 28px 14px}
+.rel-filters .seg{flex:0 1 auto}
+.rel-track{display:inline-flex;align-items:baseline;gap:6px;white-space:nowrap}
+.rel-track>[aria-hidden="true"]:first-child{letter-spacing:2px;color:var(--chip-agent)}
+.dv-skel{display:flex;flex-direction:column;gap:12px;min-height:160px}
+.dv-skel span{display:block;height:14px;border-radius:7px;background:var(--line)}
+.dv-skel span:nth-child(2){width:80%}.dv-skel span:nth-child(3){width:60%}
+.dv-failed{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.dv-failed p{margin:0;color:var(--ink)}
+@media (prefers-reduced-motion:no-preference){.dv-skel span{animation:dv-pulse 1.4s ease-in-out infinite}}
+@keyframes dv-pulse{50%{opacity:.5}}
+.rel-info{margin:0;display:grid;gap:8px}
+.rel-info>div{display:grid;grid-template-columns:38% 1fr;gap:12px;font-size:13.5px}
+.rel-info dt{color:var(--ink-2)}
+.rel-info dd{margin:0}
+.rel-note{margin:0;font-size:13px;color:var(--ink-2);align-self:center}
+.rel-pad{padding:0 28px 20px;margin:0}
+.rel-env{border-top:1px solid var(--line);padding:12px 0}
+.rel-env:first-of-type{border-top:0;padding-top:0}
+.rel-env h3{display:flex;align-items:center;gap:8px;margin:0 0 6px;font-size:13.5px;font-weight:600}
+.rel-env>p{margin:0;font-size:13px}
+.rel-env ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.rel-dep{position:relative;display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;font-size:13px;padding-right:44px;min-height:32px}
+.rel-dep-act{margin-left:auto;display:inline-flex;align-items:center;gap:6px}
+.rel-voided{margin:0 0 20px;padding:10px 14px;border-radius:12px;background:var(--chip-warn-bg);color:var(--ink);font-size:13.5px}

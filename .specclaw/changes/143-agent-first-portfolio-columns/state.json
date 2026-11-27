@@ -1,0 +1,10 @@
+{
+  "change": "143-agent-first-portfolio-columns",
+  "phase": "verify",
+  "branch": "",
+  "phases": {
+    "proposal": {"status":"approved","at":"2026-11-20T10:38:33Z"},
+    "tasks": {"status":"done","at":"2026-11-20T10:41:11Z"},
+    "verify": {"status":"done","at":"2026-11-20T11:41:20Z"}
+  }
+}

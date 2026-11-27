@@ -6,10 +6,13 @@ import { can, type Viewer } from "@amax/auth";
 import { ForbiddenError, getRuntime } from "@amax/core/server";
 import type { Phase } from "../contracts";
 import { invalid } from "./refusal";
+import { namesFor } from "./who";
+import { releaseDay } from "./release-status";
 import { isWithdrawn, ownerShownIn, withdrawnIn } from "./readiness";
-import { proposalInProd } from "./in-prod";
+import { LATEST_DEPLOYMENTS, proposalInProd } from "./in-prod";
+import { computePortfolio, portfolioFacts } from "./portfolio";
 
-const read = async <T>(viewer: Viewer, fn: (tx: Tx) => Promise<T>) => {
+export const read = async <T>(viewer: Viewer, fn: (tx: Tx) => Promise<T>) => {
   if (!can(viewer, "delivery:read")) throw new ForbiddenError("delivery:read", "delivery");
   return withTenant(getRuntime().db, viewer.tenantId, fn);
 };
@@ -26,6 +29,7 @@ export type ProjectRow = {
   sprintStart: string | null; sprintEnd: string | null;
   /** 093: the linked repo, and whether it's agent-first (the repo has brought in proposals; no manual creation). */
   repoUrl: string | null; agentFirst: boolean;
+  healthReason: string | null; nextReleaseNote: string | null; openProposals: number | null;
 };
 
 const project = (r: Record<string, unknown>): ProjectRow => ({
@@ -34,11 +38,16 @@ const project = (r: Record<string, unknown>): ProjectRow => ({
   sprintDone: Number(r.sprint_done), sprintTotal: Number(r.sprint_total), health: r.health as string, riskPct: num(r.risk_pct),
   marginPct: num(r.margin_pct), contractValue: num(r.contract_value), invoiced: num(r.invoiced), nextRelease: (r.next_release as string | null) ?? null,
   sprintStart: isoDate(r.sprint_start), sprintEnd: isoDate(r.sprint_end),
-  repoUrl: (r.repo_url as string | null) ?? null, agentFirst: r.agent_first === true,
+  repoUrl: (r.repo_url as string | null) ?? null, agentFirst: r.agent_first === true, healthReason: null, nextReleaseNote: null, openProposals: null,
 });
 
+const withPortfolio = async (tx: Tx, rows: ProjectRow[]): Promise<ProjectRow[]> => {
+  const facts = await portfolioFacts(tx, rows.filter((p) => p.agentFirst).map((p) => p.id));
+  return rows.map((p) => { const f = facts.get(p.id); return f ? { ...p, ...computePortfolio(f), riskPct: null } : p; });
+};
+
 export const listProjects = (v: Viewer, status: "active" | "closed" = "active") =>
-  read(v, async (tx) => (await tx.execute(sql`select *, ${agentFirstSql(sql`delivery.project`)} as agent_first from delivery.project where status = ${status} order by created_at, name`)).map(project));
+  read(v, async (tx) => withPortfolio(tx, (await tx.execute(sql`select *, ${agentFirstSql(sql`delivery.project`)} as agent_first from delivery.project where status = ${status} order by created_at, name`)).map(project)));
 
 /** 093 AC-2: the active projects the viewer may add proposals to by hand (not agent-first). */
 export const manualProjects = async (v: Viewer) => (await listProjects(v, "active")).filter((x) => !x.agentFirst && can(v, "delivery:proposal:create", { projectId: x.id }));
@@ -130,7 +139,8 @@ export const getProject = (v: Viewer, key: string | undefined, projectId?: strin
     const [c] = await tx.execute(sql`select count(*) filter (where ${BY_AGENT})::int as agents, count(*) filter (where ${BY_PERSON})::int as people,
         count(*) filter (where not (${BY_AGENT}) and not ${BY_PERSON})::int as automation
       from delivery.task t join delivery.proposal p on p.id = t.proposal_id where p.project_id = ${r.id} and t.done and t.done_by is not null and ${ACTIVE}`);
-    return { project: project(r), proposals, closedBy: { agents: Number(c?.agents ?? 0), people: Number(c?.people ?? 0), automation: Number(c?.automation ?? 0) } };
+    const [withComputed] = await withPortfolio(tx, [project(r)]);
+    return { project: withComputed!, proposals, closedBy: { agents: Number(c?.agents ?? 0), people: Number(c?.people ?? 0), automation: Number(c?.automation ?? 0) } };
   });
 
 /**
@@ -211,7 +221,13 @@ export const proposalMetrics = async (v: Viewer, f: Pick<ProposalFilter, "projec
   return { projectKey: f.projectKey ?? null, ...counts, shippedPerWeek: shipped };
 };
 
-export type ReleaseRow = {
+export type ReleaseTracking = { name: string | null; category: string | null; startDate: string | null; targetDate: string | null; status: string | null; completedAt: string | null; completedDay: string | null; completion: string | null; updatedAt: string | null };
+const TRACKING = sql`r.start_date::text as start_text, r.target_date::text as target_text, r.completed_day::text as completed_day_text`;
+const trackingOf = (r: Record<string, unknown>): ReleaseTracking => ({ name: (r.name as string | null) ?? (r.version as string), category: (r.category as string | null) ?? null,
+  startDate: (r.start_text as string | null) ?? null, targetDate: (r.target_text as string | null) ?? null, status: (r.status as string | null) ?? null,
+  completedAt: iso(r.completed_at), completedDay: (r.completed_day_text as string | null) ?? null, completion: (r.completion as string | null) ?? null, updatedAt: iso(r.updated_at) });
+
+export type ReleaseRow = Partial<ReleaseTracking> & {
   id: string; projectId: string; version: string; projectKey: string; projectName: string; projectColor: string; proposals: number; createdAt?: string | null;
   stages: { environment: string; environmentId: string; deploymentId: string | null; position: number; isProd: boolean; status: string | null; at: string | null; note: string | null; run: string | null }[];
 };
@@ -219,13 +235,13 @@ export type ReleaseRow = {
 export const listReleases = (v: Viewer, opts: { projectKey?: string } = {}) =>
   read(v, async (tx) => {
     const envs = await tx.execute(sql`select * from delivery.environment order by project_id, position`);
-    const releases = await tx.execute(sql`select r.*, pr.key as project_key, pr.name as project_name, pr.color as project_color,
-      (select count(*)::int from delivery.proposal p where p.release_id = r.id) as proposals
+    const releases = await tx.execute(sql`select r.*, ${TRACKING}, pr.key as project_key, pr.name as project_name, pr.color as project_color,
+      (select count(*)::int from delivery.proposal p where p.release_id = r.id and ${ACTIVE}) as proposals
       from delivery.release r join delivery.project pr on pr.id = r.project_id ${opts.projectKey ? sql`where pr.key = ${opts.projectKey}` : sql``} order by r.created_at desc`);
-    const deps = await tx.execute(sql`select distinct on (release_id, environment_id) * from delivery.deployment where voided_at is null order by release_id, environment_id, at desc`);
+    const deps = await tx.execute(LATEST_DEPLOYMENTS);
     return releases.map((r): ReleaseRow => ({
       id: r.id as string, projectId: r.project_id as string, version: r.version as string, projectKey: r.project_key as string, projectName: r.project_name as string,
-      projectColor: r.project_color as string, proposals: Number(r.proposals), createdAt: iso(r.created_at),
+      projectColor: r.project_color as string, proposals: Number(r.proposals), createdAt: iso(r.created_at), ...trackingOf(r),
       stages: envs.filter((e) => e.project_id === r.project_id).map((e) => {
         const d = deps.find((x) => x.release_id === r.id && x.environment_id === e.id);
         return { environment: e.name as string, environmentId: e.id as string, deploymentId: (d?.id as string | undefined) ?? null, position: Number(e.position), isProd: Boolean(e.is_prod), status: (d?.status as string | null) ?? null,
@@ -296,19 +312,40 @@ export function isRelease(r: { id: string; projectKey: string; version: string }
   return (!ref.releaseId || r.id === ref.releaseId) && (!ref.projectKey || r.projectKey === ref.projectKey) && (!ref.version || r.version === ref.version);
 }
 
-/** One release with its proposals and full deployment history, voided ones included. */
+/** One status change of a release, by id: the pin on a status-history row resolves here (R3). */
+export const getStatusChange = (v: Viewer, changeId: string) =>
+  read(v, async (tx) => {
+    const [h] = await tx.execute(sql`select h.id, h.from_status, h.to_status, h.at, h.source, h.changed_by, r.version, p.key from delivery.release_status_history h
+      join delivery.release r on r.id = h.release_id join delivery.project p on p.id = r.project_id where h.id = ${changeId}`);
+    if (!h) return null;
+    const named = await namesFor(tx, [h.changed_by as string]);
+    return { id: h.id as string, projectKey: h.key as string, version: h.version as string, from: (h.from_status as string | null) ?? null, to: h.to_status as string,
+      at: iso(h.at), source: h.source as string, by: named(h.changed_by as string) };
+  });
+
+const voidedOf = (d: DeploymentRow | undefined, day: (at: string) => string) => (d?.voidedAt ? { at: d.voidedAt, day: day(d.voidedAt), reason: d.voidReason } : null);
+
+/** One release with its proposals and full deployment history, voided ones included. The completion day is the one stored at completion, and the voided completing deployment's day is read in the zone stored with it (128). */
 export const getRelease = (v: Viewer, projectKey: string | undefined, version: string | undefined, releaseId?: string) =>
   read(v, async (tx) => {
     // By id when given: a pin keyed on the id survives a re-tag (057). By project key and version otherwise.
     const where = releaseWhere({ releaseId, projectKey, version });
-    const [r] = await tx.execute(sql`select r.*, p.key as project_key, p.name as project_name, p.id as pid from delivery.release r join delivery.project p on p.id = r.project_id where ${where}`);
+    const [r] = await tx.execute(sql`select r.*, ${TRACKING}, p.key as project_key, p.name as project_name, p.id as pid from delivery.release r join delivery.project p on p.id = r.project_id where ${where}`);
     if (!r) return null;
     const history = (await tx.execute(sql`select d.*, e.name as env from delivery.deployment d join delivery.environment e on e.id = d.environment_id where d.release_id = ${r.id} order by d.at desc`))
       .map((d): DeploymentRow => ({ id: d.id as string, environment: d.env as string, status: d.status as string, at: new Date(d.at as string).toISOString(), note: (d.note as string | null) ?? null, run: (d.pipeline_run as string | null) ?? null,
         recordedBy: d.recorded_by as string, voidedAt: d.voided_at ? new Date(d.voided_at as string).toISOString() : null, voidReason: (d.void_reason as string | null) ?? null }));
     const proposals = (await tx.execute(sql`select id, key, title, phase, release_id = ${r.id} as included from delivery.proposal where project_id = ${r.pid} order by key`))
       .map((p) => ({ id: p.id as string, key: p.key as string, title: p.title as string, phase: p.phase as Phase, included: Boolean(p.included) }));
-    return { id: r.id as string, version: r.version as string, projectKey: r.project_key as string, projectName: r.project_name as string, createdAt: iso(r.created_at), history, proposals };
+    const statusHistory = (await tx.execute(sql`select id, from_status, to_status, at, source, deployment_id, changed_by from delivery.release_status_history where release_id = ${r.id} order by at`))
+      .map((h) => ({ id: h.id as string, from: (h.from_status as string | null) ?? null, to: h.to_status as string, at: iso(h.at), source: h.source as string, deploymentId: (h.deployment_id as string | null) ?? null, by: h.changed_by as string }));
+    const named = await namesFor(tx, [...history.map((d) => d.recordedBy), ...statusHistory.map((h) => h.by)]);
+    const day = (at: string) => releaseDay(r.completed_zone as string, at);
+    return { id: r.id as string, version: r.version as string, projectKey: r.project_key as string, projectName: r.project_name as string, createdAt: iso(r.created_at), ...trackingOf(r),
+      completingDeploymentId: (r.completing_deployment_id as string | null) ?? null,
+      completingVoided: voidedOf(history.find((d) => d.id === r.completing_deployment_id), day),
+      history: history.map((d) => ({ ...d, recordedBy: named(d.recordedBy) })), proposals,
+      statusHistory: statusHistory.map((h) => ({ ...h, by: named(h.by) })) };
   });
 
 // One-record reads for row pins (057): a pin resolves to the row it sits on, never the whole list.

@@ -1,5 +1,6 @@
 import type { PinnedRecord } from "@amax/core";
 import type { PinRef } from "@amax/ui";
+import { statusLabel } from "./server/release-status";
 
 // Delivery's pins (059), one place for the pages and the read tools: a page pins a record by its id,
 // and the tool's `of` gives the label from the record as it is now, in the same words the page used,
@@ -47,6 +48,9 @@ export const pushPin = (p: Push): PinRef => ({ label: `${p.projectKey} push ${p.
 const pinned = <R extends { id: string; createdAt?: string | null }>(pin: (r: R) => PinRef) => (r: R | null | undefined): PinnedRecord | null =>
   r ? { id: r.id, label: pin(r).label, createdAt: r.createdAt ?? null } : null;
 
+export const statusChangePin = (c: { id: string; projectKey: string; version: string; to: string }): PinRef =>
+  ({ label: `${c.projectKey} ${c.version} → ${statusLabel(c.to)}`, tool: "get_release_status_change", args: { changeId: c.id } });
+
 export const pinOf = {
   project: (r: { project: { id: string; name: string } } | null) => pinned(projectPin)(r?.project),
   proposal: pinned(proposalPin),
@@ -57,5 +61,6 @@ export const pinOf = {
   deployment: pinned(deploymentPin),
   push: pinned(pushPin),
   event: (r: { proposalId: string; key: string; line: string; text: string } | null) => (r ? { id: r.proposalId, label: eventPin(r).label, createdAt: null } : null),
+  statusChange: pinned(statusChangePin),
   repoSync: (r: { project: { id: string; key: string } } | null) => pinned(repoSyncPin)(r?.project),
 };

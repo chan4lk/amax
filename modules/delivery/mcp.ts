@@ -15,10 +15,17 @@ import { RepoUrl } from "./sync/repo-url";
 import { proposalDetail, proposalEvent } from "./server/proposal-detail";
 import { addProposalTask, updateProposal, withdrawProposal } from "./server/lifecycle";
 import { createProposalCard, moveCard, proposeCreate, proposeUpdate, taskCard, updateCard } from "./server/proposal-card";
-import { createReleaseCard, deploymentCard, environmentCard, linkCard, releaseProposalsCard, removeEnvironmentCard, tagCard, taskDoneCard, reopenCard, unlinkCard, voidCard, withdrawCard } from "./server/write-cards";
+import { deploymentCard, environmentCard, linkCard, releaseProposalsCard, removeEnvironmentCard, tagCard, taskDoneCard, reopenCard, unlinkCard, voidCard, withdrawCard } from "./server/write-cards";
 import { isNeed, NEEDS, withNeed } from "./server/attention";
+import { listReleaseProposals, releaseNote } from "./server/release-proposals";
+import { getStatusChange } from "./server/queries";
+import { proposeRelease, releaseCard, ReleaseDraft } from "./server/release-card";
+import { Keys } from "./server/release-status";
+import { DEPLOYMENT_STATUSES } from "./server/deployment-status";
+import { filterReleases, ReleaseFilter } from "./server/release-list";
+import { proposeReleaseEdit, releaseEditCard, ReleaseEditDraft } from "./server/release-edit-card";
 import { checkReleaseRef, getDeployment, getProposalTask, getEnvironment, getProject, getRelease, proposalMetrics, isRelease, listEnvironments, likelyProposals, listProjects, listProposals, listReleases } from "./server/queries";
-import { createProject, createProposal, ProposalCreateInput, createRelease, moveProposal, recordDeployment, removeEnvironment, setReleaseProposals, tagRelease, upsertEnvironment, voidDeployment } from "./server/services";
+import { createProject, createProposal, ProposalCreateInput, createRelease, updateRelease, moveProposal, recordDeployment, removeEnvironment, setReleaseProposals, tagRelease, upsertEnvironment, voidDeployment } from "./server/services";
 import { commitTime, repoTime } from "./server/repo-time";
 import { proposeSetUp, SetUpDraft, SetUpInput, setUpProject } from "./server/set-up-project";
 import { setUpProjectCard } from "./server/set-up-project-card";
@@ -36,7 +43,7 @@ const view = "view" as const;
 
 export const mcpTools: McpToolDef[] = [
   // 084 AC-3: `mine` keeps the projects the viewer manages or is assigned to (their data scopes), for "which project?".
-  tool({ ...read, pin: view, name: "list_projects", description: "Active projects with health, sprint progress and next release. mine: true keeps only the projects you manage or are assigned to. agentFirst: its proposals come from its linked repo, never by hand.",
+  tool({ ...read, pin: view, name: "list_projects", description: "Active projects with health, sprint progress and next release. mine: true keeps only the projects you manage or are assigned to. agentFirst: its proposals come from its linked repo, never by hand, and its sprint, progress, health (with healthReason), openProposals and next release (with nextReleaseNote, where it is now) are worked out from those proposals and its releases.",
     input: z.object({ mine: z.boolean().optional() }),
     run: async (v, a) => { const all = await listProjects(v); return a.mine ? all.filter((p) => v.managedProjects.includes(p.id) || v.assignedProjects.includes(p.id)) : all; } }),
   // 008 AC-4: the Overview's Agent activity feed, and one line of it for its pin.
@@ -68,8 +75,8 @@ export const mcpTools: McpToolDef[] = [
   // Review 081 round 1 (R3): one line of a proposal's history, for its row's pin on the proposal page.
   tool({ ...read, pin: { id: "proposalId", of: pinOf.event }, name: "get_proposal_event", description: "One line of a proposal's history by proposalId and line (as get_proposal's history gives it, such as audit:12 or task:<id>): what happened, who, and when. A time line shows only to its owner and the project's approvers.",
     input: z.object({ proposalId: z.string().uuid(), line: z.string().regex(/^(?:(audit|time|event|task):[0-9a-f-]+|repo:(proposal|tasks|verify|pr|archived))$/, "a history line id such as audit:12") }), run: (v, a) => proposalEvent(v, a) }),
-  tool({ ...read, pin: view, name: "list_releases", description: "Every release with its project, proposal count and the stage it reached in each environment, optionally for one project key.",
-    input: z.object({ projectKey: z.string().optional() }), run: (v, a) => listReleases(v, a) }),
+  tool({ ...read, pin: view, name: "list_releases", description: "Every release with its project, name, category, status, dates, proposal count and the stage it reached in each environment, optionally for one project key. status (planned, in_progress, overdue = Off track, completed, untracked) and category (dev, uat, prod) filter; sort start or target orders by that date, earliest first, untracked last.",
+    input: z.object({ projectKey: z.string().optional() }).extend(ReleaseFilter.shape), run: async (v, a) => filterReleases(await listReleases(v, { projectKey: a.projectKey }), a) }),
   tool({ ...read, pin: { id: "releaseId", of: pinOf.release }, name: "get_release", description: "A release and where it is in Dev, QA, UAT and Prod: by releaseId, or by project key and version.",
     // The ref is checked before the read, so a malformed call is refused whatever the viewer can see.
     input: releaseRef, run: async (v, a) => { checkReleaseRef(a); return (await listReleases(v)).find((r) => isRelease(r, a)) ?? null; } }),
@@ -98,9 +105,10 @@ export const mcpTools: McpToolDef[] = [
   tool({ name: "move_proposal", description: "Move a proposal on the board (proposed, planned, building, verified). Released only comes from a Prod deployment.", scope: "write",
     permission: "delivery:proposal:move", input: z.object({ key: z.string(), to: z.enum(["proposed", "planned", "building", "verified"]) }),
     card: moveCard, service: moveProposal, run: (v, a, s = "mcp") => moveProposal(ctxFor(v, s), a) }),
-  tool({ name: "create_release", description: "Create a release (version tag) for a project, optionally with proposal keys.", scope: "write", permission: "delivery:release:create",
-    input: z.object({ projectKey: z.string(), version: z.string(), proposalKeys: z.array(z.string()).optional() }),
-    card: createReleaseCard, service: createRelease, run: (v, a, s = "mcp") => createRelease(ctxFor(v, s), { ...a, proposalKeys: a.proposalKeys ?? [] }) }),
+  tool({ name: "create_release", description: "Create a release for a project: its version tag, a name, its category (Dev, UAT or Prod: the environment whose deployment completes it), a start and target date (YYYY-MM-DD, target not before start), and Verified or Released proposal keys (list_release_proposals). A proposal in another release, open or completed, moves only if reassign names it too; otherwise it's refused. Returns the release's status and href. In chat, call it at once, in your first reply, with the project (a pinned or named one; with none, ask which with offer_answers, up to six active projects you may create releases in) and whatever the user said; leave out the rest: the user fills in the name, category, dates and proposals on the card. Don't ask for fields in text first. After it's done, say it was created and give the link from href.",
+    scope: "write", permission: "delivery:release:create", draft: ReleaseDraft, propose: proposeRelease, note: releaseNote, card: releaseCard,
+    input: z.object({ projectKey: z.string(), version: z.string(), name: z.string(), category: z.string().describe("Dev, UAT or Prod"), startDate: z.string(), targetDate: z.string(), proposalKeys: Keys.optional(), reassign: Keys.optional() }),
+    service: createRelease, run: (v, a, s = "mcp") => createRelease(ctxFor(v, s), { ...a, proposalKeys: a.proposalKeys ?? [], reassign: a.reassign ?? [] }) }),
   tool({ ...read, pin: view, name: "list_environments", description: "A project's environments in order, which one is Prod, and how many deployments each has.", input: z.object({ projectKey: z.string() }),
     run: (v, a) => listEnvironments(v, a.projectKey) }),
   tool({ ...read, pin: { id: "environmentId", of: pinOf.environment }, name: "get_environment", description: "One environment, by environmentId or by project key and name: its position, whether it is Prod, and how many deployments it has.",
@@ -116,8 +124,15 @@ export const mcpTools: McpToolDef[] = [
     input: z.object({ projectKey: z.string(), name: z.string() }), card: removeEnvironmentCard, service: removeEnvironment, run: (v, a, s = "mcp") => removeEnvironment(ctxFor(v, s), a) }),
   tool({ name: "tag_release", description: "Rename a release's version tag, e.g. v2.5.0 to v2.5.1.", scope: "write", permission: "delivery:release:create",
     input: z.object({ projectKey: z.string(), version: z.string(), newVersion: z.string() }), card: tagCard, service: tagRelease, run: (v, a, s = "mcp") => tagRelease(ctxFor(v, s), a) }),
-  tool({ name: "set_release_proposals", description: "Set which proposals are in a release (replaces the list; released ones stay).", scope: "write", permission: "delivery:release:create",
-    input: z.object({ projectKey: z.string(), version: z.string(), proposalKeys: z.array(z.string()) }), card: releaseProposalsCard, service: setReleaseProposals, run: (v, a, s = "mcp") => setReleaseProposals(ctxFor(v, s), a) }),
+  tool({ name: "update_release", description: "Change a release that isn't completed: its name, category (Dev, UAT or Prod), start or target date (YYYY-MM-DD). A release made before release tracking needs its category and both dates together the first time (its name stays the version unless given). In chat, call it at once with the project key and version (a pinned release is that one); the user changes the fields on the card.", scope: "write", permission: "delivery:release:create", draft: ReleaseEditDraft, propose: proposeReleaseEdit,
+    input: z.object({ projectKey: z.string(), version: z.string(), name: z.string().optional(), category: z.string().optional(), startDate: z.string().optional(), targetDate: z.string().optional() }),
+    card: releaseEditCard, service: updateRelease, run: (v, a, s = "mcp") => updateRelease(ctxFor(v, s), a) }),
+  tool({ ...read, pin: { id: "changeId", of: pinOf.statusChange }, name: "get_release_status_change", description: "One status change of a release, by changeId (as get_release_history's statusHistory gives it): from, to, when, why and who.",
+    input: z.object({ changeId: z.string().uuid() }), run: (v, a) => getStatusChange(v, a.changeId) }),
+  tool({ ...read, pin: view, name: "list_release_proposals", description: "The proposals of a project that can go in a release: Verified or Released, not withdrawn, not shipped in another release. inRelease names another release one already sits in (open or completed); moving it from there needs reassign.",
+    input: z.object({ projectKey: z.string() }), run: (v, a) => listReleaseProposals(v, a.projectKey) }),
+  tool({ name: "set_release_proposals", description: "Set which proposals are in a release (replaces the list; released ones stay). A proposal in another release, open or completed, moves only if reassign names it too.", scope: "write", permission: "delivery:release:create",
+    input: z.object({ projectKey: z.string(), version: z.string(), proposalKeys: z.array(z.string()), reassign: z.array(z.string()).optional() }), card: releaseProposalsCard, service: setReleaseProposals, run: (v, a, s = "mcp") => setReleaseProposals(ctxFor(v, s), a) }),
   tool({ name: "void_deployment", description: "Void a deployment of a release, with a reason: the one given by deploymentId, or else the latest live one to the environment. Voiding the only Prod deployment un-releases its proposals.", scope: "write", destructive: true,
     permission: "delivery:deployment:record", input: z.object({ projectKey: z.string(), version: z.string(), environment: z.string(), deploymentId: z.string().uuid().optional(), reason: z.string() }),
     card: voidCard, service: voidDeployment, run: (v, a, s = "mcp") => voidDeployment(ctxFor(v, s), a) }),
@@ -152,7 +167,7 @@ export const mcpTools: McpToolDef[] = [
     input: z.object({ legalEntityId: z.string().uuid(), enabled: z.boolean(), peopleNotified: z.boolean().optional() }), service: setCommitTimeLogging, run: (v, a, s = "mcp") => setCommitTimeLogging(ctxFor(v, s), a) }),
   tool({ name: "record_deployment", description: "Record that a release reached any environment of its project (by name, as a pipeline reports it). The project's Prod environment releases its proposals. PM or Admin.", scope: "write", destructive: false,
     permission: "delivery:deployment:record",
-    input: z.object({ projectKey: z.string(), version: z.string(), environment: z.string(), status: z.enum(["deployed", "testing", "rolled-back"]).optional(), note: z.string().optional() }),
+    input: z.object({ projectKey: z.string(), version: z.string(), environment: z.string(), status: z.enum(DEPLOYMENT_STATUSES).optional(), note: z.string().optional() }),
     card: deploymentCard, service: recordDeployment, run: (v, a, s = "mcp") => recordDeployment(ctxFor(v, s), a) }),
 ];
 

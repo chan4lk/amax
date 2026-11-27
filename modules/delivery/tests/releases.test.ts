@@ -13,6 +13,7 @@ import { managedProjectIds } from "../contracts";
 import { ctxFor } from "../server/context";
 import { getRelease, listEnvironments, listProposals, listReleases } from "../server/queries";
 import { createProject, createRelease, recordDeployment, removeEnvironment, setReleaseProposals, tagRelease, upsertEnvironment, voidDeployment } from "../server/services";
+import { tracked, verify } from "./release-fields";
 
 const T = lumen.tenant.id;
 
@@ -61,13 +62,14 @@ describe.skipIf(!hasDb)("042 release management (Postgres)", () => {
   });
 
   it("AC-2 a Dev-only project: deploy to any environment; no Prod means nothing is released", async () => {
-    await createRelease(ctxFor(sahan), { projectKey: "LAB", version: "v0.1.0", proposalKeys: [] });
+    await createRelease(ctxFor(sahan), { ...tracked("dev"), projectKey: "LAB", version: "v0.1.0", proposalKeys: [] });
     const r = await recordDeployment(ctxFor(sahan), { projectKey: "LAB", version: "v0.1.0", environment: "staging" });
     expect(r.released).toBe(false);
     await expect(recordDeployment(ctxFor(sahan), { projectKey: "LAB", version: "v0.1.0", environment: "Prod" })).rejects.toThrow(/no environment Prod/);
   });
 
   it("AC-2 tag and proposals are editable; Prod can be reached directly", async () => {
+    await verify(t.owner, "CON-016");
     await tagRelease(ctxFor(maya), { projectKey: "CON", version: "v2.5.0", newVersion: "v2.6.0" });
     await setReleaseProposals(ctxFor(maya), { projectKey: "CON", version: "v2.6.0", proposalKeys: ["CON-014", "CON-016"] });
     const rel = await getRelease(maya, "CON", "v2.6.0");
@@ -131,8 +133,8 @@ describe.skipIf(!hasDb)("voiding only un-releases through the record that releas
     // v0.9.2 is live in Prod: it keeps its own proposals but takes no new one (final review).
     await expect(setReleaseProposals(ctxFor(sahan), { projectKey: "HRI", version: "v0.9.2", proposalKeys: ["HRI-100", "HRI-101", "HRI-102", "HRI-103", "HRI-001"] })).rejects.toThrow(/already live in Prod; put HRI-001 in a new release/);
     await expect(setReleaseProposals(ctxFor(sahan), { projectKey: "HRI", version: "v0.9.2", proposalKeys: ["HRI-090"] })).rejects.toThrow(/already shipped/);
-    await expect(createRelease(ctxFor(sahan), { projectKey: "HRI", version: "v1.0.0", proposalKeys: ["HRI-100"] })).rejects.toThrow(/already shipped/);
-    await expect(createRelease(ctxFor(sahan), { projectKey: "HRI", version: "v1.0.1", proposalKeys: ["HRI-999"] })).rejects.toThrow(/no proposal HRI-999/);
+    await expect(createRelease(ctxFor(sahan), { ...tracked(), projectKey: "HRI", version: "v1.0.0", proposalKeys: ["HRI-100"] })).rejects.toThrow(/already shipped/);
+    await expect(createRelease(ctxFor(sahan), { ...tracked(), projectKey: "HRI", version: "v1.0.1", proposalKeys: ["HRI-999"] })).rejects.toThrow(/no proposal HRI-999/);
     await expect(setReleaseProposals(ctxFor(sahan), { projectKey: "HRI", version: "v0.9.2", proposalKeys: ["HRI-999"] })).rejects.toThrow(/no proposal HRI-999/);
   });
 });
@@ -197,7 +199,7 @@ describe.skipIf(!hasDb)("final review: release bugs", () => {
     await createProject(ctx(), { key: "ENV", name: "Env", client: "x", billing: "internal" });
     await upsertEnvironment(ctx(), { projectKey: "ENV", name: "prod", isProd: true });
     expect((await listEnvironments(sahan, "ENV")).map((e) => e.name)).toEqual(["Dev", "QA", "UAT", "Prod"]);
-    await createRelease(ctx(), { projectKey: "ENV", version: "v1", proposalKeys: [] });
+    await createRelease(ctx(), { ...tracked(), projectKey: "ENV", version: "v1", proposalKeys: [] });
     await recordDeployment(ctx(), { projectKey: "ENV", version: "v1", environment: "pRoD" });
     const [ev] = await t.owner`select payload from core.event where name = 'delivery.release.deployed' and payload->>'version' = 'v1' order by created_at desc limit 1`;
     expect(ev.payload.environment).toBe("Prod");
@@ -207,7 +209,7 @@ describe.skipIf(!hasDb)("final review: release bugs", () => {
 
   it("Void on a history row voids exactly that record", async () => {
     await createProject(ctx(), { key: "VID", name: "Vid", client: "x", billing: "internal" });
-    await createRelease(ctx(), { projectKey: "VID", version: "v1", proposalKeys: [] });
+    await createRelease(ctx(), { ...tracked(), projectKey: "VID", version: "v1", proposalKeys: [] });
     await recordDeployment(ctx(), { projectKey: "VID", version: "v1", environment: "Dev" });
     await recordDeployment(ctx(), { projectKey: "VID", version: "v1", environment: "Dev" });
     const history = (await getRelease(sahan, "VID", "v1"))!.history; // newest first
@@ -215,7 +217,7 @@ describe.skipIf(!hasDb)("final review: release bugs", () => {
     const after = (await getRelease(sahan, "VID", "v1"))!.history;
     expect(after.find((d) => d.id === history[1].id)!.voidedAt).not.toBeNull();
     expect(after.find((d) => d.id === history[0].id)!.voidedAt).toBeNull();
-    await createRelease(ctx(), { projectKey: "VID", version: "v2", proposalKeys: [] });
+    await createRelease(ctx(), { ...tracked(), projectKey: "VID", version: "v2", proposalKeys: [] });
     await expect(voidDeployment(ctx(), { projectKey: "VID", version: "v2", environment: "Dev", deploymentId: history[0].id, reason: "wrong release" })).rejects.toThrow(/isn't a live Dev record of v2/);
     // The id and the environment must agree: a destructive call never voids a record elsewhere (round 13).
     await expect(voidDeployment(ctx(), { projectKey: "VID", version: "v1", environment: "Prod", deploymentId: history[0].id, reason: "mismatch" })).rejects.toThrow(/isn't a live Prod record of v1/);
@@ -236,7 +238,8 @@ describe.skipIf(!hasDb)("final review: release bugs", () => {
     const planned = await createProposal(ctx(), { projectKey: "PRI", title: "only planned" });
     await moveProposal(ctx(), { key: building.key, to: "building" });
     await moveProposal(ctx(), { key: planned.key, to: "planned" });
-    await createRelease(ctx(), { projectKey: "PRI", version: "v1", proposalKeys: [building.key, planned.key] });
+    await createRelease(ctx(), { ...tracked(), projectKey: "PRI", version: "v1", proposalKeys: [] });
+    await t.owner`update delivery.proposal set release_id = (select r.id from delivery.release r join delivery.project p on p.id = r.project_id where p.key = 'PRI') where key in (${building.key}, ${planned.key})`;
     await recordDeployment(ctx(), { projectKey: "PRI", version: "v1", environment: "Prod" });
     await voidDeployment(ctx(), { projectKey: "PRI", version: "v1", environment: "Prod", reason: "wrong pipeline" });
     const phases = await t.owner`select key, phase, released_at from delivery.proposal where key in (${building.key}, ${planned.key}) order by key`;
@@ -251,7 +254,8 @@ describe.skipIf(!hasDb)("final review: release bugs", () => {
     await createProject(ctx(), { key, name: key, client: "x", billing: "internal" });
     const { createProposal } = await import("../server/services");
     const p = await createProposal(ctx(), { projectKey: key, title: "p" });
-    await createRelease(ctx(), { projectKey: key, version: "v1", proposalKeys: [] });
+    await verify(t.owner, p.key);
+    await createRelease(ctx(), { ...tracked(), projectKey: key, version: "v1", proposalKeys: [] });
     let done = false;
     await t.owner.begin(async (tx) => {
       // A key-share lock is what a foreign-key write takes; it blocks only an explicit row lock, so
@@ -273,7 +277,8 @@ describe.skipIf(!hasDb)("final review: release bugs", () => {
     const { createProposal } = await import("../server/services");
     const a = await createProposal(ctx(), { projectKey: "LIV", title: "In the release" });
     const b = await createProposal(ctx(), { projectKey: "LIV", title: "Late" });
-    await createRelease(ctx(), { projectKey: "LIV", version: "v1", proposalKeys: [a.key] });
+    await verify(t.owner, a.key);
+    await createRelease(ctx(), { ...tracked(), projectKey: "LIV", version: "v1", proposalKeys: [a.key] });
     await recordDeployment(ctx(), { projectKey: "LIV", version: "v1", environment: "Prod" });
     await expect(setReleaseProposals(ctx(), { projectKey: "LIV", version: "v1", proposalKeys: [a.key, b.key] })).rejects.toThrow(/already live in Prod; put LIV-002 in a new release/);
     await setReleaseProposals(ctx(), { projectKey: "LIV", version: "v1", proposalKeys: [a.key] });
@@ -324,7 +329,8 @@ describe.skipIf(!hasDb)("final review: release bugs", () => {
     const key = order === "assign-first" ? "RCA" : "RCB";
     await createProject(ctx(), { key, name: key, client: "x", billing: "internal" });
     const p = await createProposal(ctx(), { projectKey: key, title: "late" });
-    await createRelease(ctx(), { projectKey: key, version: "v1", proposalKeys: [] });
+    await verify(t.owner, p.key);
+    await createRelease(ctx(), { ...tracked(), projectKey: key, version: "v1", proposalKeys: [] });
     const assign = () => setReleaseProposals(ctx(), { projectKey: key, version: "v1", proposalKeys: [p.key] });
     const deploy = () => recordDeployment(ctx(), { projectKey: key, version: "v1", environment: "Prod" });
     const h = holdAfterReleaseLock();
@@ -344,17 +350,18 @@ describe.skipIf(!hasDb)("final review: release bugs", () => {
     if (order === "assign-first") await expect(second).resolves.toMatchObject({ released: true });
     else await expect(second).rejects.toThrow(/already live in Prod/);
     const [row] = await t.owner`select phase, release_id is not null as assigned from delivery.proposal where id = ${p.id}`;
-    expect(row).toEqual(order === "assign-first" ? { phase: "released", assigned: true } : { phase: "proposed", assigned: false });
+    expect(row).toEqual(order === "assign-first" ? { phase: "released", assigned: true } : { phase: "verified", assigned: false });
   });
 
   it("createRelease held after inserting its release: a Prod deployment of that version can't see it yet and is refused; nothing is released (round 17)", async () => {
     const { createProposal } = await import("../server/services");
     await createProject(ctx(), { key: "CRA", name: "CRA", client: "x", billing: "internal" });
     const p = await createProposal(ctx(), { projectKey: "CRA", title: "p" });
+    await verify(t.owner, p.key);
     const h = holdAfterReleaseLock(/insert into delivery\.release/);
     let first: Promise<unknown> = Promise.resolve(), deploy: Promise<unknown> = Promise.resolve();
     try {
-      first = createRelease(ctx(), { projectKey: "CRA", version: "v1", proposalKeys: [p.key] });
+      first = createRelease(ctx(), { ...tracked(), projectKey: "CRA", version: "v1", proposalKeys: [p.key] });
       await h.inside;
       deploy = recordDeployment(ctx(), { projectKey: "CRA", version: "v1", environment: "Prod" });
       await expect(deploy).rejects.toThrow(/no release v1/);
@@ -364,20 +371,21 @@ describe.skipIf(!hasDb)("final review: release bugs", () => {
     }
     await first;
     const [row] = await t.owner`select phase, release_id is not null as assigned from delivery.proposal where id = ${p.id}`;
-    expect(row).toEqual({ phase: "proposed", assigned: true });
+    expect(row).toEqual({ phase: "verified", assigned: true });
   });
 
   it("two createRelease calls for one version: the second waits, then fails; one release, proposals assigned once (round 17)", async () => {
     const { createProposal } = await import("../server/services");
     await createProject(ctx(), { key: "CRB", name: "CRB", client: "x", billing: "internal" });
     const p = await createProposal(ctx(), { projectKey: "CRB", title: "p" });
+    await verify(t.owner, p.key);
     const h = holdAfterReleaseLock(/insert into delivery\.release/);
     let first: Promise<unknown> = Promise.resolve(), second: Promise<unknown> = Promise.resolve();
     let secondDone = false;
     try {
-      first = createRelease(ctx(), { projectKey: "CRB", version: "v1", proposalKeys: [p.key] });
+      first = createRelease(ctx(), { ...tracked(), projectKey: "CRB", version: "v1", proposalKeys: [p.key] });
       await h.inside;
-      second = createRelease(ctx(), { projectKey: "CRB", version: "v1", proposalKeys: [p.key] }).finally(() => { secondDone = true; });
+      second = createRelease(ctx(), { ...tracked(), projectKey: "CRB", version: "v1", proposalKeys: [p.key] }).finally(() => { secondDone = true; });
       await new Promise((r) => setTimeout(r, 300));
       expect(secondDone).toBe(false); // waiting on the first insert's unique key
     } finally {
@@ -399,11 +407,13 @@ describe.skipIf(!hasDb)("final review: release bugs", () => {
     const key = `X${order === "move-first" ? "A" : "B"}${via === "create" ? "C" : "S"}`;
     await createProject(ctx(), { key, name: key, client: "x", billing: "internal" });
     const p = await createProposal(ctx(), { projectKey: key, title: "p" });
-    await createRelease(ctx(), { projectKey: key, version: "v1", proposalKeys: [p.key] });
-    if (via === "set") await createRelease(ctx(), { projectKey: key, version: "v2", proposalKeys: [] });
+    await verify(t.owner, p.key);
+    await createRelease(ctx(), { ...tracked("dev"), projectKey: key, version: "v1", proposalKeys: [p.key] });
+    await recordDeployment(ctx(), { projectKey: key, version: "v1", environment: "Dev" });
+    if (via === "set") await createRelease(ctx(), { ...tracked(), projectKey: key, version: "v2", proposalKeys: [] });
     const move = () => via === "create"
-      ? createRelease(ctx(), { projectKey: key, version: "v2", proposalKeys: [p.key] })
-      : setReleaseProposals(ctx(), { projectKey: key, version: "v2", proposalKeys: [p.key] });
+      ? createRelease(ctx(), { ...tracked(), projectKey: key, version: "v2", proposalKeys: [p.key], reassign: [p.key] })
+      : setReleaseProposals(ctx(), { projectKey: key, version: "v2", proposalKeys: [p.key], reassign: [p.key] });
     const deploy = () => recordDeployment(ctx(), { projectKey: key, version: "v1", environment: "Prod" });
     const h = holdAfterReleaseLock(order === "move-first" ? /select id from delivery\.proposal where .*order by id for update/s : /update delivery\.proposal set phase = 'released'/);
     let first: Promise<unknown> = Promise.resolve(), second: Promise<unknown> = Promise.resolve();
@@ -423,7 +433,7 @@ describe.skipIf(!hasDb)("final review: release bugs", () => {
     else await expect(second).rejects.toThrow(/already shipped in another release/);
     const [row] = await t.owner`select p.phase, r.version from delivery.proposal p join delivery.release r on r.id = p.release_id where p.id = ${p.id}`;
     // Never released under v2: either unreleased in v2, or released in v1.
-    expect(row).toEqual(order === "move-first" ? { phase: "proposed", version: "v2" } : { phase: "released", version: "v1" });
+    expect(row).toEqual(order === "move-first" ? { phase: "verified", version: "v2" } : { phase: "released", version: "v1" });
     // And the outbox agrees: a released event exactly when it was released (round 20).
     const events = await t.owner`select 1 from core.event where name = 'delivery.proposal.phase_changed' and payload->>'proposalId' = ${p.id} and payload->>'to' = 'released'`;
     expect(events).toHaveLength(order === "move-first" ? 0 : 1);
@@ -434,7 +444,8 @@ describe.skipIf(!hasDb)("final review: release bugs", () => {
     await createProject(ctx(), { key: "DLK", name: "DLK", client: "x", billing: "internal" });
     const a = await createProposal(ctx(), { projectKey: "DLK", title: "a" });
     const b = await createProposal(ctx(), { projectKey: "DLK", title: "b" });
-    await createRelease(ctx(), { projectKey: "DLK", version: "w", proposalKeys: [] });
+    await verify(t.owner, a.key, b.key);
+    await createRelease(ctx(), { ...tracked(), projectKey: "DLK", version: "w", proposalKeys: [] });
     // Hold the first writer right after its first proposal lock: with per-key locking it would hold a
     // only, the other writer would take b and then wait on a, and resuming would deadlock.
     const h = holdAfterReleaseLock(/from delivery\.proposal where .*for update/s);
@@ -442,16 +453,16 @@ describe.skipIf(!hasDb)("final review: release bugs", () => {
     try {
       first = setReleaseProposals(ctx(), { projectKey: "DLK", version: "w", proposalKeys: [a.key, b.key] });
       await h.inside;
-      second = createRelease(ctx(), { projectKey: "DLK", version: "x", proposalKeys: [b.key, a.key] });
+      second = createRelease(ctx(), { ...tracked(), projectKey: "DLK", version: "x", proposalKeys: [b.key, a.key] });
       await new Promise((r) => setTimeout(r, 300));
     } finally {
       h.release();
       await Promise.allSettled([first, second]);
     }
     await expect(first).resolves.toBeTruthy();
-    await expect(second).resolves.toBeTruthy();
+    await expect(second).rejects.toThrow(/is already in DLK w \(UAT, In progress\); confirm moving it, or take it out there first/);
     const rows = await t.owner`select p.key, r.version from delivery.proposal p join delivery.release r on r.id = p.release_id where p.key in (${a.key}, ${b.key}) order by p.key`;
-    expect(rows).toEqual([{ key: a.key, version: "x" }, { key: b.key, version: "x" }]);
+    expect(rows).toEqual([{ key: a.key, version: "w" }, { key: b.key, version: "w" }]);
   });
 
   const MERGE = [

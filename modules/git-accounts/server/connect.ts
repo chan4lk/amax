@@ -8,7 +8,7 @@ import { contextFor, defineService, logError, type ServiceContext } from "@amax/
 import { EVENTS } from "../contracts";
 import { RESULTS, type ResultCode } from "../words";
 import { CONNECT, selfOf } from "./context";
-import { authorizeUrl, isGitHubReplyError, readGitHubUser } from "./github";
+import { authorizeUrl, isGitHubCallbackError, isGitHubCredentialsError, isGitHubReplyError, readGitHubUser } from "./github";
 
 const hash = (state: string) => createHash("sha256").update(state).digest("hex");
 /** GitHub's app is used by the system, acting for the person who connects (rule 4). */
@@ -63,7 +63,8 @@ const storeConnect = defineService({
     const n = r.linked.length;
     await tx.execute(sql`update git_accounts.connect_state set result = 'connected', skipped = ${r.skipped.length}, result_at = now() where id = ${input.claimId}`);
     const summary = `${viewerOf(ctx)?.name ?? "Someone"} connected GitHub as @${input.login}: ${n} email${n === 1 ? "" : "s"}`;
-    return { result: { ...r, summary }, resourceId: userId, after: { summary, ...r },
+    // 116 AC-7: the audit record keeps counts; the addresses stay in auth.git_identity, read only by their owner.
+    return { result: { ...r, summary }, resourceId: userId, after: { summary, login: r.login, linked: n, removed: r.removed.length, skipped: r.skipped.length },
       events: [{ name: EVENTS.connected, payload: { userId, login: input.login, emails: n } }] };
   },
 });
@@ -72,6 +73,8 @@ const storeConnect = defineService({
 export const resultCodeOf = (e: unknown): ResultCode => {
   const reason = (e as { reason?: unknown } | null)?.reason;
   if (typeof reason === "string" && Object.hasOwn(RESULTS, reason)) return reason as ResultCode;
+  if (isGitHubCallbackError(e)) return "callback";
+  if (isGitHubCredentialsError(e)) return "credentials";
   return isGitHubReplyError(e) ? "github" : "error";
 };
 

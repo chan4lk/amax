@@ -1,0 +1,74 @@
+{
+ "counts": {
+  "blocker": 0,
+  "major": 0,
+  "minor": 1
+ },
+ "escalated": [],
+ "files": [
+  "apps/web/playwright.auth.config.ts",
+  "apps/web/playwright.config.ts",
+  "apps/web/tests/e2e-configs-154.test.ts",
+  "apps/web/tests/e2e/delivery-visual.spec.ts",
+  "modules/delivery/README.md",
+  "modules/delivery/db/migrations/0029_release_completing_deferrable.sql",
+  "modules/delivery/tests/release-completed-day-128.test.ts",
+  "packages/core/src/backup/restore.ts",
+  "packages/core/tests/backup-restore-order-154.test.ts"
+ ],
+ "final": true,
+ "findings": [
+  {
+   "class": "other",
+   "file": "apps/web/tests/e2e/delivery-visual.spec.ts",
+   "fp": "30babb4b4f35",
+   "in_delta": true,
+   "line": 15,
+   "message": "`.row.head` was taken out of the 001 project visual check, and the comment says '144's own e2e covers it'. But `apps/web/tests/e2e/project-tabs.spec.ts` only checks layout and behaviour: the (i) sits beside the h1, the tab bar's top stays within 1 px across tabs, nothing scrolls sideways at 390 px, and axe passes. It never compares the header's pixels to the 144 mock section. So the project header no longer has a visual check against any mock. Either point the region at the 144-project-tabs-layout mock section, or fix the comment so it doesn't claim visual coverage.",
+   "original_severity": "minor",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B2",
+   "scenario": "A later CSS change alters the project header's font size, colour or spacing \u2192 delivery-visual no longer looks at it, and project-tabs.spec still passes because the h1 text, the button count and the tab-bar position don't change.",
+   "severity": "minor",
+   "unclassified": false
+  }
+ ],
+ "head": "b9def560c72259a05cb74450be3a152883e519dc",
+ "impact": [
+  ".github/workflows/ci.yml",
+  "apps/mock/package.json",
+  "apps/web/scripts/dev.ts",
+  "apps/web/tests/dev-tick.test.ts",
+  "apps/web/tests/e2e/git-accounts.spec.ts",
+  "apps/web/tests/tick.test.ts",
+  "deploy/ci/drill.yaml",
+  "deploy/helm/amax/templates/deployment.yaml",
+  "deploy/helm/amax/templates/ingress.yaml",
+  "deploy/helm/amax/templates/service.yaml",
+  "deploy/helm/amax/templates/worker.yaml",
+  "deploy/helm/amax/values.yaml",
+  "modules/career/tests/e2e/playwright.config.ts",
+  "modules/compliance/tests/e2e/playwright.config.ts",
+  "modules/expenses/tests/e2e/playwright.config.ts",
+  "modules/experience/tests/e2e/playwright.config.ts",
+  "modules/finance/tests/e2e/playwright.config.ts",
+  "modules/git-accounts/tests/setup.ts",
+  "modules/helpdesk/server/identity.ts",
+  "modules/helpdesk/tests/e2e/playwright.config.ts"
+ ],
+ "model": "opus",
+ "passes": [
+  "review",
+  "design"
+ ],
+ "prompt_chars": 80447,
+ "round": 4,
+ "since": null,
+ "status": "clean",
+ "system_chars": 44309,
+ "tier": "review",
+ "tools": "Read,Grep,Glob",
+ "ts_end": 1795775869,
+ "ts_start": 1795775803
+}

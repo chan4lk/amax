@@ -16,7 +16,7 @@
     "e2e:auth": "playwright test --config playwright.auth.config.ts"
   },
   "dependencies": {
-    "next": "16.4.5",
+    "next": "16.4.6",
     "next-auth": "5.0.0-beta.32",
     "react": "19.3.0",
     "react-dom": "19.3.0",

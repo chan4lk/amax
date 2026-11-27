@@ -1,0 +1,10 @@
+{
+  "change": "142-next-security-upgrade",
+  "phase": "verify",
+  "branch": "",
+  "phases": {
+    "proposal": {"status":"approved","at":"2026-11-17T07:16:26Z"},
+    "tasks": {"status":"done","at":"2026-11-17T07:16:27Z"},
+    "verify": {"status":"done","at":"2026-11-20T09:16:23Z"}
+  }
+}

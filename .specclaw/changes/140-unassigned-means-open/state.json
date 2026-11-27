@@ -1,0 +1,10 @@
+{
+  "change": "140-unassigned-means-open",
+  "phase": "verify",
+  "branch": "",
+  "phases": {
+    "proposal": {"status":"approved","at":"2026-11-16T14:05:20Z"},
+    "tasks": {"status":"done","at":"2026-11-16T14:05:22Z"},
+    "verify": {"status":"done","at":"2026-11-17T05:20:17Z"}
+  }
+}

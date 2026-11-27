@@ -3391,6 +3391,9 @@ set AUDIT_HASH_KEY (the deployment's audit key)        # exit 1, nothing written
     <label>New value <input type="password" value="••••••••••••" aria-label="New secret value"></label>
     <p class="muted" style="font-size:13px">Typed here only. It goes straight to the vault, never to the AI or the chat history.</p>
     <div class="actions"><button class="btn primary">Confirm</button> <button class="btn">Cancel</button></div>
+  </div>
+</section>
+
 <!-- ================= 049 Chat history ================= -->
 <section data-change="049-chat-history" id="049-chat-history" data-roles="all" data-title="Chat history" data-nav="no" data-icon="spark">
   <h1>Chat history</h1>
@@ -3411,6 +3414,8 @@ set AUDIT_HASH_KEY (the deployment's audit key)        # exit 1, nothing written
     <div class="row line"><span>Submit timesheet, week 41</span><span class="chip">Expired</span></div>
     <p class="muted" style="font-size:13px">Ask again to make a fresh request.</p>
   </div>
+</section>
+
 <!-- ================= 048 Chat cost ================= -->
 <section data-change="048-chat-cost" id="048-chat-cost" data-roles="admin" data-title="AI usage" data-nav="no" data-parent="038-settings" data-icon="chart">
   <nav class="crumb" aria-label="Breadcrumb"><a href="#038-settings">Settings</a><span>/</span><a href="#033-ai-gateway-and-residency">AI and data</a><span>/</span>AI usage</nav>
@@ -3441,6 +3446,8 @@ set AUDIT_HASH_KEY (the deployment's audit key)        # exit 1, nothing written
       </tbody></table></div></div>
   </div>
   <div class="card" style="margin-top:28px;max-width:420px"><div class="card-head"><h2>Chat panel footer</h2></div><p class="muted">This month: $4.12 · 212 calls</p></div>
+</section>
+
 <!-- ================= 050 Immutable trace ================= -->
 <section data-change="050-immutable-trace" id="050-immutable-trace" data-roles="admin" data-title="Audit and trace" data-nav="no" data-parent="038-settings" data-icon="doc">
   <nav class="crumb" aria-label="Breadcrumb"><a href="#038-settings">Settings</a><span>/</span>Audit and trace</nav>
@@ -3800,6 +3807,44 @@ specclaw/074-audit-filters 9d02b11 → CON: applied
   <p class="muted" style="display:inline-block">amax can't say how that GitHub connect went. To try again, ask amax to connect GitHub.</p>
 </section>
 
+<!-- ================= 138 GitHub setup without the struggle ================= -->
+<section data-change="138-github-setup-without-struggle" id="138-github-setup-without-struggle" data-roles="all" data-title="GitHub setup" data-nav="no" data-icon="plug" data-parent="001-amax-foundation">
+  <h1>GitHub setup</h1>
+  <p class="lede">138: an Admin sets up the GitHub app with one card; everyone else is nudged to connect. Fictional data.</p>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:20px;align-items:start">
+    <div style="display:grid;gap:16px">
+      <div class="card"><div class="card-head"><h2>Overview · needs attention</h2><span class="chip">+</span></div>
+        <p style="font-size:13px;margin:0 0 6px"><b>Connect GitHub</b> so your commits and proposals are credited to you.</p>
+        <p class="muted" style="font-size:12.5px;margin:0 0 8px">Shown to Kasun Dias: not connected, and this workspace has the GitHub app.</p>
+        <p style="margin:0"><button class="btn sm primary" type="button">✦ Ask amax · Connect GitHub</button> &nbsp; <button class="btn sm" type="button">Not now (30 days)</button></p></div>
+      <div class="card"><div class="card-head"><h2>Settings › Integrations</h2></div>
+        <ul class="list">
+          <li><div class="l"><div>GitHub accounts<small>Configured · rotated Nov 16</small></div></div><span class="chip">+</span></li>
+        </ul>
+        <p class="muted" style="font-size:12px;margin:8px 0 4px">Chat suggests (Admins only):</p>
+        <p style="margin:0"><span class="chip">Rotate the GitHub app secret</span> <span class="chip">Remove the GitHub app</span></p>
+        <p class="muted" style="font-size:12px;margin:6px 0 0">When not set up: <span class="chip">Set up the GitHub app</span></p></div>
+    </div>
+    <div style="display:grid;gap:16px">
+      <div class="card"><div class="card-head"><h2>In chat · Set up the GitHub app</h2></div>
+        <p class="muted" style="margin:0 0 6px">You: Set up the GitHub app with client id Ov23liFAKE0000demo01</p>
+        <div class="card" style="padding:12px 14px;display:grid;gap:8px">
+          <p style="font-size:13px;margin:0"><b>Adds</b> the GitHub app people connect their GitHub accounts through.</p>
+          <p style="font-size:12.5px;margin:0">Client ID: <b>Ov23liFAKE0000demo01</b> <span class="muted">(from your message; Edit to change it)</span></p>
+          <label style="font-size:12.5px">Client secret<br><input type="password" value="fictional-secret-value-000000" style="width:100%"></label>
+          <p style="font-size:12.5px;margin:0">Callback URL to paste into GitHub: <code>http://localhost:3000/api/git/github/callback</code> <span class="btn sm">Copy</span></p>
+          <p style="margin:0"><span class="btn sm primary">Set up the GitHub app</span> &nbsp; Cancel</p></div>
+        <p class="muted" style="font-size:12px">After: ✓ GitHub app set up · rotated Nov 16</p></div>
+      <div class="card"><div class="card-head"><h2>Clear refusals</h2></div>
+        <ul class="list" style="font-size:12.5px">
+          <li>The GitHub app's credential is incomplete; an Admin sets it up again with Set up the GitHub app.</li>
+          <li>amax can't store credentials yet: no key service is set (AMAX_KMS); an operator sets it.</li>
+          <li>GitHub refused amax's callback URL; an Admin pastes http://localhost:3000/api/git/github/callback into the GitHub app's Redirect URIs.</li>
+        </ul></div>
+    </div>
+  </div>
+</section>
+
 <!-- ================= 113 PR #119 CI green ================= -->
 <section data-change="113-pr-119-ci-green" id="113-pr-119-ci-green" data-roles="admin" data-title="PR #119 CI" data-nav="no" data-icon="plug" data-parent="001-amax-foundation">
   <h1>No screen change</h1>
@@ -3816,6 +3861,366 @@ specclaw/074-audit-filters 9d02b11 → CON: applied
 <section data-change="115-log-keeps-spaces" id="115-log-keeps-spaces" data-roles="admin" data-title="Log lines" data-nav="no" data-icon="plug" data-parent="001-amax-foundation">
   <h1>No screen change</h1>
   <p class="lede">115: server log lines keep their spaces; only control characters are replaced, so each stays one line.</p>
+</section>
+
+<!-- ================= 139 GitHub app follow-ups ================= -->
+<section data-change="139-github-app-follow-ups" id="139-github-app-follow-ups" data-roles="all" data-title="GitHub app follow-ups" data-nav="no" data-icon="plug" data-parent="001-amax-foundation">
+  <h1>GitHub app follow-ups</h1>
+  <p class="lede">139: no new screen. Fictional data.</p>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:20px;align-items:start">
+    <div class="card"><div class="card-head"><h2>Git accounts · after GitHub</h2></div>
+      <p class="muted" style="font-size:13px;margin:0">GitHub wasn't connected: GitHub refused the app's Client ID or secret. An Admin replaces the GitHub app (Settings › Integrations).</p></div>
+    <div class="card"><div class="card-head"><h2>Settings › Integrations</h2></div>
+      <ul class="list"><li><div class="l"><div>GitHub accounts<small>Incomplete · set it up again</small></div></div><span class="chip">+</span></li></ul>
+      <p class="muted" style="font-size:12px;margin:8px 0 0">Chat suggests (Admins only): <span class="chip">Set up the GitHub app</span></p></div>
+  </div>
+</section>
+
+<!-- ================= 140 Unassigned means open ================= -->
+<section data-change="140-unassigned-means-open" id="140-unassigned-means-open" data-roles="admin leadership pm engineer" data-title="Owner labels" data-nav="no" data-icon="plug" data-parent="062-specclaw-sync-plugin">
+  <h1>Proposals · Owner</h1>
+  <p class="lede">140: "Unassigned" only where an open proposal needs an owner; a shipped one with none is "Not recorded". The count is unchanged. Fictional data.</p>
+  <div class="card"><div class="card-head"><h2>Needs attention</h2></div><p style="margin:0"><b>8</b> Unassigned</p></div>
+  <div class="card" style="margin-top:16px"><table class="tbl"><thead><tr><th>Proposal</th><th>Phase</th><th>Owner</th></tr></thead><tbody>
+    <tr><td>FLT-210 Fleet alerts digest</td><td>Proposed</td><td><span class="muted">Unassigned</span></td></tr>
+    <tr><td>FLT-204 Driver hours export</td><td>Verified</td><td><span class="muted">Unassigned</span></td></tr>
+    <tr><td>FLT-188 Route replay</td><td>Released</td><td><span class="muted">Not recorded</span></td></tr>
+    <tr><td>FLT-181 Depot map</td><td>Released</td><td>Kasun Dias</td></tr>
+  </tbody></table></div>
+</section>
+
+<!-- ================= 141 GitHub app state for everyone ================= -->
+<section data-change="141-github-app-state-for-everyone" id="141-github-app-state-for-everyone" data-roles="all" data-title="GitHub app state" data-nav="no" data-icon="plug" data-parent="001-amax-foundation">
+  <h1>GitHub app state</h1>
+  <p class="lede">141: everyone sees the app's real state; connecting is offered only when it is ready. Fictional data.</p>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:20px;align-items:start">
+    <div class="card"><div class="card-head"><h2>Integrations · as Kasun Dias (Engineer)</h2></div>
+      <ul class="list"><li><div class="l"><div>GitHub accounts<small>Configured</small></div></div><span class="chip good">Configured</span></li></ul>
+      <p class="muted" style="font-size:12px;margin:8px 0 0">No "Not checked" warning for a working app.</p></div>
+    <div class="card"><div class="card-head"><h2>Overview · app incomplete</h2></div>
+      <p class="muted" style="font-size:13px;margin:0">No "Connect GitHub" nudge while the GitHub app is incomplete; Admins see "Incomplete · set it up again" on Integrations.</p></div>
+  </div>
+</section>
+
+<!-- ================= 142 Next.js security upgrade ================= -->
+<section data-change="142-next-security-upgrade" id="142-next-security-upgrade" data-roles="admin" data-title="Next.js upgrade" data-nav="no" data-icon="plug" data-parent="001-amax-foundation">
+  <h1>No screen change</h1>
+  <p class="lede">142: Next.js moves off 16.4.2 (a known vulnerability); the app looks the same.</p>
+</section>
+
+<!-- ================= 144 Project tabs layout ================= -->
+<section data-change="144-project-tabs-layout" id="144-project-tabs-layout" data-roles="admin leadership pm engineer" data-title="Project tabs" data-nav="no" data-icon="grid" data-parent="001-amax-foundation-project">
+  <p class="lede">144: every project tab shares one header, so the tab bar never moves. Fictional data (Orbit Notes, an agent-first project).</p>
+
+  <h2 style="margin-top:20px">1. Team tab</h2>
+  <nav class="crumb" aria-label="Breadcrumb"><a href="#">Projects</a><span>/</span><a href="#">Orbit Notes</a><span>/</span>Team</nav>
+  <div class="row head"><div><h1 style="display:flex;align-items:center;gap:8px;margin:0">Orbit Notes <button type="button" aria-label="How Orbit Notes' proposals get here" style="width:18px;height:18px;border-radius:50%;border:1px solid currentColor;background:none;color:inherit;font-size:11px;line-height:1;padding:0;opacity:.6">i</button></h1>
+    <p class="lede">Continuous. Released means it reached Prod.</p></div>
+    <div class="actions"><button class="btn sm primary" type="button">✦ Ask amax · Add someone to ORB</button></div></div>
+  <div class="tabs" role="group" aria-label="Sections" style="margin:0 0 20px"><a class="btn sm" href="#">Board</a><a class="btn sm" href="#">Proposals</a><a class="btn sm" href="#">Releases</a><a class="btn sm" href="#">Risks and decisions</a><a class="btn sm" href="#" aria-current="page" aria-pressed="true">Team</a><a class="btn sm" href="#">Contract</a></div>
+  <div class="card flush pinnable">
+    <div class="card-head" style="justify-content:flex-start"><h2>Team</h2><span class="muted" style="font-size:13px;margin-left:auto">From allocations</span></div>
+    <div style="display:flex;align-items:center;gap:12px;margin:0 28px 12px;padding:12px 16px;border-radius:14px;background:var(--sunken,#F4F2FB)">
+      <span class="av" style="width:34px;height:34px;font-size:12px">PN</span>
+      <div style="display:grid;line-height:1.3"><b>Priya Nadarajah</b><small class="muted">Project manager</small></div>
+      <button class="pin" type="button" aria-label="Pin Orbit Notes PM" style="margin-left:auto">📌</button></div>
+    <table class="tbl"><thead><tr><th>Person</th><th>Role</th><th class="num">Nov</th><th class="num">Dec</th><th class="num">Jan</th></tr></thead>
+      <tbody><tr><td>Priya Nadarajah <span class="chip" style="color:var(--chip-agent,#6B4EF0);font-weight:600">PM</span></td><td>Delivery manager</td><td class="num">20%</td><td class="num">20%</td><td class="num">20%</td></tr>
+        <tr><td>Kasun Dias <span class="chip info">until further notice</span></td><td>Software engineer</td><td class="num">100%</td><td class="num">100%</td><td class="num">100%</td></tr>
+        <tr><td>Nethmi Perera</td><td>QA engineer</td><td class="num">50%</td><td class="num">50%</td><td class="num muted">–</td></tr></tbody></table>
+  </div>
+
+  <h2 style="margin-top:32px">2. Proposals tab: the (i) beside the title, no Project column</h2>
+  <nav class="crumb" aria-label="Breadcrumb"><a href="#">Projects</a><span>/</span><a href="#">Orbit Notes</a><span>/</span>Proposals</nav>
+  <div class="row head"><div><h1 style="display:flex;align-items:center;gap:8px;margin:0">Orbit Notes <button type="button" aria-label="How Orbit Notes' proposals get here" style="width:18px;height:18px;border-radius:50%;border:1px solid currentColor;background:none;color:inherit;font-size:11px;line-height:1;padding:0;opacity:.6">i</button></h1>
+    <p class="lede">Continuous. Released means it reached Prod.</p></div></div>
+  <div class="tabs" role="group" aria-label="Sections" style="margin:0 0 20px"><a class="btn sm" href="#">Board</a><a class="btn sm" href="#" aria-current="page" aria-pressed="true">Proposals</a><a class="btn sm" href="#">Releases</a><a class="btn sm" href="#">Risks and decisions</a><a class="btn sm" href="#">Team</a><a class="btn sm" href="#">Contract</a></div>
+  <div class="card" style="padding:14px 20px"><b style="font-size:20px">3</b> <span class="muted">Unassigned</span></div>
+  <div class="card flush" style="margin-top:16px"><div class="card-head"><h2>Proposals</h2></div>
+    <table class="tbl"><thead><tr><th>Proposal</th><th>Phase</th><th>Tasks</th><th class="num">Time</th><th>Release</th><th>Owner</th></tr></thead>
+      <tbody><tr><td><b>ORB-044</b> Offline drafts <span class="chip warn">Unassigned</span></td><td><span class="chip good">Verified</span></td><td>4 of 4</td><td class="num">0 h</td><td class="muted">None</td><td class="muted">Unassigned</td></tr>
+        <tr><td><b>ORB-031</b> Shared notebooks</td><td><span class="chip">Released</span></td><td>6 of 6</td><td class="num">5.5 h</td><td>v0.13.0</td><td class="muted">Not recorded</td></tr></tbody></table></div>
+
+  <h2 style="margin-top:32px">3. Releases tab with nothing released yet</h2>
+  <div class="card"><div class="card-head"><h2>Release map</h2><span class="chip" style="margin-left:auto">Active · All</span></div>
+    <p class="muted" style="margin:0;font-size:13.5px">No active releases on Orbit Notes. Switch to All to see past ones.</p></div>
+  <div class="card" style="margin-top:16px"><div class="card-head"><h2>All releases</h2><button class="btn sm primary" type="button" style="margin-left:auto">✦ New release</button></div>
+    <p style="text-align:center;margin:8px 0 4px"><b>No releases yet</b></p><p class="muted" style="text-align:center;margin:0;font-size:13px">Ask amax to cut one when proposals are verified.</p></div>
+</section>
+
+<!-- ================= 143 Agent-first portfolio columns ================= -->
+<section data-change="143-agent-first-portfolio-columns" id="143-agent-first-portfolio-columns" data-roles="admin leadership pm engineer finance" data-title="Agent-first portfolio row" data-nav="no" data-icon="grid" data-parent="001-amax-foundation-projects">
+  <h1>Agent-first portfolio row</h1>
+  <p class="lede">143: an agent-first project's row is worked out from its synced proposals and releases. Fictional data.</p>
+  <div class="card flush">
+    <div class="card-head"><h2>Portfolio</h2></div>
+    <div class="scroll-x">
+      <table class="tbl">
+        <thead><tr><th>Project</th><th>Manager</th><th>Sprint</th><th style="min-width:170px">Progress</th><th>Health</th><th class="num">Margin</th><th>Next release</th></tr></thead>
+        <tbody>
+          <tr><td><b>Contoso Portal</b><small>Contoso, fixed price</small></td><td>Maya F.</td><td>Sprint 18</td><td>9 of 16</td><td><span class="chip good">On track</span></td><td class="num">38.2%</td><td>v2.5.0, Nov 28</td></tr>
+          <tr><td><b>Orbit Notes</b><small>Internal, internal · agent-first</small></td><td class="muted">No manager</td><td>Continuous<small>4 open</small></td>
+            <td><div class="row"><div class="meter" style="flex:1"><i style="width:74%;background:var(--violet)"></i></div>23 of 31</div></td>
+            <td><span class="chip bad" title="Off track: ORB-042 failed verify">Off track</span><small>ORB-042 failed verify</small></td>
+            <td class="num muted">Internal</td><td>v0.14.0<small>in Staging</small></td></tr>
+          <tr><td><b>Lumen Docs</b><small>Internal, internal · agent-first</small></td><td>Priya N.</td><td>Continuous<small>0 open</small></td>
+            <td class="muted">Nothing open</td><td><span class="chip good">On track</span></td><td class="num muted">Internal</td><td>3 verified<small>not released</small></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <p class="muted" style="font-size:12px">Contoso Portal is a manual project and keeps its stored values. Manager is never computed: chat suggests setting one from the row's pin.</p>
+</section>
+
+<!-- ================= 145 Release tracking, phase 1 ================= -->
+<section data-change="145-releases-and-proposal-entries" id="145-releases-and-proposal-entries" data-roles="admin pm" data-title="Release tracking (data)" data-nav="no" data-icon="rocket" data-parent="001-amax-foundation-project">
+  <h1>Release tracking, phase 1</h1>
+  <p class="lede">145: a release gets a name, a category, dates and a status. No page changes yet; chat asks for the new fields. Fictional data (Orbit Notes).</p>
+
+  <h2 style="margin-top:20px">1. Chat: New release asks for the new fields, then confirms</h2>
+  <div class="card" style="max-width:520px">
+    <p class="muted" style="margin:0 0 8px;font-size:13px">amax · What's the release called, which environment is it for (Dev, UAT or Prod), and when does it start and need to be done?</p>
+    <div class="card-head"><h2>New release</h2></div>
+    <table class="tbl"><tbody>
+      <tr><th scope="row">Project</th><td>ORB · Orbit Notes</td></tr>
+      <tr><th scope="row">Version</th><td>v0.14.0</td></tr>
+      <tr><th scope="row">Name</th><td>Offline drafts</td></tr>
+      <tr><th scope="row">Category</th><td>UAT</td></tr>
+      <tr><th scope="row">Start</th><td>1 Dec 2026</td></tr>
+      <tr><th scope="row">Target</th><td>12 Dec 2026</td></tr>
+      <tr><th scope="row">Proposals</th><td>ORB-044, ORB-047</td></tr>
+    </tbody></table>
+    <div class="actions" style="margin-top:12px"><button class="btn sm primary" type="button">Create</button><button class="btn sm" type="button">Cancel</button></div>
+  </div>
+  <p class="muted" style="font-size:12.5px">Done: created ORB v0.14.0 · <a href="#">open the release</a> (status Planned until 1 Dec).</p>
+
+  <h2 style="margin-top:28px">2. Refusals, as chat shows them</h2>
+  <div class="card" style="max-width:640px">
+    <ul style="margin:0;padding-left:18px;font-size:13.5px;line-height:1.7">
+      <li>The target date (28 Nov) is before the start date (1 Dec).</li>
+      <li>ORB has no UAT environment. Add one, or pick Dev or Prod.</li>
+      <li>ORB-050 is Building; only Verified or Released proposals can go in a release.</li>
+      <li>ORB-044 is already in ORB v0.13.1 (UAT, In progress); take it out there first.</li>
+      <li>ORB v0.13.0 is completed; it can't change.</li>
+    </ul>
+  </div>
+
+  <h2 style="margin-top:28px">3. Completion</h2>
+  <div class="card" style="max-width:640px">
+    <p style="margin:0;font-size:13.5px">Recording a <b>deployed</b> UAT deployment of ORB v0.14.0 on 11 Dec completes it: status <span class="chip good">Completed</span> <span class="chip">On time</span>. Testing or rolled-back records, or a Dev deployment, don't. Voiding that deployment reopens it (<span class="chip info">In progress</span>, or <span class="chip bad">Overdue</span> after 12 Dec).</p>
+  </div>
+
+  <h2 style="margin-top:28px">4. get_release_history (sample output)</h2>
+  <pre class="card" style="font-size:12px;overflow:auto;max-width:640px">{
+  "projectKey": "ORB", "version": "v0.14.0", "name": "Offline drafts",
+  "category": "uat", "startDate": "2026-12-01", "targetDate": "2026-12-12",
+  "status": "completed", "completedAt": "2026-12-11T09:40:00Z", "completion": "on_time",
+  "statusHistory": [
+    { "from": null, "to": "planned", "at": "2026-11-26T05:10:00Z", "source": "create", "by": "Priya Nadarajah" },
+    { "from": "planned", "to": "completed", "at": "2026-12-11T09:40:00Z", "source": "deployment", "by": "CI for Priya Nadarajah" }
+  ],
+  "proposals": [ … ], "history": [ … deployments, unchanged … ]
+}</pre>
+  <p class="muted" style="font-size:12px">Releases made before this change are untracked: their name is their version, and category, dates and status are empty until someone edits them.</p>
+</section>
+
+<!-- ================= 146 Release chat card ================= -->
+<section data-change="146-release-chat-card" id="146-release-chat-card" data-roles="admin pm" data-title="New release card" data-nav="no" data-icon="rocket" data-parent="001-amax-foundation-project">
+  <h1>Release tracking, phase 2: one New release card</h1>
+  <p class="lede">146: "Create a new release" opens one card; proposals are picked from the project's Verified and Released ones. Fictional data (Orbit Notes).</p>
+
+  <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start">
+  <div class="card" style="max-width:420px;flex:1 1 380px">
+    <p style="margin:0 0 10px;font-size:13.5px;text-align:right"><span style="background:var(--sunken,#F4F2FB);padding:6px 10px;border-radius:12px">Create a new release</span></p>
+    <p class="muted" style="margin:0 0 12px;font-size:13.5px">Here's the release. Fill in what's missing and check it.</p>
+    <p style="margin:0;font-size:11px;letter-spacing:.06em;text-transform:uppercase" class="muted">Confirm · New release</p>
+    <h2 style="margin:4px 0 14px;font-size:16px">New release for ORB · Orbit Notes</h2>
+    <label style="display:block;font-size:12.5px" class="muted">Name</label>
+    <input class="cf-text" value="November Release" style="width:100%;margin:2px 0 10px" aria-label="Name">
+    <label style="display:block;font-size:12.5px" class="muted">Version</label>
+    <input class="cf-text" value="v0.14.0" style="width:100%;margin:2px 0 10px" aria-label="Version">
+    <span style="display:block;font-size:12.5px" class="muted">Category</span>
+    <div style="display:flex;gap:6px;margin:4px 0 10px"><span class="chip">Dev</span><span class="chip good" aria-pressed="true">UAT</span><span class="chip">Prod</span></div>
+    <div style="display:flex;gap:10px">
+      <div style="flex:1"><label style="display:block;font-size:12.5px" class="muted">Start</label><input class="cf-text" value="2026-12-01" style="width:100%;margin:2px 0 10px" aria-label="Start"></div>
+      <div style="flex:1"><label style="display:block;font-size:12.5px" class="muted">Target</label><input class="cf-text" value="2026-11-28" style="width:100%;margin:2px 0 2px" aria-label="Target" aria-invalid="true">
+        <p class="err" style="margin:0 0 10px;font-size:12px">The target date (2026-11-28) is before the start date (2026-12-01)</p></div>
+    </div>
+    <fieldset style="border:0;padding:0;margin:0 0 10px"><legend style="font-size:12.5px" class="muted">Proposals (Verified or Released)</legend>
+      <label style="display:flex;gap:8px;align-items:flex-start;margin:6px 0"><input type="checkbox" checked> <span><b>ORB-044</b> Offline drafts</span></label>
+      <label style="display:flex;gap:8px;align-items:flex-start;margin:6px 0"><input type="checkbox" checked> <span><b>ORB-047</b> Shared tags<br><small class="muted">in v0.13.1 · UAT · In progress</small></span></label>
+      <label style="display:flex;gap:8px;align-items:flex-start;margin:6px 0"><input type="checkbox"> <span><b>ORB-031</b> Shared notebooks<br><small class="muted">Released</small></span></label>
+    </fieldset>
+    <fieldset style="border:0;padding:10px 12px;margin:0 0 10px;border-radius:12px;background:var(--warn-bg,#FFF6E0)"><legend style="font-size:12.5px;padding:0">Move from their release</legend>
+      <label style="display:flex;gap:8px;margin:4px 0"><input type="checkbox"> <span><b>ORB-047</b> from v0.13.1 (UAT, In progress)</span></label>
+    </fieldset>
+    <p style="font-size:12.5px;margin:0 0 12px" class="muted">ORB-047 is in ORB v0.13.1 (UAT, In progress): it moves only if you tick it above.</p>
+    <div class="actions"><button class="btn sm primary" type="button">Create November Release</button><button class="btn sm" type="button">Edit</button><button class="btn sm" type="button">Cancel</button></div>
+  </div>
+
+  <div style="max-width:420px;flex:1 1 320px">
+    <h2 style="margin-top:0;font-size:15px">After Create</h2>
+    <div class="card">
+      <p style="margin:0;font-size:13.5px">✓ Created November Release (v0.14.0) · 2 proposals</p>
+      <p style="margin:8px 0 0"><a class="btn sm primary" href="#146-release-chat-card">Open the release</a></p>
+    </div>
+    <p class="muted" style="font-size:13.5px">amax · Your November Release has been created. You can view it here: <a href="#146-release-chat-card">/delivery/releases/ORB/v0.14.0</a></p>
+    <h2 style="font-size:15px">Refusals the card can show</h2>
+    <ul style="font-size:13px;line-height:1.7;padding-left:18px;margin:0">
+      <li>You can't create releases in FLT (no card)</li>
+      <li>ORB-047 is already in ORB v0.13.1 (UAT, In progress); confirm moving it, or take it out there first</li>
+      <li>ORB-050 is Building; only Verified or Released proposals can go in a release</li>
+      <li>ORB has no Prod environment; add one, or pick another category</li>
+      <li>That didn't go through. Try again. (nothing was created)</li>
+    </ul>
+  </div>
+  </div>
+</section>
+
+<!-- ================= 147 Release pages ================= -->
+<section data-change="147-release-pages" id="147-release-pages" data-roles="admin leadership pm engineer" data-title="Release pages" data-nav="no" data-icon="rocket" data-parent="001-amax-foundation-project">
+  <h1>Release tracking, phase 3: the release pages</h1>
+  <p class="lede">147: the list shows name, category, status and dates, filters and sorts; the release page shows its information, proposals, deployments by environment and status history. Fictional data (Orbit Notes).</p>
+
+  <h2 style="margin-top:20px">1. All releases, filtered</h2>
+  <div class="card flush">
+    <div class="card-head"><h2>All releases</h2><button class="btn sm primary" type="button" style="margin-left:auto">✦ New release</button></div>
+    <div style="display:flex;flex-wrap:wrap;gap:14px;padding:0 28px 12px;font-size:13px">
+      <nav class="seg" aria-label="Status"><a href="#">All</a><a href="#">Planned</a><a href="#" aria-current="true">In progress</a><a href="#">Off track</a><a href="#">Completed</a><a href="#">Untracked</a></nav>
+      <nav class="seg" aria-label="Category"><a href="#" aria-current="true">All</a><a href="#">Dev</a><a href="#">UAT</a><a href="#">Prod</a></nav>
+      <nav class="seg" aria-label="Sort"><a href="#">Newest</a><a href="#">Start date</a><a href="#" aria-current="true">Target date</a></nav>
+    </div>
+    <table class="tbl">
+      <thead><tr><th>Release</th><th>Project</th><th>Category</th><th>Status</th><th>Start</th><th>Target</th><th class="num">Proposals</th><th>Progress</th><th class="num">Action</th></tr></thead>
+      <tbody>
+        <tr><td><a href="#"><b>November Release</b></a><br><small class="muted">v0.14.0</small></td><td>Orbit Notes</td><td>UAT</td><td><span class="chip info">In progress</span></td><td>1 Dec 2026</td><td>12 Dec 2026</td><td class="num">2</td>
+          <td><span title="Dev deployed · QA deployed · UAT testing · Prod not yet">●●◐○</span> <small class="muted">UAT testing</small></td><td class="num muted">Deploy to UAT 📌</td></tr>
+        <tr><td><a href="#"><b>Hotfix 13.2</b></a><br><small class="muted">v0.13.2</small></td><td>Orbit Notes</td><td>Prod</td><td><span class="chip bad">Off track</span></td><td>20 Nov 2026</td><td>24 Nov 2026</td><td class="num">1</td>
+          <td><span title="Dev deployed · QA deployed · UAT deployed · Prod not yet">●●●○</span> <small class="muted">UAT</small></td><td class="num muted">Deploy to Prod 📌</td></tr>
+      </tbody>
+    </table>
+    <p class="muted" style="padding:12px 28px;margin:0;font-size:12.5px">With no match: "No releases match these filters · <a href="#">Clear filters</a>". Loading: a skeleton (aria-busy). A failed read: "Couldn't load releases · <a href="#">Try again</a>".</p>
+  </div>
+
+  <h2 style="margin-top:32px">2. Release page</h2>
+  <div class="row head"><div><h1 style="margin:0">November Release</h1><p class="lede">Orbit Notes v0.14.0 · UAT release. Changes happen in chat.</p></div>
+    <div class="actions"><button class="btn sm primary" type="button">✦ Edit release</button></div></div>
+  <div class="cols even" style="margin-bottom:20px">
+    <div class="card"><div class="card-head"><h2>Release</h2><span style="margin-left:auto">📌</span></div>
+      <table class="tbl"><tbody>
+        <tr><th scope="row">Category</th><td>UAT</td></tr><tr><th scope="row">Status</th><td><span class="chip info">In progress</span></td></tr>
+        <tr><th scope="row">Start</th><td>1 Dec 2026</td></tr><tr><th scope="row">Target</th><td>12 Dec 2026</td></tr><tr><th scope="row">Completed</th><td class="muted">Not yet</td></tr>
+      </tbody></table></div>
+    <div class="card"><div class="card-head"><h2>Proposals</h2><span style="margin-left:auto">📌</span></div>
+      <ul style="list-style:none;padding:0;margin:0;font-size:13.5px;line-height:2">
+        <li><a href="#"><b>ORB-044</b> Offline drafts</a> <span class="chip good">Verified</span> 📌</li>
+        <li><a href="#"><b>ORB-047</b> Shared tags</a> <span class="chip good">Verified</span> 📌</li></ul></div>
+  </div>
+  <div class="cols even">
+    <div class="card"><div class="card-head"><h2>Deployments</h2></div>
+      <h3 style="font-size:13px;margin:4px 0">Dev</h3><p style="margin:0 0 8px;font-size:13px"><span class="chip good">deployed</span> 2 Dec 2026, 10:14 · CI for Priya · run 4812</p>
+      <h3 style="font-size:13px;margin:4px 0">QA</h3><p style="margin:0 0 8px;font-size:13px"><span class="chip good">deployed</span> 3 Dec 2026, 09:02 · Priya Nadarajah</p>
+      <h3 style="font-size:13px;margin:4px 0">UAT</h3><p style="margin:0 0 8px;font-size:13px"><span class="chip info">testing</span> 5 Dec 2026, 16:40 · CI for Priya · run 4830</p>
+      <h3 style="font-size:13px;margin:4px 0">Prod</h3><p class="muted" style="margin:0;font-size:13px">Not deployed yet</p></div>
+    <div class="card"><div class="card-head"><h2>Status history</h2></div>
+      <table class="tbl"><thead><tr><th>From</th><th>To</th><th>When</th><th>Why</th><th>Who</th></tr></thead><tbody>
+        <tr><td class="muted">—</td><td><span class="chip">Planned</span></td><td>26 Nov 2026</td><td>Created</td><td>Priya Nadarajah</td></tr>
+        <tr><td><span class="chip">Planned</span></td><td><span class="chip info">In progress</span></td><td>1 Dec 2026</td><td>Edited</td><td>Priya Nadarajah</td></tr>
+      </tbody></table></div>
+  </div>
+  <div class="card" style="margin-top:20px;max-width:640px"><p style="margin:0;font-size:13.5px"><b>Completed release:</b> "Completed on 11 Dec 2026 · On time. A completed release can't change." No Edit, re-tag or change-proposals buttons; the UAT deployment that completed it reads "Completed the release". <b>Without the right to edit:</b> "Only the project's PM or an Admin can change a release."</p></div>
+
+  <h2 style="margin-top:32px">3. Edit release, in chat</h2>
+  <div class="card" style="max-width:420px">
+    <p style="margin:0;font-size:11px;letter-spacing:.06em;text-transform:uppercase" class="muted">Confirm · Edit a release</p>
+    <h2 style="margin:4px 0 12px;font-size:16px">Edit ORB v0.14.0 · November Release</h2>
+    <label class="muted" style="font-size:12.5px">Name</label><input class="cf-text" value="November Release" style="width:100%;margin:2px 0 10px" aria-label="Name">
+    <span class="muted" style="font-size:12.5px">Category</span><div style="display:flex;gap:6px;margin:4px 0 10px"><span class="chip">Dev</span><span class="chip good">UAT</span><span class="chip">Prod</span></div>
+    <div style="display:flex;gap:10px"><div style="flex:1"><label class="muted" style="font-size:12.5px">Start</label><input class="cf-text" value="2026-12-01" style="width:100%" aria-label="Start"></div>
+      <div style="flex:1"><label class="muted" style="font-size:12.5px">Target</label><input class="cf-text" value="2026-12-15" style="width:100%" aria-label="Target"></div></div>
+    <div class="actions" style="margin-top:12px"><button class="btn sm primary" type="button">Save</button><button class="btn sm" type="button">Cancel</button></div>
+    <p class="muted" style="font-size:12.5px;margin:8px 0 0">After Save: ✓ Updated November Release (v0.14.0); the page shows the new target without a reload.</p>
+  </div>
+</section>
+
+<!-- ================= 148 Release status engine ================= -->
+<section data-change="148-release-status-engine" id="148-release-status-engine" data-roles="admin pm" data-title="Release status engine" data-nav="no" data-icon="rocket" data-parent="001-amax-foundation-project">
+  <h1>Release tracking, phase 4: status keeps itself up to date</h1>
+  <p class="lede">148: an hourly check moves releases as their dates pass; a failed deployment never completes one; Completed is final. Fictional data (Orbit Notes).</p>
+
+  <h2 style="margin-top:20px">1. Status history with the check's rows</h2>
+  <div class="card flush" style="max-width:760px">
+    <div class="card-head"><h2>Status history</h2></div>
+    <table class="tbl"><thead><tr><th>From</th><th>To</th><th>When</th><th>Why</th><th>Who</th></tr></thead><tbody>
+      <tr><td class="muted">—</td><td><span class="chip">Planned</span></td><td>26 Nov 2026, 10:12</td><td>Created</td><td>Priya Nadarajah</td></tr>
+      <tr><td><span class="chip">Planned</span></td><td><span class="chip info">In progress</span></td><td>1 Dec 2026, 00:04</td><td>Start date reached</td><td>amax</td></tr>
+      <tr><td><span class="chip info">In progress</span></td><td><span class="chip bad">Off track</span></td><td>13 Dec 2026, 00:03</td><td>Target date passed</td><td>amax</td></tr>
+      <tr><td><span class="chip bad">Off track</span></td><td><span class="chip good">Completed</span> <span class="chip warn">late</span></td><td>15 Dec 2026, 16:40</td><td>Deployed to UAT</td><td>CI for Priya</td></tr>
+    </tbody></table>
+  </div>
+
+  <h2 style="margin-top:28px">2. Deployments: a failed run, and a voided completing record</h2>
+  <div class="card" style="max-width:760px">
+    <h3 style="font-size:13.5px;margin:0 0 6px">UAT</h3>
+    <p style="margin:0 0 6px;font-size:13px"><span class="chip bad">failed</span> 14 Dec 2026, 18:20 · CI for Priya · Run 4851</p>
+    <p style="margin:0 0 6px;font-size:13px"><span class="chip">Voided: wrong build</span> 15 Dec 2026, 16:40 · CI for Priya · <span class="chip good">Completed the release</span></p>
+    <p class="muted" style="margin:8px 0 0;font-size:13px">The deployment that completed this release was voided on 16 Dec 2026: wrong build. The release stays completed.</p>
+  </div>
+
+  <h2 style="margin-top:28px">3. Settings → Workflows</h2>
+  <div class="card flush" style="max-width:760px">
+    <table class="tbl"><thead><tr><th>Schedule</th><th>When</th><th>Last run</th><th>Next run</th><th>On</th></tr></thead><tbody>
+      <tr><td><b>Release status check</b><br><small class="muted">Moves releases as their start and target dates pass</small></td><td>Hourly (UTC)</td><td>Today 10:00 · 2 releases moved</td><td>Today 11:00</td><td>✓</td></tr>
+    </tbody></table>
+  </div>
+</section>
+
+<!-- ================= 149 Release Off track notice ================= -->
+<section data-change="149-release-off-track-notice" id="149-release-off-track-notice" data-roles="admin pm" data-title="Off track notice" data-nav="no" data-icon="rocket" data-parent="030-notifications">
+  <h1>Release tracking, phase 5: the Off track notice</h1>
+  <p class="lede">149: when the hourly check turns a release Off track, the project's PM hears once. Fictional data (Orbit Notes).</p>
+  <div class="card pinnable" style="max-width:640px">
+    <div class="card-head"><h2>The bell <span class="chip">1 unread</span></h2><button class="btn sm">✦ Mark all read</button></div>
+    <h3 class="muted" style="font-size:12px;text-transform:uppercase;letter-spacing:.06em;margin:4px 0">Delivery</h3>
+    <ul class="list">
+      <li><span><a href="#147-release-pages"><b>November Release is now Off track</b></a><small><span class="chip bad">Urgent</span> UAT release · target 12 Dec 2026 · no successful UAT deployment yet · 13 Dec, 00:03 · Unread</small></span><button class="btn sm">📌</button></li>
+    </ul>
+    <p class="muted" style="font-size:12.5px;margin:12px 0 0">Once per transition: the next hourly runs send nothing while it stays Off track. Email and Teams follow the person's Releases channels and quiet hours.</p>
+  </div>
+</section>
+
+<section data-change="150-release-completed-day" id="150-release-completed-day" data-roles="admin leadership pm engineer" data-title="Completed day kept" data-nav="no" data-icon="rocket" data-parent="001-amax-foundation-project">
+  <h1>A completed release keeps the day it completed on</h1>
+  <p class="lede">150: the completion day is stored when the release completes, so a later change of the project's zone can't move it away from its On time or Late. Fictional data (Orbit Notes).</p>
+  <div class="cols even" style="max-width:900px">
+    <div class="card pinnable">
+      <div class="card-head"><h2>Release</h2><button class="btn sm">📌</button></div>
+      <p class="muted" style="margin:0 0 8px;font-size:12.5px">Completed at 23:00 on 13 Dec while the project's entity was in Pacific/Pago_Pago</p>
+      <dl class="rel-info"><div><dt>Target</dt><dd>13 Dec 2026</dd></div><div><dt>Completed</dt><dd>13 Dec 2026 · On time</dd></div></dl>
+    </div>
+    <div class="card pinnable">
+      <div class="card-head"><h2>Release</h2><button class="btn sm">📌</button></div>
+      <p class="muted" style="margin:0 0 8px;font-size:12.5px">After the entity moved to Pacific/Kiritimati</p>
+      <dl class="rel-info"><div><dt>Target</dt><dd>13 Dec 2026</dd></div><div><dt>Completed</dt><dd>13 Dec 2026 · On time</dd></div></dl>
+      <p class="muted" style="margin:8px 0 0;font-size:12.5px">Unchanged. Before 150 this read "15 Dec 2026 · On time": two days past the target, beside On time.</p>
+    </div>
+  </div>
+</section>
+
+<section data-change="151-completed-release-moves" id="151-completed-release-moves" data-roles="admin pm" data-title="Moves from completed releases" data-nav="no" data-icon="rocket" data-parent="001-amax-foundation-project">
+  <h1>A proposal in a completed release moves only when asked</h1>
+  <p class="lede">151: the New release card treats a proposal in a completed release like one in an open release. Fictional data (Orbit Notes).</p>
+  <div class="card" style="max-width:560px">
+    <div class="card-head"><h2>New release · ORB</h2></div>
+    <fieldset style="border:0;padding:0;margin:0 0 10px"><legend style="font-size:12.5px;padding:0">Proposals (Verified or Released)</legend>
+      <label style="display:flex;gap:8px;align-items:flex-start;margin:6px 0"><input type="checkbox" checked> <span><b>ORB-052</b> Offline drafts<br><small class="muted">in v0.12.0 · UAT · Completed</small></span></label>
+      <label style="display:flex;gap:8px;align-items:flex-start;margin:6px 0"><input type="checkbox" checked> <span><b>ORB-055</b> Faster search</span></label>
+    </fieldset>
+    <fieldset style="border:0;padding:10px 12px;margin:0 0 10px;border-radius:12px;background:var(--warn-bg,#FFF6E0)"><legend style="font-size:12.5px;padding:0">Move from their release</legend>
+      <label style="display:flex;gap:8px;margin:4px 0"><input type="checkbox"> <span><b>ORB-052</b> from v0.12.0 (UAT, Completed)</span></label>
+    </fieldset>
+    <p style="font-size:12.5px;margin:0" class="muted">ORB-052 is in ORB v0.12.0 (UAT, Completed): it moves only if you tick it above. Before 151 it moved silently.</p>
+  </div>
 </section>
 
 <!-- ================= 097 e2e released row ================= -->

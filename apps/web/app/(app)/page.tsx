@@ -45,7 +45,7 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
           <div className="stack">
             <StatTickets tickets={data.tickets} />
             {main.map((p) => <Panel key={p.key} panel={p} />)}
-            {viewer && <WaitingTable items={data.waiting} now={Date.now()} />}
+            {viewer && <WaitingTable items={data.waiting} now={Date.now()} viewerId={viewer.userId} />}
             {items.length > 0 && <ActivityFeed items={items} />}
           </div>
           {side.length > 0 && <aside className="stack">{side.map((p) => <Panel key={p.key} panel={p} />)}</aside>}

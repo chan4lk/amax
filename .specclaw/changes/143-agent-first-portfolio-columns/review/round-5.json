@@ -1,0 +1,84 @@
+{
+ "counts": {
+  "blocker": 0,
+  "major": 1,
+  "minor": 0
+ },
+ "escalated": [],
+ "files": [
+  "apps/web/tests/e2e/delivery.spec.ts",
+  "modules/delivery/mcp.ts",
+  "modules/delivery/server/in-prod.ts",
+  "modules/delivery/server/pin-offers.ts",
+  "modules/delivery/server/portfolio.ts",
+  "modules/delivery/server/queries.ts",
+  "modules/delivery/tests/afx.ts",
+  "modules/delivery/tests/portfolio-121-facts.test.ts",
+  "modules/delivery/tests/portfolio-121-offers.test.ts",
+  "modules/delivery/tests/portfolio-121-status.test.ts",
+  "modules/delivery/tests/portfolio-121.test.ts",
+  "modules/delivery/ui/ProjectsPage.tsx"
+ ],
+ "final": true,
+ "findings": [
+  {
+   "class": "other",
+   "file": "modules/delivery/server/in-prod.ts",
+   "fp": "72b0bdd80f64",
+   "in_delta": true,
+   "line": 16,
+   "message": "This change adds a second 'live in Prod' rule. `liveOnProd` decides by whether the latest non-voided Prod deployment has status 'deployed'. The existing rule, `liveProdDeployments`, decides by whether any non-voided deployment has `released` set. The file's own header calls that the one In Prod rule, and the card's 'In Prod', the CSV, 'Released this month', 'Shipped to Prod' and `proposalInProd` all use it. `nextReleaseOf` now uses the new rule, so the Portfolio's Next release, the pin offer (pin-offers.ts:83, which no longer uses `liveProdDeployments`, so the header's claim is now stale) and the stage column can disagree with every other In Prod reader. The test 'a release rolled back in Prod is not live, so it is still next' (portfolio-121-facts.test.ts:28) encodes that disagreement. Fix: build `nextReleaseOf` on one shared predicate. Either use `liveProdDeployments`, or change `liveProdDeployments` itself (and so everything that reads it) so a Prod rollback un-releases. Then update the header and the test to match.",
+   "original_severity": "major",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B4",
+   "scenario": "Release v1.4.0 gets a Prod deployment with status 'deployed' and released=true, then a Prod deployment with status 'rolled-back'. The Releases card and `proposalInProd` still show v1.4.0 as In Prod, and its proposals count in 'Released this month'. The Portfolio row shows 'v1.4.0 / not deployed' as the next release. A verified AFX proposal's pin offers 'Put AFX-001 in AFX v1.4.0', a release that the rest of the app says has already shipped.",
+   "severity": "major",
+   "unclassified": false
+  }
+ ],
+ "fix_proof": {
+  "base": "6784225b6ffadc4433f7b8cc0fe28f0d8b4581f2",
+  "mode": "warn",
+  "reason": "no review.test_command configured, so no test could prove the fix",
+  "status": "not_proven",
+  "tests": []
+ },
+ "head": "a7ab29c616b23fea38330d54a99d876879838a14",
+ "impact": [
+  "apps/mock/app/page.tsx",
+  "apps/mock/public/mock/index.html",
+  "apps/web/app/(app)/page.tsx",
+  "apps/web/app/(public)/welcome/page.tsx",
+  "apps/web/app/actions/chat-history.ts",
+  "apps/web/app/actions/chat.ts",
+  "apps/web/app/oauth/authorize/page.tsx",
+  "apps/web/components/chat/Chat.tsx",
+  "apps/web/components/marketing/Footer.tsx",
+  "apps/web/components/marketing/Hero.tsx",
+  "apps/web/components/marketing/Statement.tsx",
+  "apps/web/components/marketing/areas.ts",
+  "apps/web/components/marketing/copy.ts",
+  "apps/web/lib/admin/privacy.ts",
+  "apps/web/lib/admin/tool.ts",
+  "apps/web/lib/chat-outcome.ts",
+  "apps/web/lib/github-return.ts",
+  "apps/web/lib/page-context.ts",
+  "apps/web/lib/platform-workflows.ts",
+  "apps/web/lib/rate-wiring.ts"
+ ],
+ "model": "opus",
+ "passes": [
+  "review",
+  "design"
+ ],
+ "prompt_chars": 81991,
+ "round": 5,
+ "since": null,
+ "status": "open",
+ "system_chars": 44207,
+ "tier": "review",
+ "tools": "Read,Grep,Glob",
+ "ts_end": 1795174843,
+ "ts_start": 1795174768
+}

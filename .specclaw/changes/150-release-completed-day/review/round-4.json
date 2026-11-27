@@ -1,0 +1,77 @@
+{
+ "counts": {
+  "blocker": 0,
+  "major": 0,
+  "minor": 1
+ },
+ "escalated": [],
+ "files": [
+  "modules/delivery/README.md",
+  "modules/delivery/db/migrations/0027_release_completed_day.sql",
+  "modules/delivery/server/queries.ts",
+  "modules/delivery/server/release-tracking.ts",
+  "modules/delivery/tests/release-completed-day-128.test.ts"
+ ],
+ "final": false,
+ "findings": [
+  {
+   "class": "other",
+   "file": "modules/delivery/README.md",
+   "fp": "22e31b8e442c",
+   "in_delta": true,
+   "line": 68,
+   "message": "This changed paragraph contradicts itself. It still opens with 'The page's days (completed, a voided completing deployment) are the project's, as releaseDay reads them in the entity zone', which means the current zone. A few sentences later it says both days are read in the zone stored at completion (`completed_zone`). Fix: change the first sentence to say the days are read in the zone the release completed in (`completed_zone`), not the project's zone now.",
+   "original_severity": "minor",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B4",
+   "scenario": "After reading the first sentence, a reader expects the voided day to follow a change to the project's zone. With this fix it doesn't.",
+   "severity": "minor",
+   "unclassified": false
+  }
+ ],
+ "fix_proof": {
+  "base": "5c18d522cac84f3b6f6f8e533f21906af29cd85f",
+  "mode": "warn",
+  "reason": "no review.test_command configured, so no test could prove the fix",
+  "status": "not_proven",
+  "tests": []
+ },
+ "head": "5f1a9b8311958f97b61cc67fd497c298150efb41",
+ "impact": [
+  "apps/mock/public/mock/index.html",
+  "apps/web/app/actions/chat-history.ts",
+  "apps/web/components/chat/ChoiceCard.tsx",
+  "apps/web/components/marketing/copy.ts",
+  "apps/web/lib/admin/privacy.ts",
+  "apps/web/lib/admin/status.ts",
+  "apps/web/lib/agents-fixtures.ts",
+  "apps/web/lib/backup-fixtures.ts",
+  "apps/web/lib/chat-move.ts",
+  "modules/delivery/mcp.ts",
+  "modules/delivery/tests/release-card-124.test.ts",
+  "modules/delivery/tests/release-db.ts",
+  "modules/delivery/tests/release-detail-125.test.ts",
+  "modules/delivery/tests/release-engine-126.test.ts",
+  "modules/delivery/tests/release-ref.test.ts",
+  "modules/delivery/tests/release-tracking-123-writes.test.ts",
+  "modules/delivery/tests/release-tracking-123.test.ts",
+  "modules/delivery/tests/releases.test.ts",
+  "modules/delivery/tests/stable-pins.test.ts",
+  "modules/delivery/ui/ReleasePage.tsx"
+ ],
+ "model": "opus",
+ "passes": [
+  "review",
+  "design"
+ ],
+ "prompt_chars": 82057,
+ "round": 4,
+ "since": "5c18d522",
+ "status": "clean",
+ "system_chars": 44114,
+ "tier": "review",
+ "tools": "Read,Grep,Glob",
+ "ts_end": 1795702877,
+ "ts_start": 1795702830
+}

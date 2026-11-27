@@ -29,6 +29,12 @@ export const isReadyToVerify = (p: ReadinessFacts) =>
  */
 export const hasNoOwner = (p: { ownerUserId: string | null; ownerName: string | null }) => !p.ownerUserId && !p.ownerName;
 
+/** 118 AC-1: an ownerless proposal needs an owner only while it's open; once released or withdrawn its owner is a credit. */
+type Owned = { ownerUserId: string | null; ownerName: string | null; phase: string; withdrawn: boolean };
+export const needsOwner = (p: Owned) => hasNoOwner(p) && !p.withdrawn && p.phase !== "released";
+/** 118 AC-2: what every screen shows for a proposal's owner. */
+export const ownerLabel = (p: Owned) => (hasNoOwner(p) ? (needsOwner(p) ? "Unassigned" : "Not recorded") : (p.ownerName ?? ""));
+
 /**
  * 087 (review round 3): the owner name a screen or card shows, once, in SQL: the stored name, else the owner user's, else
  * "Unknown person" for an owner user whose name can't be read. Null only when it has no owner (hasNoOwner).

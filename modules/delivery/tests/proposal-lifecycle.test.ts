@@ -13,6 +13,7 @@ import { createProposal, createRelease, moveProposal, syncProposal } from "../se
 import { markTaskDone, reopenTask } from "../server/tasks";
 import { userFacing } from "@amax/mcp";
 import { proposalDb, T } from "./proposal-db";
+import { tracked } from "./release-fields";
 
 const spec = { projectKey: "FLT", project: { name: "Fleet Tracker", client: "Northwind" }, key: "FLT-301", title: "Spec change", phase: "building" as const,
   tasksDone: 0, tasksTotal: 0, source: "specclaw", sourceRef: "301-spec", releasedAt: null, meta: {}, committedAt: "2026-10-10T09:00:00Z" };
@@ -44,18 +45,19 @@ describe.skipIf(!hasDb)("081 the lifecycle of a hand-made proposal (Postgres)", 
 
   it("AC10 withdraw_proposal marks it withdrawn with who and why, takes it out of its release, lists and counts, and keeps it readable", async () => {
     const { key } = await createProposal(ctxFor(maya), { projectKey: "CON", title: "Old idea" });
-    await createRelease(ctxFor(maya), { projectKey: "CON", version: "v9.0.0", proposalKeys: [key] });
-    const before = (await phaseCounts(maya)).proposed;
+    await moveProposal(ctxFor(maya), { key, to: "verified" });
+    await createRelease(ctxFor(maya), { ...tracked(), projectKey: "CON", version: "v9.0.0", proposalKeys: [key] });
+    const before = (await phaseCounts(maya)).verified;
     await expect(withdrawProposal(ctxFor(maya), { key, reason: "no" })).rejects.toThrow(/invalid input/);
     expect(await withdrawProposal(ctxFor(maya), { key, reason: "Client dropped it" })).toMatchObject({ withdrawn: true, leftRelease: "v9.0.0" });
     expect(await db.row(key)).toMatchObject({ withdraw_reason: "Client dropped it", withdrawn_by: `user:${maya.userId}`, release_id: null });
     expect(await db.q(sql`select payload->>'reason' as reason from core.event where name = 'delivery.proposal.withdrawn' and payload->>'key' = ${key}`)).toEqual([{ reason: "Client dropped it" }]);
     expect((await listProposals(maya, { projectKey: "CON" })).map((p) => p.key)).not.toContain(key);
-    expect((await phaseCounts(maya)).proposed).toBe(before - 1);
+    expect((await phaseCounts(maya)).verified).toBe(before - 1);
     expect(await getProposal(maya, { key })).toMatchObject({ withdrawn: true });
     await expect(withdrawProposal(ctxFor(maya), { key, reason: "again please" })).rejects.toThrow(/was withdrawn/);
     await expect(moveProposal(ctxFor(maya), { key, to: "planned" })).rejects.toThrow(/withdrawn/);
-    await expect(createRelease(ctxFor(maya), { projectKey: "CON", version: "v9.0.1", proposalKeys: [key] })).rejects.toThrow(/withdrawn/);
+    await expect(createRelease(ctxFor(maya), { ...tracked(), projectKey: "CON", version: "v9.0.1", proposalKeys: [key] })).rejects.toThrow(/withdrawn/);
     await expect(withdrawProposal(ctxFor(maya), { key: "FLT-301", reason: "not wanted" })).rejects.toThrow(/comes from specclaw/);
   });
 
@@ -79,7 +81,7 @@ describe.skipIf(!hasDb)("081 the lifecycle of a hand-made proposal (Postgres)", 
   // Review round 1 (B1): a refusal reaches the person with its reason (userFacing), not as an internal-error reference.
   it.each([
     ["a withdrawn proposal moved", (key: string) => moveProposal(ctxFor(maya), { key, to: "planned" }), /was withdrawn/],
-    ["a withdrawn proposal put in a release", (key: string) => createRelease(ctxFor(maya), { projectKey: "CON", version: `v8.${Date.now()}`, proposalKeys: [key] }), /was withdrawn/],
+    ["a withdrawn proposal put in a release", (key: string) => createRelease(ctxFor(maya), { ...tracked(), projectKey: "CON", version: `v8.${Date.now()}`, proposalKeys: [key] }), /was withdrawn/],
     ["a task reopened on a proposal that doesn't exist", () => reopenTask(ctxFor(maya), { key: "CON-999", task: "T1" }), /no proposal CON-999/],
     ["a task closed that the proposal doesn't have", () => markTaskDone(ctxFor(maya), { key: "CON-014", task: "T9" }), /has no task T9/],
     ["a proposal in a project that doesn't exist", () => createProposal(ctxFor(maya), { projectKey: "NOPE", title: "x" }), /no project NOPE/],

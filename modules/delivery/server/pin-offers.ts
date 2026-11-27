@@ -4,8 +4,8 @@ import { can, canEver, type Viewer } from "@amax/auth";
 import { getRuntime, hasModule } from "@amax/core/server";
 import { getDeployment, getEnvironment, getProposal, getProposalTask, listReleases, manualProjects, type ProposalRow } from "./queries";
 import { agentFirstSql } from "./agent-first";
-import { hasNoOwner } from "./readiness";
-import { liveProdDeployments } from "./in-prod";
+import { needsOwner } from "./readiness";
+import { nextReleaseOf } from "./in-prod";
 
 // 081 amendments 2 and 3 (AC-30, AC-38): what a pinned Delivery record offers in chat. Each offer is the prompt its
 // tool's chat flow takes; a click fills the box, the write waits for the confirm card. Read when chat asks, so the
@@ -81,9 +81,7 @@ export async function proposalOffers(v: Viewer, a: Args) {
       from delivery.proposal p join delivery.project pr on pr.id = p.project_id where p.id = ${p.id}`);
     // The newest release of the project not yet live in Prod: where a verified proposal with no release goes.
     const [r] = p.phase === "verified" && !p.release ? await tx.execute(sql`select r.version, coalesce((select string_agg(q.key, ', ' order by q.key) from delivery.proposal q where q.release_id = r.id), '') as keys
-      from delivery.release r join delivery.project pr on pr.id = r.project_id where pr.key = ${p.projectKey}
-        and not exists (${liveProdDeployments(sql`r.id`)})
-      order by r.created_at desc limit 1`) : [];
+      from (${nextReleaseOf(sql`(select id from delivery.project where key = ${p.projectKey})`, true)}) r`) : [];
     const [inRelease] = p.phase === "verified" && p.release ? await tx.execute(sql`select release_id from delivery.proposal where id = ${p.id}`) : [];
     return { projectId: x.project_id as string, openTask: (x.open_task as string | null) ?? null, justClosed: (x.just_closed as string | null) ?? null, release: r ? { version: r.version as string, keys: r.keys as string } : null,
       releaseId: (inRelease?.release_id as string | null) ?? null, timeTables: Boolean(x.time_tables) };
@@ -101,7 +99,8 @@ export async function proposalOffers(v: Viewer, a: Args) {
 }
 
 function proposalGated(p: ProposalRow, me: string, f: { openTask: string | null; justClosed?: string | null; release: { version: string; keys: string } | null }): Gated[] {
-  const owner: Gated[] = !hasNoOwner(p) ? [] : [{ label: `Make me the owner of ${p.key}`, prompt: `Make me (user id ${me}) the owner of ${p.key}`, tool: "update_proposal", permission: "delivery:proposal:create" }];
+  // 118 (review round 1): the owner offer follows the same rule as the Unassigned chip: only an open proposal needs one.
+  const owner: Gated[] = !needsOwner(p) ? [] : [{ label: `Make me the owner of ${p.key}`, prompt: `Make me (user id ${me}) the owner of ${p.key}`, tool: "update_proposal", permission: "delivery:proposal:create" }];
   const task: Gated[] = f.openTask ? [{ label: `Mark ${f.openTask} of ${p.key} done`, prompt: `Mark ${f.openTask} of ${p.key} done`, tool: "mark_task_done", permission: "delivery:task:done" }] : [];
   const release: Gated[] = f.release ? [{ label: `Put ${p.key} in ${p.projectKey} ${f.release.version}`, prompt: `Set the proposals in ${p.projectKey} ${f.release.version} to: ${[f.release.keys, p.key].filter(Boolean).join(", ")}`,
     tool: "set_release_proposals", permission: "delivery:release:create" }] : [];
@@ -144,8 +143,9 @@ export async function releaseOffers(v: Viewer, a: Args) {
   const keys = await read(v, async (tx) => (await tx.execute(sql`select string_agg(key, ', ' order by key) as keys from delivery.proposal where release_id = ${r.id}`))[0]?.keys as string | null);
   return allowed(v, [
     ...(next ? [{ label: `Record a deployment of ${name} to ${next.environment}`, prompt: `Record a deployment of ${name} to ${next.environment}`, tool: "record_deployment", permission: "delivery:deployment:record" }] : []),
-    ...(live ? [] : [{ label: `Change the proposals in ${name}`, prompt: `Set the proposals in ${name} to: ${keys ?? ""}`, tool: "set_release_proposals", permission: "delivery:release:create" }]),
-    { label: `Re-tag ${name}`, prompt: `Tag ${name} as `, tool: "tag_release", permission: "delivery:release:create" },
+    // A completed release is final (123, 126): no write that would only be refused.
+    ...(live || r.status === "completed" ? [] : [{ label: `Change the proposals in ${name}`, prompt: `Set the proposals in ${name} to: ${keys ?? ""}`, tool: "set_release_proposals", permission: "delivery:release:create" }]),
+    ...(r.status === "completed" ? [] : [{ label: `Re-tag ${name}`, prompt: `Tag ${name} as `, tool: "tag_release", permission: "delivery:release:create" }]),
   ], r.projectId);
 }
 

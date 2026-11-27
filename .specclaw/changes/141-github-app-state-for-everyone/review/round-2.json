@@ -1,0 +1,76 @@
+{
+ "counts": {
+  "blocker": 0,
+  "major": 0,
+  "minor": 0
+ },
+ "escalated": [],
+ "files": [
+  "modules/git-accounts/server/app.ts",
+  "modules/git-accounts/server/read.ts",
+  "modules/git-accounts/tests/problem-117.test.ts",
+  "modules/git-accounts/tests/state-119.test.ts"
+ ],
+ "final": false,
+ "findings": [
+  {
+   "class": "other",
+   "file": "modules/git-accounts/server/app.ts",
+   "fp": "d3e6f99e398c",
+   "in_delta": false,
+   "line": 68,
+   "message": "The doc comment on `appRow` still says 'for those who manage credentials'. Since this round, `githubAppStatus` calls it for every viewer through a job context (read.ts:35-36), so the comment no longer matches what the code does. Update it to say who calls it now: the status check, run as a job for any viewer, and the Admin tools, run as the viewer.",
+   "original_severity": "minor",
+   "pass": "review",
+   "pre_existing": true,
+   "rule": "B11",
+   "scenario": "A reader trusts the comment and assumes an Engineer's status read never lists credentials. In fact every status read runs listCredentials as `git-accounts.app-check`.",
+   "severity": "minor",
+   "unclassified": false
+  }
+ ],
+ "fix_proof": {
+  "base": "b72245c54bdfc5fd529e2f8b34c7f16299d011b0",
+  "mode": "warn",
+  "reason": "no review.test_command configured, so no test could prove the fix",
+  "status": "not_proven",
+  "tests": []
+ },
+ "head": "807b2ffb69212e9cd1d22fd132cbf2ee5bbafee9",
+ "impact": [
+  ".github/workflows/ci.yml",
+  "apps/mock/public/mock/index.html",
+  "apps/web/components/agents/RunCard.tsx",
+  "apps/web/components/chat/ChoiceCard.tsx",
+  "apps/web/components/chat/FormConfirm.tsx",
+  "apps/web/components/marketing/queues.ts",
+  "apps/web/lib/admin/secrets.ts",
+  "apps/web/lib/backup-workflows.ts",
+  "apps/web/lib/page-context.ts",
+  "apps/web/tests/admin/secret-116.test.ts",
+  "apps/web/tests/dev-seed.test.ts",
+  "apps/web/tests/marketing-queue.test.ts",
+  "apps/web/tests/pin-refs.test.ts",
+  "deploy/helm/amax/values.yaml",
+  "deploy/podman/amax-restore-drill.container",
+  "modules/allocations/css.d.ts",
+  "modules/career/contracts.ts",
+  "modules/career/css.d.ts",
+  "modules/compliance/fixtures/data.ts",
+  "modules/compliance/mcp.ts"
+ ],
+ "model": "opus",
+ "passes": [
+  "review",
+  "design"
+ ],
+ "prompt_chars": 64069,
+ "round": 2,
+ "since": "b72245c5",
+ "status": "clean",
+ "system_chars": 44127,
+ "tier": "review",
+ "tools": "Read,Grep,Glob",
+ "ts_end": 1794894218,
+ "ts_start": 1794894114
+}

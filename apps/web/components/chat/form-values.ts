@@ -57,4 +57,19 @@ export function confirmLabel(form: CardForm, values: Values, fallback: string) {
 
 export const hintOf = (field: CardField, values: Values) => (field.kind === "text" && field.hint && values[field.name]?.trim() ? fill(field.hint, { ...values, value: values[field.name] }) : undefined);
 
-export const edited = (form: CardForm, values: Values) => Object.fromEntries(form.fields.map((f) => [f.name, values[f.name]?.trim() ?? ""]));
+export const ticked = (value?: string) => (value ?? "").split(",").map((v) => v.trim()).filter(Boolean);
+
+type Checks = Extract<CardField, { kind: "checks" }>;
+export const shownChecks = (field: Checks, values: Values) => {
+  if (field.of) return field.options.filter((o) => ticked(values[field.of!]).includes(o.value));
+  const offered = field.options.map((o) => o.value);
+  return [...field.options, ...ticked(values[field.name]).filter((v) => !offered.includes(v)).map((v) => ({ value: v, label: v, detail: "not among the choices" }))];
+};
+
+const valueOf = (f: CardField, values: Values) => {
+  if (f.kind !== "checks") return values[f.name]?.trim() ?? "";
+  const shown = shownChecks(f, values).map((o) => o.value);
+  return ticked(values[f.name]).filter((v) => shown.includes(v)).join(",");
+};
+
+export const edited = (form: CardForm, values: Values) => Object.fromEntries(form.fields.map((f) => [f.name, valueOf(f, values)]));

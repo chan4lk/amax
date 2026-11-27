@@ -1,0 +1,101 @@
+{
+ "counts": {
+  "blocker": 0,
+  "major": 1,
+  "minor": 2
+ },
+ "escalated": [],
+ "files": [
+  "modules/delivery/README.md",
+  "modules/delivery/db/migrations/0027_release_completed_day.sql",
+  "modules/delivery/server/queries.ts",
+  "modules/delivery/server/release-tracking.ts",
+  "modules/delivery/tests/release-completed-day-128.test.ts",
+  "modules/delivery/ui/ReleaseInfo.tsx"
+ ],
+ "final": true,
+ "findings": [
+  {
+   "class": "other",
+   "file": "modules/delivery/tests/release-completed-day-128.test.ts",
+   "fp": "c7e119691c24",
+   "in_delta": true,
+   "line": 34,
+   "message": "Two gaps in the AC-1/AC-2 variant table. First, every case completes on the target day, so only 'On time' is ever shown to survive a zone change. No case completes Late, which would show the stored 'late' and its day staying put too. Second, the third case, Asia/Colombo moving to no zone (UTC), proves nothing for most of the day. The `if (to)` guard skips the check that the day actually differs, and Colombo and UTC give the same calendar day except between 18:30 and 24:00 UTC. The old read-time code would have passed that case as well. Fix: add a row whose target is the day before the completion day (expect 'late' / 'Late'). Replace the Colombo-to-UTC row with a pair of zones whose days always differ, such as Kiritimati moving to no zone, or pin the completion instant.",
+   "original_severity": "minor",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B2",
+   "scenario": "Revert completeBy to not store completed_day and have getRelease compute the day from the current zone again. Run the Colombo-to-UTC case at 10:00 UTC: both zones give the same day, so the case still passes.",
+   "severity": "minor",
+   "unclassified": false
+  },
+  {
+   "class": "other",
+   "file": "modules/delivery/tests/release-completed-day-128.test.ts",
+   "fp": "9ea8de6694d0",
+   "in_delta": true,
+   "line": 82,
+   "message": "The 'refused' test updates `where version = 'c1'` without filtering on the project, so it would also touch a 'c1' release in any other project of the shared test database. The AC-3 `before()` step rewrites completed_at and completed_day for every release in the tenant, not just RTK's, and swaps the table's check constraint without restoring it in a finally block. A failed assertion therefore leaves 0025's weaker constraint in place for the later tests in the file. Fix: scope both updates to RTK's project_id, and put the migration re-apply (which restores the constraint) in a try/finally.",
+   "original_severity": "minor",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B12",
+   "scenario": "An assertion in AC-3's loop fails after before() has run. The weaker constraint stays, so the next test's check (`rejects.toThrow(/release_completed_whole/)`) runs against a constraint that doesn't ask for completed_day, and it fails for a reason that has nothing to do with the code under test.",
+   "severity": "minor",
+   "unclassified": false
+  },
+  {
+   "class": "other",
+   "file": "modules/delivery/server/queries.ts",
+   "fp": "428d4e01cb30",
+   "in_delta": true,
+   "line": 345,
+   "message": "The fix covers only one of the two days that the earlier finding named. The completion day is now stored at completion. The voided day on the same page is still worked out at read time, using the project's zone as it is now (`voidedOf(..., day)` with `day = releaseDay(zone, at)`). After the project's entity or zone changes, the two days on the page come from different zones. The voided day can then show before the completion day it voided. Fix: record the voided completing deployment's day in the same zone as the stored completion day when the void is written, or say in the UI which zone each day is in. Alternatively, work out the voided day in the zone `completed_day` was judged in, and store that zone at completion.",
+   "original_severity": "major",
+   "pass": "design",
+   "pre_existing": false,
+   "rule": "B1",
+   "scenario": "The project is in Pacific/Kiritimati. The release completes at 2026-12-12T20:00Z, so `completed_day` is stored as 13 Dec. The completing deployment is voided at 2026-12-13T02:00Z, which is also 13 Dec. The project then moves to a Pacific/Pago_Pago entity. The page shows 'Completed 13 Dec' next to a void 'on 12 Dec': the void now reads as a day before the completion it voided.",
+   "severity": "major",
+   "unclassified": false
+  }
+ ],
+ "head": "5c18d522cac84f3b6f6f8e533f21906af29cd85f",
+ "impact": [
+  "modules/compliance/server/evidence-parts.ts",
+  "modules/delivery/db/migrations/0025_release_tracking.sql",
+  "modules/delivery/mcp.ts",
+  "modules/delivery/tests/release-card-124.test.ts",
+  "modules/delivery/tests/release-db.ts",
+  "modules/delivery/tests/release-detail-125.test.ts",
+  "modules/delivery/tests/release-engine-126.test.ts",
+  "modules/delivery/tests/release-notice-127.test.ts",
+  "modules/delivery/tests/release-ref.test.ts",
+  "modules/delivery/tests/release-tracking-123-writes.test.ts",
+  "modules/delivery/tests/release-tracking-123.test.ts",
+  "modules/delivery/tests/releases.test.ts",
+  "modules/delivery/tests/stable-pins.test.ts",
+  "modules/delivery/ui/ReleasePage.tsx",
+  "modules/delivery/ui/ReleaseTable.tsx",
+  "modules/learning/contracts.ts",
+  "modules/learning/fixtures/data.ts",
+  "modules/learning/fixtures/plan.ts",
+  "modules/learning/mcp.ts",
+  "modules/learning/module.ts"
+ ],
+ "model": "opus",
+ "passes": [
+  "review",
+  "design"
+ ],
+ "prompt_chars": 76799,
+ "round": 3,
+ "since": null,
+ "status": "open",
+ "system_chars": 44179,
+ "tier": "review",
+ "tools": "Read,Grep,Glob",
+ "ts_end": 1795702209,
+ "ts_start": 1795702148
+}

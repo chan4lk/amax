@@ -1,0 +1,10 @@
+{
+  "change": "149-release-off-track-notice",
+  "phase": "verify",
+  "branch": "",
+  "phases": {
+    "proposal": {"status":"approved","at":"2026-11-26T10:59:36Z"},
+    "tasks": {"status":"done","at":"2026-11-26T10:59:47Z"},
+    "verify": {"status":"done","at":"2026-11-26T12:43:54Z"}
+  }
+}

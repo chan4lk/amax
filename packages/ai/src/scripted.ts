@@ -3,7 +3,7 @@ import { scriptedWrite } from "./scripted-writes";
 
 // A deterministic stand-in model for e2e tests and local demos without an API key
 // (AMAX_AI_PROVIDER=scripted, refused in production). It recognises "add <title> to <KEY>", "add a task to PS-0000: <title>",
-// "rotate the <connector> token", "create a service credential named <name> with <scopes> for <n> days" (035) and "pause|resume the <title> schedule" and "revoke <client> for <person>" with the grant pinned (047),
+// "set up the GitHub app with client id <id>" (116), "rotate the <connector> token", "create a service credential named <name> with <scopes> for <n> days" (035) and "pause|resume the <title> schedule" and "revoke <client> for <person>" with the grant pinned (047),
 // the Ask amax prompts of time, allocations, delivery and presales (054, scripted-writes.ts),
 // "open an erasure|access request for <person>" and "approve the erasure request" with it pinned (032), "run a restore drill now",
 // "export all our data. Reason: <why>" and "approve the tenant export" with it pinned (034), and otherwise lists projects, so the full chat path runs end to end.
@@ -25,6 +25,10 @@ export function scriptedProvider() {
     if (writes?.length) return { toolCalls: writes };
     const task = text.match(/add a task to (PS-\d{4}):\s*(.+?)\s*$/i);
     if (task) return { toolCalls: [{ type: "tool_use", id: `t${Date.now()}`, name: "add_opportunity_task", input: { number: task[1], title: task[2] } }] };
+    if (/remove the github app/i.test(text)) return { toolCalls: [{ type: "tool_use", id: `t${Date.now()}`, name: "revoke_secret", input: { connector: "github-oauth", reason: "unused" } }] };
+    const githubApp = text.match(/(?:set up|rotate) the github app(?: secret)? with client id (\S+)/i);
+    if (githubApp) return { toolCalls: [{ type: "tool_use", id: `t${Date.now()}`, name: "set_github_app", input: { clientId: githubApp[1] } }] };
+    if (/\b(?:set up|rotate) the github app\b/i.test(text)) return { text: "What's the GitHub app's Client ID? It's at the top of the app's page on GitHub." };
     const rotate = text.match(/rotate the (.+?) (?:token|secret|key)\b/i);
     if (rotate) return { toolCalls: [{ type: "tool_use", id: `t${Date.now()}`, name: "rotate_secret", input: { connector: rotate[1].toLowerCase().replace(/[^a-z0-9]+/g, "-") } }] };
     const cred = text.match(/create a service credential named (.+?) with ([a-z0-9:, -]+?) for (\d+) days/i);

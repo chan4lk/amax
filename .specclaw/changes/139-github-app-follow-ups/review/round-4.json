@@ -1,0 +1,129 @@
+{
+ "counts": {
+  "blocker": 0,
+  "major": 3,
+  "minor": 1
+ },
+ "escalated": [
+  "269f61532cd8",
+  "c68bd057067a"
+ ],
+ "files": [
+  "apps/web/app/(app)/settings/integrations/page.tsx",
+  "apps/web/components/settings/GitHubAppCard.tsx",
+  "apps/web/tests/github-app-card-117.test.ts",
+  "modules/git-accounts/chat-suggestions.ts",
+  "modules/git-accounts/server/app.ts",
+  "modules/git-accounts/server/read.ts",
+  "modules/git-accounts/tests/expiry-116.test.ts",
+  "modules/git-accounts/tests/follow-ups-117.test.ts",
+  "modules/git-accounts/tests/nudge-116.test.ts"
+ ],
+ "final": false,
+ "findings": [
+  {
+   "class": "other",
+   "file": "modules/git-accounts/tests/follow-ups-117.test.ts",
+   "fp": "269f61532cd8",
+   "in_delta": true,
+   "line": 66,
+   "message": "This is an instance fix of the previous B2 finding. The table now has a 'different key service' row, which takes problemOf's generic fallback, and an asserted offered() list. It still has no row for a refused use, meaning useSecret throws ForbiddenError or another error that asRefusal turns into a ToolError with its own message. The 'kasun' row does not cover it: it takes the `!row` branch in stateOf and never calls appUsable or problemOf. So the problemOf branch that keeps a refusal's own message is never run: map it to the generic text and every test still passes. The previous finding also asked for the KMS to be restored in a `finally`. The test still restores it inline, after registry.call and offeredTo, so a throw in either one leaves `kms: null` or the wrong key in place for later tests. Fix: add a row where the credential read is refused (for example an Admin whose use is denied, or a revoked or expired grant reaching useSecret) and expect that refusal's exact message. Wrap the outage in try/finally around configureSecrets({ kms: db.kms }).",
+   "original_severity": "major",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B2",
+   "scenario": "Change problemOf to `() => \"amax couldn't read the GitHub app's credential just now\"`, so it drops the refusal's message \u2192 every row still passes.",
+   "severity": "major",
+   "unclassified": false
+  },
+  {
+   "class": "other",
+   "file": "apps/web/components/settings/GitHubAppCard.tsx",
+   "fp": "cd49c8224623",
+   "in_delta": true,
+   "line": 17,
+   "message": "The `unchecked` note says 'amax couldn't read the GitHub app's credential to check it.' The spec (AC-3) also gives `unchecked` to people who don't manage credentials. For them amax never tried to read it, so on the same card the note contradicts the error line ('only those who manage credentials can check the GitHub app'). An engineer looking at a working app sees a warn chip and a claimed read failure. Fix: use a note that holds for both causes, or show only checkProblem for `unchecked`.",
+   "original_severity": "minor",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B1",
+   "scenario": "Kasun (git-accounts:read, no secrets:credential:read) opens Integrations with a usable app \u2192 warn chip 'Couldn't check it', note 'amax couldn't read the GitHub app's credential', error 'only those who manage credentials can check\u2026'.",
+   "severity": "minor",
+   "unclassified": false
+  },
+  {
+   "class": "other",
+   "file": "apps/web/components/settings/GitHubAppCard.tsx",
+   "fp": "116711e68439",
+   "in_delta": true,
+   "line": 7,
+   "message": "`GitHubAppState` is a second, hand-written copy of `AppState` from modules/git-accounts/server/read.ts:41. The page casts the tool result to it (`as GitHubAppStatus`), so the compiler never checks one copy against the other. The comment says \"a new one can't be shown as another\", but that holds only inside the app's own copy. If the module adds or renames a state, `SHOWN[app.state]` is undefined and `s.chip` throws, which breaks the Integrations page. Fix: publish the state union (and the status shape) in modules/git-accounts/contracts.ts. Import it in both read.ts and the card, so `Record<AppState, \u2026>` fails to compile when a state is missing.",
+   "original_severity": "major",
+   "pass": "design",
+   "pre_existing": false,
+   "rule": "B4",
+   "scenario": "read.ts gains a state such as `\"rotating\"` \u2192 get_github_app_status returns `{state:\"rotating\"}` \u2192 `SHOWN[\"rotating\"]` is undefined \u2192 TypeError while rendering /settings/integrations. No test fails, because the card test lists only the app's own five states.",
+   "severity": "major",
+   "unclassified": false
+  },
+  {
+   "class": "other",
+   "file": "modules/git-accounts/tests/follow-ups-117.test.ts",
+   "fp": "c68bd057067a",
+   "in_delta": true,
+   "line": 61,
+   "message": "The previous round asked for a row where `useSecret` itself refuses the use. That row is still missing. The kasun row returns before `appUsable` runs (the `!row` branch in read.ts:44). The 'different key service' row covers only a decrypt failure. A ForbiddenError from `secrets.credential.use` (a viewer who holds `secrets:credential:read` but not `secrets:use:github-oauth`) is not in REFUSALS, so `problemOf` gives it the generic \"amax couldn't read the GitHub app's credential just now\". That text calls a permanent refusal a passing glitch. The answer is also dropped from the cache, so every status read tries the use again and gets refused again. Fix: map ForbiddenError to its own reason (\"you can't use the GitHub app's credential\"). Add a table row that drives a real refused use through the registry and asserts that exact reason and what `offeredTo` returns.",
+   "original_severity": "major",
+   "pass": "design",
+   "pre_existing": false,
+   "rule": "B2",
+   "scenario": "An Admin-like role holds secrets:credential:read but lacks secrets:use:github-oauth \u2192 each Integrations load calls useSecret, which is refused \u2192 the card shows \"Couldn't check it\" with \"amax couldn't read \u2026 just now\" and invites a retry that can never succeed. No test row covers this path.",
+   "severity": "major",
+   "unclassified": false
+  }
+ ],
+ "fix_proof": {
+  "base": "480d8fbd703cfcf69ac22b6da22e84e2a7a1dc0a",
+  "mode": "warn",
+  "reason": "no review.test_command configured, so no test could prove the fix",
+  "status": "not_proven",
+  "tests": []
+ },
+ "head": "9c8a3e33ac842524ea07c1fb1ffc0514a602952c",
+ "impact": [
+  ".claude-plugin/marketplace.json",
+  "apps/mock/app/layout.tsx",
+  "apps/mock/public/mock/index.html",
+  "apps/web/app/(app)/layout.tsx",
+  "apps/web/app/(app)/page.tsx",
+  "apps/web/app/(app)/settings/ai/page.tsx",
+  "apps/web/app/(app)/settings/ai/usage/page.tsx",
+  "apps/web/app/(app)/settings/api/page.tsx",
+  "apps/web/app/(app)/settings/audit/page.tsx",
+  "apps/web/app/(app)/settings/backups/page.tsx",
+  "apps/web/app/(app)/settings/keys/page.tsx",
+  "apps/web/app/(app)/settings/page.tsx",
+  "apps/web/app/(app)/settings/retention/page.tsx",
+  "apps/web/app/(app)/settings/workflows/page.tsx",
+  "apps/web/app/(app)/suggestions/page.tsx",
+  "apps/web/app/.well-known/oauth-authorization-server/route.ts",
+  "apps/web/app/.well-known/oauth-protected-resource/[[...path]]/route.ts",
+  "apps/web/app/layout.tsx",
+  "apps/web/app/oauth/authorize/page.tsx",
+  "apps/web/app/signin/page.tsx"
+ ],
+ "model": "opus",
+ "passes": [
+  "review",
+  "design"
+ ],
+ "prompt_chars": 77941,
+ "round": 4,
+ "since": "26d9ce7b",
+ "status": "escalate",
+ "system_chars": 44190,
+ "tier": "review",
+ "tools": "Read,Grep,Glob",
+ "ts_end": 1794838413,
+ "ts_start": 1794838302
+}

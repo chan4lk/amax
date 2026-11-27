@@ -1,0 +1,97 @@
+{
+ "counts": {
+  "blocker": 0,
+  "major": 1,
+  "minor": 0
+ },
+ "escalated": [],
+ "files": [
+  "modules/delivery/README.md",
+  "modules/delivery/mcp.ts",
+  "modules/delivery/server/queries.ts",
+  "modules/delivery/server/release-edit-card.ts",
+  "modules/delivery/server/release-tracking.ts",
+  "modules/delivery/server/services.ts",
+  "modules/delivery/tests/release-detail-125.test.ts",
+  "modules/delivery/tests/release-edit-125.test.ts",
+  "modules/delivery/ui/ReleaseInfo.tsx",
+  "modules/delivery/ui/ReleasePage.tsx"
+ ],
+ "final": false,
+ "findings": [
+  {
+   "class": "other",
+   "file": "modules/delivery/tests/release-detail-125.test.ts",
+   "fp": "6837857b4735",
+   "in_delta": true,
+   "line": 74,
+   "message": "This is an instance fix of the round-1 B2 finding. The new table goes through getRelease, which is good. But it sets `completed_at` and `voided_at` by hand in SQL and leaves the stored `completion` as it was. The test then expects \"On time\" in every row. The finding asked to complete each release through recordDeployment and to check that the zoned day agrees with `completion`, because the defect being guarded against (B4) is a page showing a day on or before the target next to 'Late', or the reverse. With the state planted, the test can never see the day that getRelease reads (entityZone + releaseDay) drift from the day completeOnDeployment/completionOf used when it wrote `completion`. Fix: give each zone row a target day next to the midnight boundary (for example target = the UTC day, and a zone that pushes the completion to the next day). Complete the release through recordDeployment at that instant and void it through voidDeployment. Then assert the rendered day and the On time/Late word together, so at least one row expects 'Late'.",
+   "original_severity": "major",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B2",
+   "scenario": "Change completeOnDeployment to judge `completion` by the UTC day while getRelease keeps the zone. Kiritimati project, target 2026-12-12, deployed at 2026-12-12T20:00Z: the write stores on_time (UTC day 12 Dec) and the page renders 'Completed on 13 Dec 2026 \u00b7 On time', a day after the target. Every row of this table still passes, because `completion` is never recomputed and \"On time\" is hard-coded.",
+   "severity": "major",
+   "unclassified": false
+  },
+  {
+   "class": "other",
+   "file": "modules/delivery/pins.ts",
+   "fp": "da770a482491",
+   "in_delta": false,
+   "line": 26,
+   "message": "The release page now prints its days in the project's entity zone. Two pre-existing formatters still print release-related days in UTC: the deployment pin label shown on the same page (`pins.ts` `day`), and the stage text on the release lists (`ReleasesPage.tsx:110` `dayName` and `day`, e.g. 'Live since', 'Rolled back'). A project far from UTC sees one day on the release page and another on its pin and on the list. Follow-up: format these days with `releaseDay` in the entity zone too.",
+   "original_severity": "minor",
+   "pass": "review",
+   "pre_existing": true,
+   "rule": "B1",
+   "scenario": "Kiritimati project, UAT deployment at 2026-12-12T20:00Z completes the release. The release page reads 'Completed on 13 Dec 2026'. The deployment's pin label reads '\u2026 on UAT, Dec 12' and the release list card reads 'Live since Dec 12'.",
+   "severity": "minor",
+   "unclassified": false
+  }
+ ],
+ "fix_proof": {
+  "base": "3238fd6fa0873e6c0148ae35602fdd8202d8af11",
+  "mode": "warn",
+  "reason": "no review.test_command configured, so no test could prove the fix",
+  "status": "not_proven",
+  "tests": []
+ },
+ "head": "934f8cfe333bfdf1d026a76b0942abcc9144c480",
+ "impact": [
+  ".github/workflows/specclaw-sync.yml",
+  "apps/mock/public/mock/index.html",
+  "apps/web/app/(app)/settings/api/page.tsx",
+  "apps/web/components/agents/UndoTable.tsx",
+  "apps/web/components/agents/format.ts",
+  "apps/web/components/chat/form-values.ts",
+  "apps/web/lib/admin/api.ts",
+  "apps/web/lib/admin/privacy.ts",
+  "apps/web/lib/admin/workflows.ts",
+  "apps/web/lib/chat-move.ts",
+  "apps/web/lib/overview.ts",
+  "apps/web/tests/card-month-109.test.ts",
+  "modules/delivery/tests/release-card-124.test.ts",
+  "modules/delivery/tests/release-db.ts",
+  "modules/delivery/tests/release-engine-126.test.ts",
+  "modules/delivery/tests/release-ref.test.ts",
+  "modules/delivery/tests/release-tracking-123-writes.test.ts",
+  "modules/delivery/tests/release-tracking-123.test.ts",
+  "modules/delivery/tests/releases.test.ts",
+  "modules/delivery/tests/stable-pins.test.ts"
+ ],
+ "model": "opus",
+ "passes": [
+  "review",
+  "design"
+ ],
+ "prompt_chars": 86446,
+ "round": 3,
+ "since": "89b7b6f8",
+ "status": "open",
+ "system_chars": 44190,
+ "tier": "review",
+ "tools": "Read,Grep,Glob",
+ "ts_end": 1795698720,
+ "ts_start": 1795698615
+}

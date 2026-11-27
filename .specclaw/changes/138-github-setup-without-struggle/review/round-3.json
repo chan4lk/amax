@@ -1,0 +1,92 @@
+{
+ "counts": {
+  "blocker": 0,
+  "major": 1,
+  "minor": 1
+ },
+ "escalated": [],
+ "files": [
+  "apps/web/lib/admin/secrets.ts",
+  "modules/git-accounts/app-tool.ts",
+  "modules/git-accounts/tests/expiry-116.test.ts",
+  "packages/core/src/secrets.ts",
+  "packages/core/src/secrets/expiry.ts"
+ ],
+ "final": false,
+ "findings": [
+  {
+   "class": "other",
+   "file": "modules/git-accounts/app-tool.ts",
+   "fp": "97c25c7b65ca",
+   "in_delta": true,
+   "line": 37,
+   "message": "This is an instance fix. The defect class is: an expiry that the write will refuse is only found after the person has typed the Client secret and confirmed. `propose` now checks the kept expiry, but it does not check an `expiresAt` that the caller gives. When `a.expiresAt` is set, `propose` skips every check. Two inputs still get a confirm card and fail only at `run`. (1) A past day passes the `EXPIRY_DAY` regex, and then putSecret's `.refine(... > new Date(), \"must be in the future\")` refuses it (packages/core/src/secrets/manage.ts:30). (2) An impossible day such as `2026-13-45` also passes the regex, and `endOfDay` turns it into a string that fails `z.iso.datetime`. In both cases the person sees a zod validation error, not a refusal that says what to do. rotate_secret's `propose` (apps/web/lib/admin/secrets.ts:53-57) and put_secret's `propose` (line 43) have the same gap for a given `expiresAt`. Fix: add one shared check of a given day in `@amax/core/secrets` beside `endOfDay`. It should require a real calendar date whose end of day is still in the future, and throw a named refusal. Call it from every `propose` and `run` that takes `expiresAt`: set_github_app, put_secret and rotate_secret. Add a past date and an impossible date to the expiry-116 propose table.",
+   "original_severity": "major",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B1",
+   "scenario": "An Admin has an expired GitHub app and calls set_github_app with { clientId: 'Ov23liFAKEdemo02', expiresAt: '2025-01-31' }. propose resolves and the confirm card is shown. The Admin types the 40-character Client secret and confirms. putSecret then rejects with 'must be in the future', so the secret is discarded and the card fails. The same happens with expiresAt '2026-13-45'.",
+   "severity": "major",
+   "unclassified": false
+  },
+  {
+   "class": "other",
+   "file": "apps/web/lib/admin/secrets.ts",
+   "fp": "5dc007653c25",
+   "in_delta": true,
+   "line": 22,
+   "message": "`const endOf = endOfDay;` is a local alias that adds nothing. Delete it and call `endOfDay` directly at lines 47 and 62, as app-tool.ts does.",
+   "original_severity": "minor",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B11",
+   "scenario": "",
+   "severity": "minor",
+   "unclassified": false
+  }
+ ],
+ "fix_proof": {
+  "base": "9672a6e511a29ffa6ecbe681e77bb3f1a584d330",
+  "mode": "warn",
+  "reason": "no review.test_command configured, so no test could prove the fix",
+  "status": "not_proven",
+  "tests": []
+ },
+ "head": "df83c70784f104bfd580d2e7e8daa36b481f31e6",
+ "impact": [
+  "apps/mock/public/mock/index.html",
+  "apps/web/app/(app)/settings/keys/KeyTable.tsx",
+  "apps/web/app/(app)/settings/keys/KeyTickets.tsx",
+  "apps/web/app/(app)/settings/keys/format.ts",
+  "apps/web/lib/admin/status.ts",
+  "apps/web/tests/admin/hardening-053.test.ts",
+  "apps/web/tests/admin/secret-116.test.ts",
+  "apps/web/tests/admin/secret.test.ts",
+  "apps/web/tests/admin/tools.test.ts",
+  "apps/web/tests/e2e/git-accounts.spec.ts",
+  "apps/web/tests/e2e/secrets-seed.ts",
+  "modules/career/layout/tree.ts",
+  "modules/experience/server/collect.ts",
+  "modules/experience/tests/collect.test.ts",
+  "modules/git-accounts/mcp.ts",
+  "modules/git-accounts/server/app.ts",
+  "modules/git-accounts/server/read.ts",
+  "modules/git-accounts/tests/app-116.test.ts",
+  "modules/git-accounts/tests/nudge-116.test.ts",
+  "modules/git-accounts/tests/setup.ts"
+ ],
+ "model": "opus",
+ "passes": [
+  "review",
+  "design"
+ ],
+ "prompt_chars": 65331,
+ "round": 3,
+ "since": "0bf719d0",
+ "status": "open",
+ "system_chars": 44134,
+ "tier": "review",
+ "tools": "Read,Grep,Glob",
+ "ts_end": 1794834227,
+ "ts_start": 1794834173
+}

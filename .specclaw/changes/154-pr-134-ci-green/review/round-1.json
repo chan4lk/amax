@@ -1,0 +1,103 @@
+{
+ "counts": {
+  "blocker": 0,
+  "major": 1,
+  "minor": 2
+ },
+ "escalated": [],
+ "files": [
+  "apps/web/playwright.auth.config.ts",
+  "apps/web/playwright.config.ts",
+  "apps/web/tests/e2e-configs-154.test.ts",
+  "modules/delivery/README.md",
+  "modules/delivery/db/migrations/0029_release_completing_deferrable.sql",
+  "modules/delivery/tests/release-completed-day-128.test.ts",
+  "packages/core/src/backup/restore.ts",
+  "packages/core/tests/backup-restore-order-154.test.ts"
+ ],
+ "final": false,
+ "findings": [
+  {
+   "class": "other",
+   "file": "apps/web/tests/e2e-configs-154.test.ts",
+   "fp": "b5e3889f1428",
+   "in_delta": true,
+   "line": 11,
+   "message": "The guard only spots a spec as signed in by four spellings: `signIn(`, `from \"postgres\"`, `storageState` and `owner()`. At least five specs that already run signed in use none of them, so the guard never checks them: overview.spec.ts and set-up-project-fields.spec.ts sign in inline with `page.goto(\"/signin\")`, mcp.spec.ts goes through `/oauth/authorize`, and landing.spec.ts and api-visual.spec.ts go to app routes that need a session. This fixes the case PR #134 hit (project-tabs and release-pages both call `signIn(`), not the class. Fix: have the test use the configs as the source of truth. Assert that every spec is either matched by exactly one auth project or not ignored by the public config, and keep a short explicit list of the specs that really are public (marketing*, shell). That way any spec ignored by the public run must also run signed in, and any unlisted spec has to be put on one side or the other.",
+   "original_severity": "major",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B1",
+   "scenario": "Add `tests/e2e/foo.spec.ts` that signs in like overview.spec.ts (`await page.goto(\"/signin\")` then a form fill) and leave it out of both configs. The guard stays green because `signedIn` doesn't include it, the public CI run tries to sign in with no database, and CI fails the same way PR #134 did.",
+   "severity": "major",
+   "unclassified": false
+  },
+  {
+   "class": "other",
+   "file": "packages/core/src/backup/restore.ts",
+   "fp": "8a06073933ef",
+   "in_delta": true,
+   "line": 44,
+   "message": "`inOrder` skips every edge that has `condeferrable` set. A key declared `deferrable initially immediate` is still checked at the end of each statement, because the restore never runs `set constraints all deferred` before loading. Such a key loses its ordering edge, and if a child table is loaded before its parent the insert fails. No key like that exists today, which is why this is minor. Fix: drop only edges where `c.condeferred` is true, or run `set constraints all deferred` before the load loop.",
+   "original_severity": "minor",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B6",
+   "scenario": "A future migration adds `x.child.parent_id references x.parent deferrable` (initially immediate). inOrder may load x.child before x.parent, and the drill fails with an FK violation.",
+   "severity": "minor",
+   "unclassified": false
+  },
+  {
+   "class": "other",
+   "file": "modules/delivery/README.md",
+   "fp": "fb9571010201",
+   "in_delta": true,
+   "line": 66,
+   "message": "The new note only warns about migrations that update `release` rows and then alter `release`. The deferred constraint also queues events on the referenced side: deleting a `delivery.deployment` row, or updating its id, queues a deferred check against `release_completing_deployment_id_fkey`. An `ALTER TABLE delivery.deployment` later in the same transaction is then refused with 'pending trigger events'. Name both tables in the note.",
+   "original_severity": "minor",
+   "pass": "design",
+   "pre_existing": false,
+   "rule": "B1",
+   "scenario": "A migration runs `delete from delivery.deployment where \u2026; alter table delivery.deployment add column \u2026` in one file. Postgres refuses the ALTER because a trigger event is still pending, and the README's rule (which names only release) doesn't warn about it.",
+   "severity": "minor",
+   "unclassified": false
+  }
+ ],
+ "head": "fa4262e9c7385ac7dfd673c53a187e03ee0c4e16",
+ "impact": [
+  ".github/workflows/ci.yml",
+  "apps/mock/package.json",
+  "apps/web/scripts/dev.ts",
+  "apps/web/tests/dev-tick.test.ts",
+  "apps/web/tests/e2e/git-accounts.spec.ts",
+  "apps/web/tests/tick.test.ts",
+  "deploy/ci/drill.yaml",
+  "deploy/helm/amax/templates/deployment.yaml",
+  "deploy/helm/amax/templates/ingress.yaml",
+  "deploy/helm/amax/templates/service.yaml",
+  "deploy/helm/amax/templates/worker.yaml",
+  "deploy/helm/amax/values.yaml",
+  "modules/career/tests/e2e/playwright.config.ts",
+  "modules/compliance/tests/e2e/playwright.config.ts",
+  "modules/expenses/tests/e2e/playwright.config.ts",
+  "modules/experience/tests/e2e/playwright.config.ts",
+  "modules/finance/tests/e2e/playwright.config.ts",
+  "modules/git-accounts/tests/setup.ts",
+  "modules/helpdesk/server/identity.ts",
+  "modules/helpdesk/tests/e2e/playwright.config.ts"
+ ],
+ "model": "opus",
+ "passes": [
+  "review",
+  "design"
+ ],
+ "prompt_chars": 78197,
+ "round": 1,
+ "since": null,
+ "status": "open",
+ "system_chars": 44297,
+ "tier": "review",
+ "tools": "Read,Grep,Glob",
+ "ts_end": 1795771113,
+ "ts_start": 1795771007
+}

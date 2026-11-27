@@ -32,24 +32,32 @@ async function resetScratch(url: string, root: string | null) {
   }
 }
 
-/** Parents before children by foreign key, so each table's single insert finds the rows it points at. */
-async function inOrder(tx: Tx, names: string[]) {
+/**
+ * Parents before children by foreign key, so each table's single insert finds the rows it points at. A key deferred by
+ * default (`initially deferred`) is checked at the restore's commit, so it doesn't order anything (154: release and deployment point at each other). Tables
+ * still left with no parent restored first are a cycle of keys checked at once: refused, naming them, never loaded in no
+ * order.
+ */
+export async function inOrder(tx: Tx, names: string[]) {
   const edges = await tx.execute(sql`select cn.nspname || '.' || cc.relname as child, pn.nspname || '.' || pc.relname as parent from pg_constraint c
     join pg_class cc on cc.oid = c.conrelid join pg_namespace cn on cn.oid = cc.relnamespace join pg_class pc on pc.oid = c.confrelid join pg_namespace pn on pn.oid = pc.relnamespace
-    where c.contype = 'f' and c.conrelid <> c.confrelid`);
+    where c.contype = 'f' and c.conrelid <> c.confrelid and not c.condeferred`);
   const deps = new Map(names.map((n) => [n, new Set(edges.filter((e) => e.child === n && names.includes(e.parent as string)).map((e) => e.parent as string))]));
   const out: string[] = [];
   while (out.length < names.length) {
     const ready = names.filter((n) => !out.includes(n) && [...deps.get(n)!].every((p) => out.includes(p)));
-    out.push(...(ready.length ? ready : names.filter((n) => !out.includes(n))));
+    if (!ready.length) throw new BackupError(`these tables' foreign keys form a cycle checked at once, so no restore order exists: ${names.filter((n) => !out.includes(n)).sort().join(", ")}`);
+    out.push(...ready);
   }
   return out;
 }
 
+async function userTriggers(tx: Tx, names: string[], on: boolean) {
+  for (const n of names) await tx.execute(sql`alter table ${tableIdent(ref(n))} ${on ? sql`enable` : sql`disable`} trigger user`);
+}
+
 async function load(tx: Tx, t: TableRef, rows: unknown[]) {
-  await tx.execute(sql`alter table ${tableIdent(t)} disable trigger user`);
   await tx.execute(sql`insert into ${tableIdent(t)} overriding system value select * from jsonb_populate_recordset(null::${tableIdent(t)}, ${JSON.stringify(rows)}::jsonb)`);
-  await tx.execute(sql`alter table ${tableIdent(t)} enable trigger user`);
 }
 
 /** AC-3: restores the tenant's latest snapshot into the scratch database and checks it. */
@@ -68,13 +76,19 @@ export async function restoreLatest(o: { live: Db; scratchUrl: string; root: str
       const checked = await withTenant(db, o.tenantId, async (tx) => {
         const mismatches: DrillOutcome["mismatches"] = [];
         let rows = 0;
-        for (const name of await inOrder(tx, Object.keys(snap!.tables))) {
+        // 154: user triggers off for the whole load and back on after it: a table can't be altered while a deferred key
+        // check it queued (release ↔ deployment) is pending, so those run first, together, once every row is in.
+        const order = await inOrder(tx, Object.keys(snap!.tables));
+        await userTriggers(tx, order, false);
+        for (const name of order) {
           const body = await storage.get(snapshotKey(o.tenantId, snap!.id, name));
           await load(tx, ref(name), body ? openJson<unknown[]>(key, body, o.tenantId, snap!.id, name) : []);
           const restored = await countRows(tx, ref(name));
           rows += restored;
           if (restored !== snap!.tables[name]) mismatches.push({ table: name, expected: snap!.tables[name], restored });
         }
+        await tx.execute(sql`set constraints all immediate`);
+        await userTriggers(tx, order, true);
         return { mismatches, rows, chain: await verifyAuditChain(tx, o.tenantId) };
       });
       return { ...base, snapshotId: snap.id, backupTakenAt: snap.takenAt, durationMs: Date.now() - startedAt.getTime(), tablesChecked: Object.keys(snap.tables).length, rowsChecked: checked.rows, mismatches: checked.mismatches, chainOk: checked.chain.ok, chainLength: checked.chain.ok ? checked.chain.length : null, error: null };

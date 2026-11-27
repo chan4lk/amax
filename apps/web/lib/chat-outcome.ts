@@ -2,6 +2,7 @@ import { ActionFailedError, CHECK_FAILED, NotPendingError, type FieldCheck } fro
 import { logError } from "@amax/core/server";
 import { SignedInElsewhere } from "./same-user";
 import { movedOf, type Moved } from "./chat-move";
+import { inApp } from "./in-app";
 
 export { movedOf } from "./chat-move";
 
@@ -19,7 +20,7 @@ export const revealOf = (result: unknown): Reveal | undefined => {
 export type Open = { label: string; url: string };
 export const openOf = (result: unknown): Open | undefined => {
   const o = (result as { open?: Partial<Open> } | null)?.open;
-  return o && typeof o.label === "string" && typeof o.url === "string" && /^https?:\/\//.test(o.url) ? { label: o.label, url: o.url } : undefined;
+  return o && typeof o.label === "string" && typeof o.url === "string" && (/^https?:\/\//.test(o.url) || inApp(o.url)) ? { label: o.label, url: o.url } : undefined;
 };
 
 /**

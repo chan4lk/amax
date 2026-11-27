@@ -36,8 +36,12 @@ describe.skipIf(!hasDb)("contracts, with and without delivery (Postgres)", () =>
     const full = await leaveDb();
     dbs.push(full);
     const [hri] = await full.q(sql`select id from delivery.project where key = 'HRI'`);
-    const deployed = (released: boolean) => withTenant(full.app, T, (tx) => releaseHandler.handle({ tx, tenantId: T, event: { id: "e1", name: releaseHandler.event,
-      payload: { releaseId: hri.id, projectId: hri.id, version: "v0.9.3", environment: released ? "Prod" : "UAT", status: "deployed", released } } }));
+    const deployed = (released: boolean, status = "deployed") => withTenant(full.app, T, (tx) => releaseHandler.handle({ tx, tenantId: T, event: { id: "e1", name: releaseHandler.event,
+      payload: { releaseId: hri.id, projectId: hri.id, version: "v0.9.3", environment: released ? "Prod" : "UAT", status, released } } }));
+    for (const [status, retry] of [["rolled-back", true], ["failed", true], ["testing", false]] as const) {
+      await deployed(false, status);
+      expect([status, (await full.q(sql`select retry from leave.release_window where version = 'v0.9.3'`))[0]?.retry]).toEqual([status, retry]);
+    }
     await deployed(false);
     expect(await full.q(sql`select project_title, environment, to_char(starts_on, 'YYYY-MM-DD') as f, to_char(ends_on, 'YYYY-MM-DD') as t from leave.release_window where version = 'v0.9.3'`))
       .toEqual([{ project_title: "HR Insights", environment: "UAT", f: "2026-10-16", t: "2026-10-30" }]);

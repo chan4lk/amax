@@ -1,0 +1,71 @@
+{
+ "counts": {
+  "blocker": 0,
+  "major": 0,
+  "minor": 1
+ },
+ "escalated": [],
+ "files": [
+  "apps/mock/package.json",
+  "apps/mock/public/mock/index.html",
+  "apps/web/next.config.ts",
+  "apps/web/package.json",
+  "modules/allocations/package.json",
+  "modules/career/package.json",
+  "modules/compliance/package.json",
+  "modules/delivery/package.json",
+  "modules/expenses/package.json",
+  "modules/experience/package.json",
+  "modules/finance/package.json",
+  "modules/git-accounts/package.json",
+  "modules/helpdesk/package.json",
+  "modules/hr/package.json",
+  "modules/inbox-agent/package.json",
+  "modules/insights/package.json",
+  "modules/it-access/package.json",
+  "modules/keyflow/package.json",
+  "modules/learning/package.json",
+  "modules/leave/package.json",
+  "modules/notifications/package.json",
+  "modules/onboarding/package.json",
+  "modules/payroll/package.json",
+  "modules/presales/package.json",
+  "modules/recruitment/package.json",
+  "modules/reports/package.json",
+  "modules/time/package.json"
+ ],
+ "final": false,
+ "findings": [
+  {
+   "class": "other",
+   "file": "apps/web/next.config.ts",
+   "fp": "75fa884f2470",
+   "in_delta": true,
+   "line": 13,
+   "message": "`experimental.agentUpgrade: \"security\"` is Next.js 16.4.6's default (`next/dist/server/config-shared.js:192`), so this line changes nothing. The comment is also wrong. Next.js does not record a finished agent-run upgrade with this setting. It is the policy for nudging coding agents about future upgrades (`config-shared.d.ts:366`: \"Nudge coding agents about security upgrades, stable releases, or Future Defaults\"; `lib/upgrade/nudge.js` reads it on each `next dev` or `build`). Delete the key and its comment. If the team wants this policy written down on purpose, keep the key and change the comment to say it sets the agent-nudge policy, not that it records the 16.4.2 \u2192 16.4.6 upgrade.",
+   "original_severity": "minor",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B11",
+   "scenario": "Remove `agentUpgrade: \"security\"` \u2192 the resolved config still has `experimental.agentUpgrade === \"security\"` and the nudge works the same. A reader who trusts the comment thinks it is a record of the upgrade and may keep it or edit it for the wrong reason.",
+   "severity": "minor",
+   "unclassified": false
+  }
+ ],
+ "head": "cd2c342e25184c223108552f5d9de8dd104e9f50",
+ "impact": [],
+ "model": "opus",
+ "passes": [
+  "review",
+  "design"
+ ],
+ "prompt_chars": 56515,
+ "round": 1,
+ "since": null,
+ "status": "clean",
+ "system_chars": 44254,
+ "tier": "review",
+ "tools": "Read,Grep,Glob",
+ "ts_end": 1795165567,
+ "ts_start": 1795165456
+}

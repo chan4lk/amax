@@ -12,6 +12,10 @@ import { invalid, notFound } from "./refusal";
 import { isWithdrawn, withdrawnIn } from "./readiness";
 import { liveProdDeployments } from "./in-prod";
 import { commitTime, knownTime, repoInstant, repoPhasesInMeta, repoTime, resolveRepoPhases, storedPhasesFor } from "./repo-time";
+import { Day, Keys, ReleaseName, CategoryInput, Tracking, Version, type ReleaseStatus } from "./release-status";
+import { candidates, moveRefusal, notReleasable, heldElsewhere, shippedElsewhere } from "./release-proposals";
+import { DEPLOYMENT_STATUSES } from "./deployment-status";
+import { checkDates, completeBy, completeOnDeployment, completeReached, missingForTracking, notCompleted, notTrackedYet, reachedAlready, statusFor, strandsReleases, tracked, writeStatus, type Dates } from "./release-tracking";
 
 const by = (ctx: ServiceContext) => ctx.onBehalfOf ? `${ctx.actor.id} for ${ctx.onBehalfOf}` : ctx.actor.id;
 
@@ -37,19 +41,25 @@ async function projectByKey(tx: Tx, key: string) {
 // which would deadlock (round 19).
 const lockProposals = (tx: Tx, where: ReturnType<typeof sql>) => tx.execute(sql`select id from delivery.proposal where ${where} order by id for update`);
 
-async function assignProposals(tx: Tx, projectId: unknown, releaseId: unknown, keys: string[]) {
+async function assignProposals(tx: Tx, projectId: unknown, releaseId: unknown, keys: string[], kept: string[] = [], reassign: string[] = []) {
   const [{ live }] = await tx.execute(sql`select count(*)::int as live from (${liveProdDeployments(sql`${releaseId}`)}) x`);
   await lockProposals(tx, sql`project_id = ${projectId} and key = any(${textArray(keys)})`);
+  const moved: { key: string; from: string }[] = [];
   for (const key of keys) {
     // Locked above, so the phase read here is the committed one.
-    const [p] = await tx.execute(sql`select id, phase, release_id, withdrawn_at, meta from delivery.proposal where key = ${key} and project_id = ${projectId}`);
+    const [p] = await candidates(tx, sql`p.key = ${key} and p.project_id = ${projectId}`);
     if (!p) throw notFound(`no proposal ${key} in this project`);
-    if (isWithdrawn(p)) throw invalid(`${key} was withdrawn; it can't go in a release`);
-    if (p.phase === "released" && p.release_id !== releaseId) throw invalid(`${key} already shipped in another release`);
+    if (isWithdrawn(p) || shippedElsewhere(p, releaseId)) throw invalid(notReleasable(p, releaseId)!);
+    if (heldElsewhere(p, releaseId) && !reassign.includes(key)) throw invalid(moveRefusal(p));
     if (Number(live) > 0 && p.release_id !== releaseId) throw invalid(`this release is already live in Prod; put ${key} in a new release`);
+    const phase = kept.includes(key) ? null : notReleasable(p, releaseId);
+    if (phase) throw invalid(phase);
+    if (p.release_id && p.release_id !== releaseId) moved.push({ key, from: p.version as string });
     await tx.execute(sql`update delivery.proposal set release_id = ${releaseId} where id = ${p.id}`);
   }
+  return moved;
 }
+
 
 // Every write that reads a release locks its row, so a Prod deployment and a change to its proposals
 // can't interleave: proposals added to a release are either released with it or refused (final review).
@@ -57,6 +67,19 @@ async function releaseOf(tx: Tx, projectId: unknown, version: string) {
   const [r] = await tx.execute(sql`select * from delivery.release where project_id = ${projectId} and version = ${version} for update`);
   if (!r) throw notFound(`no release ${version}`);
   return r;
+}
+
+// Release edits and environment changes check each other (a category needs its environment), so both take the project
+// row lock first, then any release rows: one order, no deadlock (123 review round 2).
+const lockProject = (tx: Tx, projectId: unknown) => tx.execute(sql`select 1 from delivery.project where id = ${projectId} for update`);
+
+async function openRelease(tx: Tx, ctx: ServiceContext, input: { projectKey: string; version: string }) {
+  const project = await projectByKey(tx, input.projectKey);
+  scoped(ctx, "delivery:release:create", project.id as string);
+  await lockProject(tx, project.id);
+  const r = await releaseOf(tx, project.id, input.version);
+  notCompleted(r, input.projectKey);
+  return { project, r };
 }
 
 const phaseEvent = (p: Record<string, unknown>, to: Phase, ctx: ServiceContext): Emitted => ({
@@ -151,16 +174,22 @@ export const createRelease = defineService({
   name: "delivery.release.create",
   action: "delivery:release:create",
   resource: "delivery.release",
-  input: z.object({ projectKey: z.string(), version: z.string().min(1), proposalKeys: z.array(z.string()).default([]) }),
+  input: z.object({ projectKey: z.string(), version: Version, proposalKeys: Keys.default([]), reassign: Keys.default([]), ...Tracking.shape }),
   async run(tx, input, ctx) {
     const project = await projectByKey(tx, input.projectKey);
     scoped(ctx, "delivery:release:create", project.id as string);
+    await lockProject(tx, project.id);
+    await checkDates(tx, project, input);
+    const status = await statusFor(tx, project, input);
     // A version that exists (or is being created right now) is refused clearly, not as a raw unique violation.
-    const [r] = await tx.execute(sql`insert into delivery.release (tenant_id, project_id, version) values (${ctx.tenantId}, ${project.id}, ${input.version})
-      on conflict (project_id, version) do nothing returning id`);
+    const [r] = await tx.execute(sql`insert into delivery.release (tenant_id, project_id, version, name, category, start_date, target_date, status)
+      values (${ctx.tenantId}, ${project.id}, ${input.version}, ${input.name}, ${input.category}, ${input.startDate}, ${input.targetDate}, ${status})
+      on conflict (project_id, version) do nothing returning id, tenant_id`);
     if (!r) throw invalid(`${input.projectKey} already has a release ${input.version}`);
-    await assignProposals(tx, project.id, r.id, input.proposalKeys);
-    return { result: { id: r.id as string }, resourceId: r.id as string, after: input };
+    const created = await writeStatus(tx, { ...r, status: null }, status, "create", by(ctx));
+    const moved = await assignProposals(tx, project.id, r.id, input.proposalKeys, [], input.reassign);
+    const href = releaseHref(input);
+    return { result: { id: r.id as string, status, href, moved, open: { label: "Open the release", url: href } }, resourceId: r.id as string, after: { ...input, moved }, events: created ? [created] : [] };
   },
 });
 
@@ -174,7 +203,7 @@ export const recordDeployment = defineService({
     projectKey: z.string(),
     version: z.string(),
     environment: z.string(),
-    status: z.enum(["deployed", "testing", "rolled-back"]).default("deployed"),
+    status: z.enum(DEPLOYMENT_STATUSES).default("deployed"),
     note: z.string().optional(),
     pipelineRun: z.string().optional(),
   }),
@@ -187,8 +216,9 @@ export const recordDeployment = defineService({
     if (!env) throw invalid(`${input.projectKey} has no environment ${input.environment}`);
     const released = Boolean(env.is_prod) && input.status === "deployed";
     const [d] = await tx.execute(sql`insert into delivery.deployment (tenant_id, release_id, environment_id, status, note, pipeline_run, recorded_by, released)
-      values (${ctx.tenantId}, ${release.id}, ${env.id}, ${input.status}, ${input.note ?? null}, ${input.pipelineRun ?? null}, ${by(ctx)}, ${released}) returning id`);
-    const events: Emitted[] = [{
+      values (${ctx.tenantId}, ${release.id}, ${env.id}, ${input.status}, ${input.note ?? null}, ${input.pipelineRun ?? null}, ${by(ctx)}, ${released}) returning id, at, status, environment_id`);
+    const completed = await completeOnDeployment(tx, project, release.id, d, by(ctx));
+    const events: Emitted[] = [...(completed ? [completed] : []), {
       name: EVENTS.releaseDeployed,
       payload: { releaseId: release.id as string, projectId: project.id as string, version: input.version, environment: env.name as string, status: input.status, released } satisfies ReleaseDeployed,
     }];
@@ -379,9 +409,12 @@ export const upsertEnvironment = defineService({
   async run(tx, input, ctx) {
     const project = await projectByKey(tx, input.projectKey);
     scoped(ctx, "delivery:release:create", project.id as string);
+    await lockProject(tx, project.id);
     const before = await envByName(tx, project.id, input.name);
     const target = input.rename ? await envByName(tx, project.id, input.rename) : undefined;
     if (target && target.id !== before?.id) throw invalid(`${input.projectKey} already has an environment called ${target.name}`);
+    const stranded = before && (await strandsReleases(tx, project.id, before, { name: input.rename ?? before.name, is_prod: input.isProd ?? before.is_prod }));
+    if (stranded) throw invalid(stranded);
     if (input.isProd) await tx.execute(sql`update delivery.environment set is_prod = false where project_id = ${project.id}`);
     let row;
     if (before) {
@@ -398,7 +431,10 @@ export const upsertEnvironment = defineService({
       await tx.execute(sql`update delivery.environment set position = -position where project_id = ${project.id}`);
     }
     // Pins name the environment by its id (059), so a rename needs nothing more.
-    return { result: { name: row.name as string }, resourceId: row.id as string, before: before ? { name: before.name, isProd: before.is_prod } : null, after: input };
+    // Releases this change completed are audited with it: the environment change is why they completed.
+    const { events, completed } = await completeReached(tx, project, by(ctx));
+    return { result: { name: row.name as string, ...(completed.length ? { completed } : {}) }, resourceId: row.id as string, before: before ? { name: before.name, isProd: before.is_prod } : null,
+      after: { ...input, completed }, events };
   },
 });
 
@@ -411,11 +447,14 @@ export const removeEnvironment = defineService({
   async run(tx, input, ctx) {
     const project = await projectByKey(tx, input.projectKey);
     scoped(ctx, "delivery:release:create", project.id as string);
+    await lockProject(tx, project.id);
     const env = await envByName(tx, project.id, input.name);
     if (!env) throw notFound(`no environment ${input.name}`);
     const [{ n }] = await tx.execute(sql`select count(*)::int as n from delivery.deployment where environment_id = ${env.id}`);
     // Voided records stay as history, so they count too.
     if (Number(n) > 0) throw invalid(`${env.name} has ${n} deployment record${Number(n) === 1 ? "" : "s"} (voided ones included, kept as history), so it stays`);
+    const stranded = await strandsReleases(tx, project.id, env, null);
+    if (stranded) throw invalid(stranded);
     await tx.execute(sql`delete from delivery.environment where id = ${env.id}`);
     return { result: { removed: env.name as string }, resourceId: env.id as string, before: { name: env.name } };
   },
@@ -426,16 +465,19 @@ export const tagRelease = defineService({
   name: "delivery.release.tag",
   action: "delivery:release:create",
   resource: "delivery.release",
-  input: z.object({ projectKey: z.string(), version: z.string(), newVersion: z.string().min(1).max(40) }),
+  input: z.object({ projectKey: z.string(), version: z.string(), newVersion: Version }),
   async run(tx, input, ctx) {
-    const project = await projectByKey(tx, input.projectKey);
-    scoped(ctx, "delivery:release:create", project.id as string);
-    const r = await releaseOf(tx, project.id, input.version);
-    await tx.execute(sql`update delivery.release set version = ${input.newVersion} where id = ${r.id}`);
+    const { project, r } = await openRelease(tx, ctx, input);
+    // 154: a name that is just the old version (0025 gave every release made before 145 one) follows the re-tag; a real name
+    // stays. 155: worked out once, so the name written and the name audited can't disagree.
+    const renamed = r.name === input.version;
+    const name = renamed ? input.newVersion : (r.name as string | null);
+    await tx.execute(sql`update delivery.release set version = ${input.newVersion}, name = ${name}, updated_at = now() where id = ${r.id}`);
     // The release's page is named by its version: say where it moved, so chat can follow it (057).
     const moved = { from: releaseHref(input), to: releaseHref({ projectKey: input.projectKey, version: input.newVersion }) };
     // Pins name it by its id (059), so they need nothing.
-    return { result: { version: input.newVersion, moved }, resourceId: r.id as string, before: { version: input.version }, after: { version: input.newVersion } };
+    return { result: { version: input.newVersion, moved }, resourceId: r.id as string,
+      before: { version: input.version, ...(renamed ? { name: input.version } : {}) }, after: { version: input.newVersion, ...(renamed ? { name } : {}) } };
   },
 });
 
@@ -444,16 +486,46 @@ export const setReleaseProposals = defineService({
   name: "delivery.release.proposals",
   action: "delivery:release:create",
   resource: "delivery.release",
-  input: z.object({ projectKey: z.string(), version: z.string(), proposalKeys: z.array(z.string()) }),
+  input: z.object({ projectKey: z.string(), version: z.string(), proposalKeys: Keys, reassign: Keys.default([]) }),
   async run(tx, input, ctx) {
-    const project = await projectByKey(tx, input.projectKey);
-    scoped(ctx, "delivery:release:create", project.id as string);
-    const r = await releaseOf(tx, project.id, input.version);
+    const { project, r } = await openRelease(tx, ctx, input);
     const before = (await tx.execute(sql`select key from delivery.proposal where release_id = ${r.id} order by key`)).map((p) => p.key as string);
     await lockProposals(tx, sql`release_id = ${r.id} or (project_id = ${project.id} and key = any(${textArray(input.proposalKeys)}))`);
     await tx.execute(sql`update delivery.proposal set release_id = null where release_id = ${r.id} and phase <> 'released'`);
-    await assignProposals(tx, project.id, r.id, input.proposalKeys);
-    return { result: { version: input.version, proposals: input.proposalKeys }, resourceId: r.id as string, before: { proposals: before }, after: { proposals: input.proposalKeys } };
+    const moved = await assignProposals(tx, project.id, r.id, input.proposalKeys, before, input.reassign);
+    return { result: { version: input.version, proposals: input.proposalKeys, moved }, resourceId: r.id as string, before: { proposals: before }, after: { proposals: input.proposalKeys, moved } };
+  },
+});
+
+const ReleaseUpdate = z.object({ projectKey: z.string(), version: z.string(), name: ReleaseName.optional(), category: CategoryInput.optional(), startDate: Day.optional(), targetDate: Day.optional() })
+  .refine((a) => a.name !== undefined || a.category !== undefined || a.startDate !== undefined || a.targetDate !== undefined, "Nothing changed: change the name, category, start or target");
+
+export const updateRelease = defineService({
+  scoped: true,
+  name: "delivery.release.update",
+  action: "delivery:release:create",
+  resource: "delivery.release",
+  input: ReleaseUpdate,
+  async run(tx, input, ctx) {
+    const { project, r: locked } = await openRelease(tx, ctx, input);
+    const r = await tracked(tx, locked.id);
+    const datesGiven = input.category !== undefined || input.startDate !== undefined || input.targetDate !== undefined;
+    if (missingForTracking(r, input)) throw invalid(notTrackedYet(input.projectKey, input.version));
+    const name = input.name ?? (r.name as string | null) ?? (r.version as string);
+    const before = { name: r.name, category: r.category, startDate: r.start_date, targetDate: r.target_date, status: r.status };
+    if (!r.category && !datesGiven) {
+      await tx.execute(sql`update delivery.release set name = ${name}, updated_at = now() where id = ${r.id}`);
+      return { result: { version: input.version, status: null as ReleaseStatus | null }, resourceId: r.id as string, before, after: { ...before, name } };
+    }
+    const d = { category: input.category ?? r.category, startDate: input.startDate ?? r.start_date, targetDate: input.targetDate ?? r.target_date } as Dates;
+    await checkDates(tx, project, d);
+    const fields = sql`, name = ${name}, category = ${d.category}, start_date = ${d.startDate}, target_date = ${d.targetDate}`;
+    // Tracked, or moved to a category it already reached: that deployment completes it, in the same write (no false Off track).
+    const reached = await reachedAlready(tx, project.id, r.id, d.category);
+    const status = reached ? "completed" : await statusFor(tx, project, d);
+    const changed = reached ? await completeBy(tx, project, { ...r, target_date: d.targetDate }, reached, "deployment", by(ctx), fields)
+      : await writeStatus(tx, r, status, "update", by(ctx), null, fields);
+    return { result: { version: input.version, status }, resourceId: r.id as string, before, after: { name, ...d, status }, events: changed ? [changed] : [] };
   },
 });
 

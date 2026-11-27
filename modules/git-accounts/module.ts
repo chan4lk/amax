@@ -3,6 +3,7 @@ import { chatSuggestions } from "./chat-suggestions";
 import { EVENTS, type GitHubConnected } from "./contracts";
 import { gitAccountsFixtures } from "./fixtures";
 import { mcpTools } from "./mcp";
+import { gitAccountsOverview } from "./overview";
 import { GITHUB_CALLBACK_SLOT } from "@amax/core/server";
 import { githubCallback } from "./server/callback";
 import { CONNECT, READ, UNLINK } from "./server/context";
@@ -24,6 +25,7 @@ export default defineModule({
   routes: [{ path: "", title: "Git accounts", component: GitAccountsPage }],
   mcpTools,
   chatSuggestions,
+  overview: gitAccountsOverview as never,
   // Final pass 2: GitHub's return, read by the app's callback route through this slot (it names no module package).
   provides: { [GITHUB_CALLBACK_SLOT]: githubCallback },
   events: {

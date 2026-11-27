@@ -12,6 +12,7 @@ import { EVENTS } from "../contracts";
 import { getProject } from "../server/queries";
 import { syncSpecclaw } from "../sync/import";
 import { readSpecclaw } from "../sync/specclaw";
+import { tracked } from "./release-fields";
 
 const T = "abababab-0000-4000-8000-0000000000ab";
 
@@ -117,7 +118,8 @@ describe.skipIf(!hasDb)("sync robustness (review round 1)", () => {
     const sync = (sha: string) => syncSpecclaw(app, ctx, { projectKey: "OWN", projectName: "own", client: "x", records: readSpecclaw(repo), sha, committedAt: "2026-10-01T00:00:00Z" });
     await sync("1");
     await expect(moveProposal(pm, { key: "OWN-001", to: "building" })).rejects.toThrow(/comes from specclaw; its phase follows the repo/);
-    await createRelease(pm, { projectKey: "OWN", version: "v1", proposalKeys: ["OWN-001"] });
+    await t.owner`update delivery.proposal set phase = 'verified' where key = 'OWN-001'`;
+    await createRelease(pm, { ...tracked(), projectKey: "OWN", version: "v1", proposalKeys: ["OWN-001"] });
     await recordDeployment(pm, { projectKey: "OWN", version: "v1", environment: "Prod" });
     const phase = async () => (await withTenant(app, T, (tx) => tx.execute(sql`select phase from delivery.proposal where key = 'OWN-001'`)))[0].phase;
     const backwards = async () => Number((await t.owner`select count(*)::int as n from core.event where name = ${EVENTS.proposalPhaseChanged} and payload->>'key' = 'OWN-001' and payload->>'from' = 'released'`)[0].n);
@@ -125,7 +127,7 @@ describe.skipIf(!hasDb)("sync robustness (review round 1)", () => {
     expect(await phase()).toBe("released");
     expect(await backwards()).toBe(0);
     await voidDeployment(pm, { projectKey: "OWN", version: "v1", environment: "Prod", reason: "recorded by mistake" });
-    expect(await phase()).toBe("planned");
+    expect(await phase()).toBe("verified");
     expect(await backwards()).toBe(1);
   });
 

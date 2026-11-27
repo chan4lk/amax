@@ -1,0 +1,30 @@
+{
+ "counts": {
+  "blocker": 0,
+  "major": 0,
+  "minor": 0
+ },
+ "escalated": [],
+ "files": [
+  "apps/mock/public/mock/index.html",
+  "apps/web/tests/e2e/delivery-visual.spec.ts"
+ ],
+ "final": true,
+ "findings": [],
+ "head": "f9c8f6960534503870d3017ed0a14d211a52537e",
+ "impact": [],
+ "model": "opus",
+ "passes": [
+  "review",
+  "design"
+ ],
+ "prompt_chars": 84035,
+ "round": 3,
+ "since": null,
+ "status": "clean",
+ "system_chars": 44175,
+ "tier": "review",
+ "tools": "Read,Grep,Glob",
+ "ts_end": 1795757179,
+ "ts_start": 1795757148
+}

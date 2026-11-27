@@ -1,0 +1,10 @@
+{
+  "change": "153-map-pin-icon",
+  "phase": "verify",
+  "branch": "",
+  "phases": {
+    "proposal": {"status":"approved","at":"2026-11-27T05:49:27Z"},
+    "tasks": {"status":"done","at":"2026-11-27T05:49:29Z"},
+    "verify": {"status":"done","at":"2026-11-27T06:16:26Z"}
+  }
+}

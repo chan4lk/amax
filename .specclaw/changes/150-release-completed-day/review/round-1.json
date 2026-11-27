@@ -1,0 +1,86 @@
+{
+ "counts": {
+  "blocker": 0,
+  "major": 1,
+  "minor": 1
+ },
+ "escalated": [],
+ "files": [
+  "modules/delivery/README.md",
+  "modules/delivery/db/migrations/0027_release_completed_day.sql",
+  "modules/delivery/server/queries.ts",
+  "modules/delivery/server/release-tracking.ts",
+  "modules/delivery/tests/release-completed-day-128.test.ts",
+  "modules/delivery/ui/ReleaseInfo.tsx"
+ ],
+ "final": false,
+ "findings": [
+  {
+   "class": "other",
+   "file": "modules/delivery/db/migrations/0027_release_completed_day.sql",
+   "fp": "8fca378b7995",
+   "in_delta": true,
+   "line": 7,
+   "message": "The backfill picks the zone with its own rule: `workflows.entity_zone`, else 'UTC'. But `completion` was judged in `completeBy` through `zoneOf` \u2192 `entityZone` (packages/workflows/src/host.ts:22-32, `entityZoneSql`), which uses the entity's own zone, then its country's default (`ENTITY_ZONES`), then UTC. So the backfill is a second copy of the zone rule, and it disagrees with the one that decided On time or Late. The README line for 128 repeats the wrong fallback ('the entity's own zone, else UTC'). The AC-3 test only covers an entity_zone row or no entity, so it misses the country step. Fix: use `entityZoneSql`'s coalesce in the update (own zone, then the country default from `core.legal_entity.country`, then 'UTC'), correct the README, and add a test row for an entity that has a country but no entity_zone row.",
+   "original_severity": "major",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B4",
+   "scenario": "A project's legal entity has country LK and no workflows.entity_zone row. Its release completes at 2026-11-20T20:00Z with target 2026-11-21. At runtime the day is judged in Asia/Colombo (11-21), so completion = on_time. The backfill stores completed_day = 2026-11-20 (UTC). That case comes out right by chance. The same gap gives the wrong result on the other side: a deployment at 2026-11-21T19:00Z with target 2026-11-21 was judged late (the Colombo day is 11-22), but the backfill stores completed_day 2026-11-21. The page then shows 'Nov 21 \u00b7 Late' against a Nov 21 target.",
+   "severity": "major",
+   "unclassified": false
+  },
+  {
+   "class": "other",
+   "file": "modules/delivery/tests/release-completed-day-128.test.ts",
+   "fp": "b636523e56d8",
+   "in_delta": true,
+   "line": 69,
+   "message": "The 'completed release without its day is refused' test relies on the release 'b-utc', which the AC-3 test creates. Run alone (`it.only`, or a filtered run), it updates no rows and the expected rejection never comes, so it fails for the wrong reason. It also depends on AC-3 putting the 0027 constraint back. Fix: create its own completed release inside the test.",
+   "original_severity": "minor",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B2",
+   "scenario": "vitest -t 'without its day' \u2192 the update matches zero rows \u2192 nothing is rejected \u2192 the test fails, even though the constraint is in place.",
+   "severity": "minor",
+   "unclassified": false
+  }
+ ],
+ "head": "d0e1e4cbbf191de8fd35c15329a7ec3ce640e033",
+ "impact": [
+  "modules/compliance/server/evidence-parts.ts",
+  "modules/delivery/db/migrations/0025_release_tracking.sql",
+  "modules/delivery/mcp.ts",
+  "modules/delivery/tests/release-card-124.test.ts",
+  "modules/delivery/tests/release-db.ts",
+  "modules/delivery/tests/release-detail-125.test.ts",
+  "modules/delivery/tests/release-engine-126.test.ts",
+  "modules/delivery/tests/release-notice-127.test.ts",
+  "modules/delivery/tests/release-ref.test.ts",
+  "modules/delivery/tests/release-tracking-123-writes.test.ts",
+  "modules/delivery/tests/release-tracking-123.test.ts",
+  "modules/delivery/tests/releases.test.ts",
+  "modules/delivery/tests/stable-pins.test.ts",
+  "modules/delivery/ui/ReleasePage.tsx",
+  "modules/delivery/ui/ReleaseTable.tsx",
+  "modules/learning/contracts.ts",
+  "modules/learning/fixtures/data.ts",
+  "modules/learning/fixtures/plan.ts",
+  "modules/learning/mcp.ts",
+  "modules/learning/module.ts"
+ ],
+ "model": "opus",
+ "passes": [
+  "review",
+  "design"
+ ],
+ "prompt_chars": 74962,
+ "round": 1,
+ "since": null,
+ "status": "open",
+ "system_chars": 44179,
+ "tier": "review",
+ "tools": "Read,Grep,Glob",
+ "ts_end": 1795701879,
+ "ts_start": 1795701822
+}

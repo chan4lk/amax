@@ -1,0 +1,71 @@
+{
+ "counts": {
+  "blocker": 0,
+  "major": 0,
+  "minor": 1
+ },
+ "escalated": [],
+ "files": [
+  "apps/mock/package.json",
+  "apps/mock/public/mock/index.html",
+  "apps/web/next.config.ts",
+  "apps/web/package.json",
+  "modules/allocations/package.json",
+  "modules/career/package.json",
+  "modules/compliance/package.json",
+  "modules/delivery/package.json",
+  "modules/expenses/package.json",
+  "modules/experience/package.json",
+  "modules/finance/package.json",
+  "modules/git-accounts/package.json",
+  "modules/helpdesk/package.json",
+  "modules/hr/package.json",
+  "modules/inbox-agent/package.json",
+  "modules/insights/package.json",
+  "modules/it-access/package.json",
+  "modules/keyflow/package.json",
+  "modules/learning/package.json",
+  "modules/leave/package.json",
+  "modules/notifications/package.json",
+  "modules/onboarding/package.json",
+  "modules/payroll/package.json",
+  "modules/presales/package.json",
+  "modules/recruitment/package.json",
+  "modules/reports/package.json",
+  "modules/time/package.json"
+ ],
+ "final": true,
+ "findings": [
+  {
+   "class": "other",
+   "file": "apps/web/next.config.ts",
+   "fp": "8a77d0aff42a",
+   "in_delta": true,
+   "line": 13,
+   "message": "The comment says `experimental.agentUpgrade: \"security\"` records that this upgrade was run by an agent. It doesn't. In Next 16.4.6 the option sets the nudge policy: dev and build tell coding agents about security upgrades (`lib/upgrade/nudge.js`, `server/lib/router-server.js`, `build/index.js`). \"security\" is also the default (`server/config-shared.js:161`), so this line changes nothing. Fix it one of two ways: drop the key, or keep it and rewrite the comment to say it pins the agent-upgrade nudge policy to security releases. The current text would mislead whoever next edits this config.",
+   "original_severity": "minor",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B11",
+   "scenario": "Delete `agentUpgrade: \"security\"` and run next dev or next build. The nudge behaves exactly the same because the default is already \"security\". The comment's claim that the line records an agent-run upgrade is false.",
+   "severity": "minor",
+   "unclassified": false
+  }
+ ],
+ "head": "cd2c342e25184c223108552f5d9de8dd104e9f50",
+ "impact": [],
+ "model": "opus",
+ "passes": [
+  "review",
+  "design"
+ ],
+ "prompt_chars": 56524,
+ "round": 2,
+ "since": null,
+ "status": "clean",
+ "system_chars": 44254,
+ "tier": "review",
+ "tools": "Read,Grep,Glob",
+ "ts_end": 1795165655,
+ "ts_start": 1795165572
+}

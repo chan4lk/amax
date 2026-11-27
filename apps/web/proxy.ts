@@ -2,6 +2,7 @@ import { NextResponse, type NextFetchEvent, type NextRequest } from "next/server
 import { gate, isPublicPath, landing } from "@amax/auth/gate";
 import { sessionStamp } from "@amax/auth/authjs";
 import { pageChannel, takeRate } from "@amax/core/rate-limit";
+import { githubMismatchForward } from "./lib/github-return";
 import { wireProxy } from "./lib/rate-wiring";
 import { auth } from "./auth";
 
@@ -31,6 +32,8 @@ const guarded: Promise<Handler> | null = process.env.DATABASE_URL
 
 // Signed-out visitors are sent to /signin. Without a database the app is a guest preview.
 export async function proxy(req: NextRequest, ev: NextFetchEvent) {
+  const forward = githubMismatchForward(req.nextUrl);
+  if (forward) return NextResponse.redirect(forward);
   if (!guarded || isPublicPath(req.nextUrl.pathname)) return NextResponse.next();
   return (await guarded)(req, ev);
 }

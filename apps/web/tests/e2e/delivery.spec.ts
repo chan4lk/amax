@@ -119,6 +119,17 @@ test("roles without delivery access don't get the screens", async ({ page }) => 
   await expect(page.getByRole("heading", { level: 1 })).not.toHaveText("Projects");
 });
 
+test("121 AC-8 the Portfolio's AMX row says Internal and No manager; a manual project keeps its stored values", async ({ page }) => {
+  await signIn(page);
+  const row = (key: string) => page.getByRole("row").filter({ has: page.locator(`a[href="/delivery/p/${key}"]`) }).first();
+  const amxRow = row("AMX");
+  await expect(amxRow.locator('td[data-label="Margin"]')).toHaveText("Internal");
+  await expect(amxRow.locator('td[data-label="Manager"]')).toHaveText("No manager");
+  await expect(row("CON").locator('td[data-label="Sprint"]')).toHaveText("Sprint 18");
+  await expect(row("CON").locator('td[data-label="Margin"]')).toHaveText("38.2%");
+  expect(await axe(page)).toEqual([]);
+});
+
 test("039 the AMX board shows amax's own specs in the same phases the queue reports", async ({ page }) => {
   const records = await amx();
   await signIn(page, "maya@lumenlabs.test", "/delivery/p/AMX");
@@ -254,9 +265,15 @@ test("081 AC-39 pin a project, then its new release: create the release and depl
   await create.click();
   await expect(page.getByLabel("Message amax")).toHaveValue(`Create release ${version} of FLT`);
   await page.getByRole("button", { name: "Send", exact: true }).click();
+  // 124: one New release card; the version is filled in, the rest is picked on the card.
   let confirm = page.getByRole("group", { name: /^Confirm:/ }).last();
-  await confirm.getByRole("button", { name: "Create", exact: true }).click();
-  await expect(confirm).toContainText("Done:");
+  await expect(confirm.getByLabel("Version")).toHaveValue(version);
+  await confirm.getByLabel("Name").fill("Fleet beta");
+  await confirm.getByText("Dev", { exact: true }).click();
+  await confirm.getByLabel("Target (YYYY-MM-DD)").fill("2099-12-31");
+  await confirm.getByRole("button", { name: "Create Fleet beta", exact: true }).click();
+  await expect(confirm).toContainText(`Created Fleet beta (${version})`);
+  await expect(confirm.getByRole("link", { name: "Open the release" })).toHaveAttribute("href", `/delivery/releases/FLT/${version}`);
   await page.goto("/delivery/p/FLT/releases");
   await page.getByRole("button", { name: `Add Fleet Tracker ${version} to chat` }).first().press("Enter");
   await offers.getByRole("button", { name: `Record a deployment of FLT ${version} to Dev` }).click();
@@ -265,7 +282,7 @@ test("081 AC-39 pin a project, then its new release: create the release and depl
   await confirm.getByRole("button", { name: "Record", exact: true }).click();
   await expect(confirm).toContainText("Done:");
   await page.goto(`/delivery/releases/FLT/${version}`);
-  await expect(page.locator("tbody tr", { hasText: "Dev" }).first()).toContainText("deployed");
+  await expect(page.getByRole("region", { name: "Dev deployments" })).toContainText("deployed");
 });
 
 // An environment's pin: add one from the environments list's pin, then remove it from its own (it has no deployments).

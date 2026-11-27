@@ -1,0 +1,75 @@
+{
+ "counts": {
+  "blocker": 0,
+  "major": 0,
+  "minor": 1
+ },
+ "escalated": [],
+ "files": [
+  "modules/delivery/README.md",
+  "modules/delivery/db/migrations/0027_release_completed_day.sql",
+  "modules/delivery/tests/release-completed-day-128.test.ts"
+ ],
+ "final": false,
+ "findings": [
+  {
+   "class": "other",
+   "file": "modules/delivery/tests/release-completed-day-128.test.ts",
+   "fp": "f2e8dc2b0b52",
+   "in_delta": true,
+   "line": 67,
+   "message": "The round-1 fix covers the whole rule, not just the named case. The backfill now uses the same steps as `entityZoneSql`: the entity's own zone, then the country default through `trim(e.country)` and the `ENTITY_ZONES` map, then 'UTC'. The README matches, and the test covers each step. The test does not check the order of the first two steps, though. Its own-zone row is on the non-LK entity, which has no country default, so the two steps never compete. A backfill that put the country default first would still pass. Fix: add a table row for the LK entity with its own `workflows.entity_zone` row whose day differs from Colombo's at 2026-12-12T20:00Z (for example 'Pacific/Pago_Pago', which gives 2026-12-12), and expect the own-zone day.",
+   "original_severity": "minor",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B2",
+   "scenario": "Swap the first two coalesce arguments in 0027 \u2192 an LK entity with its own Pago_Pago zone is backfilled as 2026-12-13 (Colombo) instead of 2026-12-12, and AC-3 stays green.",
+   "severity": "minor",
+   "unclassified": false
+  }
+ ],
+ "fix_proof": {
+  "base": "d0e1e4cbbf191de8fd35c15329a7ec3ce640e033",
+  "mode": "warn",
+  "reason": "no review.test_command configured, so no test could prove the fix",
+  "status": "not_proven",
+  "tests": []
+ },
+ "head": "5c18d522cac84f3b6f6f8e533f21906af29cd85f",
+ "impact": [
+  ".claude/settings.json",
+  "apps/mock/public/mock/index.html",
+  "apps/web/app/(app)/settings/backups/format.ts",
+  "apps/web/app/(app)/settings/keys/format.ts",
+  "apps/web/app/(app)/settings/keys/keys.css",
+  "apps/web/app/(public)/welcome/welcome.css",
+  "apps/web/app/api/jobs/tick/route.ts",
+  "apps/web/app/api/webhooks/[tenant]/[provider]/route.ts",
+  "apps/web/components/chat/Chat.tsx",
+  "apps/web/components/chat/ChoiceCard.tsx",
+  "apps/web/components/marketing/HowStage.tsx",
+  "apps/web/components/marketing/copy.ts",
+  "apps/web/lib/admin/backups.ts",
+  "apps/web/lib/admin/secrets.ts",
+  "apps/web/lib/backup-workflows.ts",
+  "apps/web/lib/chat-outcome.ts",
+  "apps/web/lib/privacy-fixtures.ts",
+  "apps/web/lib/same-user.ts",
+  "apps/web/lib/server.ts",
+  "apps/web/scripts/dev-tick.ts"
+ ],
+ "model": "opus",
+ "passes": [
+  "review",
+  "design"
+ ],
+ "prompt_chars": 67327,
+ "round": 2,
+ "since": "d0e1e4cb",
+ "status": "clean",
+ "system_chars": 44322,
+ "tier": "review",
+ "tools": "Read,Grep,Glob",
+ "ts_end": 1795702142,
+ "ts_start": 1795702098
+}

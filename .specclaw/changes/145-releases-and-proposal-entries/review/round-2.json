@@ -1,0 +1,107 @@
+{
+ "counts": {
+  "blocker": 0,
+  "major": 3,
+  "minor": 0
+ },
+ "escalated": [],
+ "files": [
+  "modules/delivery/README.md",
+  "modules/delivery/server/pin-offers.ts",
+  "modules/delivery/server/release-tracking.ts",
+  "modules/delivery/server/services.ts",
+  "modules/delivery/tests/release-review-123.test.ts"
+ ],
+ "final": false,
+ "findings": [
+  {
+   "class": "other",
+   "file": "modules/delivery/server/services.ts",
+   "fp": "e9189f0e3564",
+   "in_delta": true,
+   "line": 409,
+   "message": "The new stranded-release guard checks and then acts without a lock. `upsertEnvironment` and `removeEnvironment` run `strandsReleases` with a plain select on `delivery.release`. `createRelease` and `updateRelease` run `checkDates`/`categoryProblem` with a plain select on `delivery.environment`. Neither side locks the project or the environment row, so under READ COMMITTED both checks can pass at once. A release can then end up with no environment to complete on, which is the exact state this fix is meant to prevent. Fix: take one lock that both sides use. For example, lock the project row `for update` (as `services.ts:118` and `:324` already do) in upsertEnvironment, removeEnvironment, createRelease and updateRelease before their checks. Or lock the category's environment row in `categoryEnv` when it is called from `checkDates`. Add a two-session race test.",
+   "original_severity": "major",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B12",
+   "scenario": "Session A runs create_release(category dev) and passes categoryProblem because Dev exists. At the same time session B runs remove_environment(Dev), which has no deployments, and strandsReleases finds no open dev release. Both commit. The new dev release has no Dev environment, so it can never complete, and the hourly check later moves it to Off track and notifies the PM.",
+   "severity": "major",
+   "unclassified": false
+  },
+  {
+   "class": "other",
+   "file": "modules/delivery/server/release-tracking.ts",
+   "fp": "44e27e6a895c",
+   "in_delta": true,
+   "line": 87,
+   "message": "The 'already reached' fix only runs inside updateRelease. It also needs to run when an environment change gives a category a new environment that open releases have already deployed to. Two changes do this. Marking another environment Prod (`upsertEnvironment` with isProd: true clears is_prod on every other environment at services.ts:411). Renaming an environment to 'Dev' or 'UAT'. `strandsReleases` only refuses a category being lost. When a category moves to a different environment, nothing checks the open releases of that category for a live `deployed` record there. Those releases stay open until a redeploy. Fix: after the environment write in upsertEnvironment, run `reachedAlready` and `completeBy` for each open release of every category whose environment changed. Add a variant test: marking a reached environment Prod, renaming a reached environment to UAT, and a category whose new environment hasn't been reached.",
+   "original_severity": "major",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B1",
+   "scenario": "Project environments are Dev, Staging and Live, with Live marked Prod. Release v1 has category prod and is already live on Staging. upsert_environment(Staging, isProd: true) makes Staging the Prod environment, but v1 stays in_progress. After its target day the hourly check moves it to overdue and sends a false Off track notice, even though v1 is live in Prod.",
+   "severity": "major",
+   "unclassified": false
+  },
+  {
+   "class": "other",
+   "file": "modules/delivery/server/pin-offers.ts",
+   "fp": "bf5d62b0f7aa",
+   "in_delta": true,
+   "line": 105,
+   "message": "Only the release pin's offers were fixed. A Verified proposal with no release is offered 'Put <key> in <project> <version>' (set_release_proposals) for the release `nextReleaseOf` picks: the newest release not live in Prod (pin-offers.ts:83-84, in-prod.ts:19-22). That pick doesn't skip completed releases, so it can pick a completed Dev or UAT release, and openRelease refuses the write. Fix: exclude `status = 'completed'` when choosing the release this offer targets. Add the proposal-pin case to the variant test: newest release completed Dev, completed UAT, and open.",
+   "original_severity": "major",
+   "pass": "design",
+   "pre_existing": false,
+   "rule": "B1",
+   "scenario": "Project with release v3 (category dev), deployed to Dev, so completed. A Verified proposal with no release is pinned. Chat offers 'Put P-12 in ACME v3'. On confirm, set_release_proposals fails with 'ACME v3 is completed; it can't change'.",
+   "severity": "major",
+   "unclassified": false
+  }
+ ],
+ "fix_proof": {
+  "base": "a8414d4354e2d869a652146c372f41911db411c9",
+  "mode": "warn",
+  "reason": "no review.test_command configured, so no test could prove the fix",
+  "status": "not_proven",
+  "tests": []
+ },
+ "head": "bed76a9218f61ff61efa168ba208178f21f70094",
+ "impact": [
+  ".github/workflows/ci.yml",
+  "apps/mock/public/mock/index.html",
+  "apps/web/app/(app)/settings/ai/usage/page.tsx",
+  "apps/web/app/(app)/settings/api/LimitTable.tsx",
+  "apps/web/app/(app)/settings/api/format.ts",
+  "apps/web/app/(app)/settings/api/page.tsx",
+  "apps/web/app/(app)/settings/keys/keys.css",
+  "apps/web/app/(app)/settings/keys/page.tsx",
+  "apps/web/app/(app)/settings/page.tsx",
+  "apps/web/app/actions/chat.ts",
+  "apps/web/components/chat/ChoiceCard.tsx",
+  "apps/web/components/marketing/Queue.tsx",
+  "apps/web/components/marketing/areas.ts",
+  "apps/web/components/settings/GitHubAppCard.tsx",
+  "apps/web/components/shell/ProfileMenu.tsx",
+  "apps/web/lib/admin/api.ts",
+  "apps/web/lib/admin/status.ts",
+  "apps/web/tests/admin/hardening-053.test.ts",
+  "apps/web/tests/admin/no-forms.test.ts",
+  "modules/delivery/pin-suggestions.ts"
+ ],
+ "model": "opus",
+ "passes": [
+  "review",
+  "design"
+ ],
+ "prompt_chars": 78088,
+ "round": 2,
+ "since": "a8414d43",
+ "status": "open",
+ "system_chars": 44189,
+ "tier": "review",
+ "tools": "Read,Grep,Glob",
+ "ts_end": 1795710119,
+ "ts_start": 1795709963
+}

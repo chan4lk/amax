@@ -4,13 +4,13 @@ import type { Viewer } from "@amax/auth";
 import { NOT_SET_UP, OWNERS_NOTE } from "./contracts";
 import { identityOf } from "./pins";
 import { forPerson, issueConnect } from "./server/connect";
-import { clientIdOf } from "./server/github";
+import { setGitHubAppTool } from "./app-tool";
+import { tool } from "./tool";
+import { clientIdOf } from "./server/app";
 import { CONNECT, ctxFor, READ, UNLINK } from "./server/context";
 import { disconnectWhat, githubAppStatus, myGitAccounts, myIdentity } from "./server/read";
 import { disconnectGitHub, unlinkIdentity } from "./server/services";
 
-type Src = "mcp" | "chat";
-const tool = <I extends z.ZodType>(t: Omit<McpToolDef, "input" | "run"> & { input: I; run: (v: Viewer, input: z.infer<I>, source: Src) => Promise<unknown> }) => t as unknown as McpToolDef;
 const read = { scope: "read" as const, readOnly: true, permission: READ };
 
 /** 108 AC-1: the Connect GitHub card; once confirmed, its button opens GitHub. Without the app, chat says who sets it up. */
@@ -35,7 +35,7 @@ const disconnectCard = async (v: Viewer): Promise<ToolCard> => {
 export const mcpTools: McpToolDef[] = [
   tool({ ...read, pin: "view", name: "get_my_git_identities", description: "Your Git accounts: whether GitHub is set up in this workspace, your GitHub login and the verified emails amax matches your commits by.",
     input: z.object({}), run: (v) => myGitAccounts(v) }),
-  tool({ ...read, pin: "view", name: "get_github_app_status", description: "Whether this workspace has the GitHub app people connect their GitHub accounts through (connector github-oauth).",
+  tool({ ...read, pin: "view", name: "get_github_app_status", description: "Whether this workspace has the GitHub app people connect their GitHub accounts through (connector github-oauth), when it was last rotated (for Admins), and the callback URL GitHub must have.",
     input: z.object({}), run: (v) => githubAppStatus(v) }),
   tool({ ...read, pin: { id: "identityId", of: identityOf }, name: "get_my_git_identity", description: "One of your verified Git emails by id.",
     input: z.object({ identityId: z.uuid() }), run: (v, a) => myIdentity(v, a.identityId) }),
@@ -48,5 +48,6 @@ export const mcpTools: McpToolDef[] = [
     input: z.object({}), card: disconnectCard, service: disconnectGitHub, run: (v, _a, s = "mcp") => disconnectGitHub(ctxFor(v, s), {}) }),
   tool({ scope: "write", permission: UNLINK, destructive: true, name: "unlink_git_identity", description: "Admin: unlink one Git identity (a login's email) of any person by its id.",
     input: z.object({ identityId: z.uuid() }), service: unlinkIdentity, run: (v, a, s = "mcp") => unlinkIdentity(ctxFor(v, s), a) }),
+  setGitHubAppTool,
 ];
 

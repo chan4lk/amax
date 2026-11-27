@@ -1,0 +1,89 @@
+{
+ "counts": {
+  "blocker": 0,
+  "major": 0,
+  "minor": 1
+ },
+ "escalated": [],
+ "files": [
+  "modules/delivery/README.md",
+  "modules/delivery/mcp.ts",
+  "modules/delivery/server/release-card.ts",
+  "modules/delivery/server/release-proposals.ts",
+  "modules/delivery/server/services.ts",
+  "modules/delivery/tests/completed-release-moves-129.test.ts",
+  "modules/delivery/tests/release-card-124.test.ts",
+  "modules/delivery/tests/release-tracking-123.test.ts",
+  "modules/delivery/tests/releases.test.ts"
+ ],
+ "final": false,
+ "findings": [
+  {
+   "class": "other",
+   "file": "modules/delivery/mcp.ts",
+   "fp": "cb26ab8ea4ee",
+   "in_delta": false,
+   "line": 134,
+   "message": "The held-elsewhere rule now covers completed releases, but only the `list_release_proposals` description was updated. The `set_release_proposals` description (line 134) and the `create_release` description (line 108) still say \"A proposal in another release that isn't completed moves only if reassign names it too\". These descriptions are the contract the chat model and MCP agents follow, and they now contradict `heldElsewhere`. Fix: change both to say \"in another release, open or completed\".",
+   "original_severity": "major",
+   "pass": "design",
+   "pre_existing": true,
+   "rule": "B1",
+   "scenario": "RTK-5 sits in completed release v1. A user says \"put RTK-5 in v2\". The agent follows the description, treats a completed release as free and calls `set_release_proposals` without `reassign`. The service refuses (\"RTK-5 is already in RTK v1 (UAT, Completed); confirm moving it\u2026\"), so the agent's documented contract makes it fail on the first call, every time.",
+   "severity": "major",
+   "unclassified": false
+  },
+  {
+   "class": "other",
+   "file": "modules/delivery/server/services.ts",
+   "fp": "8d1a1a8b2459",
+   "in_delta": true,
+   "line": 76,
+   "message": "The find-and-replace of `openRelease` also renamed the private service helper `openRelease` to `inRelease`. That helper loads the release and calls `notCompleted`: it accepts only an open release. The new name suggests the opposite and clashes with the new `inRelease` field, which now means 'any release, open or completed'. This rename was not in T1's scope. Fix: put the helper's name back to `openRelease`, or call it something like `editableRelease`.",
+   "original_severity": "minor",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B10",
+   "scenario": "",
+   "severity": "minor",
+   "unclassified": false
+  }
+ ],
+ "head": "f7b735c50ccbe451d06bf93c2277a02ab0e20ee8",
+ "impact": [
+  ".github/workflows/codeql.yml",
+  ".github/workflows/dependency-review.yml",
+  "apps/mock/public/mock/index.html",
+  "apps/web/lib/backup-workflows.ts",
+  "deploy/ci/drill.yaml",
+  "modules/allocations/tests/scope.test.ts",
+  "modules/allocations/tests/standing-race-107.test.ts",
+  "modules/compliance/contracts.ts",
+  "modules/compliance/tests/standard.test.ts",
+  "modules/delivery/db/migrations/0026_release_status_engine.sql",
+  "modules/delivery/server/release-edit-card.ts",
+  "modules/delivery/tests/chat-043.test.ts",
+  "modules/delivery/tests/chat.test.ts",
+  "modules/experience/server/wire.ts",
+  "modules/git-accounts/server/github.ts",
+  "modules/hr/tests/records.test.ts",
+  "modules/inbox-agent/server/record.ts",
+  "modules/inbox-agent/server/wire.ts",
+  "modules/keyflow/server/http.ts",
+  "modules/keyflow/server/record.ts"
+ ],
+ "model": "opus",
+ "passes": [
+  "review",
+  "design"
+ ],
+ "prompt_chars": 85646,
+ "round": 1,
+ "since": null,
+ "status": "clean",
+ "system_chars": 44184,
+ "tier": "review",
+ "tools": "Read,Grep,Glob",
+ "ts_end": 1795715799,
+ "ts_start": 1795715720
+}

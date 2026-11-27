@@ -1,9 +1,9 @@
 import type { ScreenProps } from "@amax/core";
 import type { Viewer } from "@amax/auth";
 import { PinButton } from "@amax/ui";
-import { NOT_SET_UP } from "../contracts";
+import { APP_NOT_READY, NOT_SET_UP } from "../words";
 import { accountsPin, identityPin } from "../pins";
-import { myGitAccounts, returnResult } from "../server/read";
+import { githubAppStatus, myGitAccounts, returnResult } from "../server/read";
 import { AskButton } from "./AskButton";
 import { ResultNote } from "./ResultNote";
 import { ResumeReturn } from "./ResumeReturn";
@@ -15,7 +15,9 @@ export async function GitAccountsPage({ viewer, searchParams }: ScreenProps) {
   if (!v) return <h1>Git accounts</h1>;
   if (searchParams?.resume) return <><h1>Git accounts</h1><ResumeReturn query={searchParams.resume} /></>;
   const shown = Boolean(searchParams?.github);
-  const [{ configured, github }, record] = await Promise.all([myGitAccounts(v), shown && searchParams?.ref ? returnResult(v, searchParams.ref) : null]);
+  const [{ github }, record] = await Promise.all([myGitAccounts(v), shown && searchParams?.ref ? returnResult(v, searchParams.ref) : null]);
+  // 119 (final pass): the page offers Connect only when the app is ready, as chat and Overview do.
+  const app = github ? null : (await githubAppStatus(v)).state;
   return (
     <>
       <h1>Git accounts</h1>
@@ -35,12 +37,12 @@ export async function GitAccountsPage({ viewer, searchParams }: ScreenProps) {
       ) : (
         <div className="card pinnable" style={{ maxWidth: 720 }}>
           <div className="card-head"><h2>GitHub · Not connected</h2><PinButton inline pin={accountsPin} /></div>
-          {configured ? (
+          {app === "ready" ? (
             <>
               <p className="muted" style={{ fontSize: 13 }}>Until you connect, proposals from the repo can&apos;t name you as owner and no hours are drafted from your commits.</p>
               <AskButton className="btn sm primary" label="Ask amax · Connect GitHub" prompt="Connect my GitHub" pin={accountsPin} />
             </>
-          ) : <p className="muted" style={{ fontSize: 13, margin: 0 }}>{NOT_SET_UP}.</p>}
+          ) : <p className="muted" style={{ fontSize: 13, margin: 0 }}>{app === "none" ? NOT_SET_UP : APP_NOT_READY}.</p>}
         </div>
       )}
     </>

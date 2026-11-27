@@ -6,7 +6,7 @@ import { SuggestionError } from "@amax/agents/server";
 import { setOwnerIn } from "./lifecycle";
 import { namedOwner, notOnProject } from "./owner";
 import { moveIn } from "./services";
-import { hasNoOwner } from "./readiness";
+import { hasNoOwner, isWithdrawn, needsOwner } from "./readiness";
 
 // 081 amendment 2 (AC-32, AC-33): what the Delivery agent may suggest about a proposal. A person accepts it (the
 // platform checks the kind's permission on the suggestion's project); apply is the same write as the board or
@@ -62,7 +62,10 @@ export const suggestedOwner = defineSuggestionKind<Owner, { key: string }>({
   permission: "delivery:proposal:create",
   proposed: Owner,
   apply: async (tx, ctx, p) => own(tx, ctx, p, await namedOwner(tx, p.userId), (row, key) => {
-    if (!hasNoOwner({ ownerUserId: (row.owner_user_id as string | null) ?? null, ownerName: (row.owner_name as string | null) ?? null })) stale(`${key} has an owner now${row.owner_name ? ` (${String(row.owner_name)})` : ""}`);
+    const now = { ownerUserId: (row.owner_user_id as string | null) ?? null, ownerName: (row.owner_name as string | null) ?? null, phase: String(row.phase), withdrawn: isWithdrawn(row) };
+    if (!hasNoOwner(now)) stale(`${key} has an owner now${row.owner_name ? ` (${String(row.owner_name)})` : ""}`);
+    // 118 (117 final pass): the same rule as the Unassigned chip: a released proposal needs no owner.
+    if (!needsOwner(now)) stale(`${key} is released now and needs no owner`);
   }),
   undo: (tx, ctx, p) => own(tx, ctx, p, null, (row, key) => {
     if (row.owner_user_id !== p.userId) stale(`${key}'s owner changed since; undo only clears ${p.name}`);

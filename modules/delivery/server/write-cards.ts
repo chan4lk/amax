@@ -4,6 +4,7 @@ import type { Viewer } from "@amax/auth";
 import type { ToolCard } from "@amax/core";
 import { getRuntime } from "@amax/core/server";
 import { repoFields, storedLink } from "./set-up-project-card";
+import { movesLine } from "./release-proposals";
 
 // 081 amendment 3: the confirm cards for the writes Delivery's pins offer (releases, deployments, environments, tasks,
 // repos), so the card says what will happen and its receipt what did, instead of the tool's description and raw
@@ -13,9 +14,6 @@ const card = (title: string, kind: string, lines: [string, string | undefined | 
   title, lines: lines.filter(([, v]) => v !== undefined && v !== null && v !== "").map(([label, value]) => ({ label, value: value as string })),
   look: { kind, subject: title, confirm, done: `Done: ${done}` },
 });
-
-export const createReleaseCard = async (_v: Viewer, a: { projectKey: string; version: string; proposalKeys?: string[] }) =>
-  card(`Create release ${a.version} of ${a.projectKey}`, "New release", [["Project", a.projectKey], ["Version", a.version], ["Proposals", a.proposalKeys?.join(", ") || "none yet"]], `created ${a.projectKey} ${a.version}`, "Create");
 
 export const deploymentCard = async (_v: Viewer, a: { projectKey: string; version: string; environment: string; status?: string; note?: string }) =>
   card(`Record ${a.projectKey} ${a.version} in ${a.environment}`, "Record a deployment", [["Release", `${a.projectKey} ${a.version}`], ["Environment", a.environment],
@@ -28,9 +26,9 @@ export const voidCard = async (_v: Viewer, a: { projectKey: string; version: str
 export const tagCard = async (_v: Viewer, a: { projectKey: string; version: string; newVersion: string }) =>
   card(`Re-tag ${a.projectKey} ${a.version} as ${a.newVersion}`, "Re-tag a release", [["Release", `${a.projectKey} ${a.version}`], ["New tag", a.newVersion]], `${a.projectKey} ${a.version} is now ${a.newVersion}`, "Re-tag");
 
-export const releaseProposalsCard = async (_v: Viewer, a: { projectKey: string; version: string; proposalKeys: string[] }) =>
+export const releaseProposalsCard = async (v: Viewer, a: { projectKey: string; version: string; proposalKeys: string[]; reassign?: string[] }) =>
   card(`Set the proposals in ${a.projectKey} ${a.version}`, "Change a release", [["Release", `${a.projectKey} ${a.version}`], ["Proposals", a.proposalKeys.join(", ") || "none"],
-    ["Kept", "proposals already released stay"]], `${a.projectKey} ${a.version} holds ${a.proposalKeys.length} proposal${a.proposalKeys.length === 1 ? "" : "s"}`, "Save");
+    ["Moves", await movesLine(v, a)], ["Kept", "proposals already released stay"]], `${a.projectKey} ${a.version} holds ${a.proposalKeys.length} proposal${a.proposalKeys.length === 1 ? "" : "s"}`, "Save");
 
 export async function environmentCard(v: Viewer, a: { projectKey: string; name: string; rename?: string; position?: number; isProd?: boolean }) {
   const [had] = await withTenant(getRuntime().db, v.tenantId, (tx) => tx.execute(sql`select 1 from delivery.environment e join delivery.project p on p.id = e.project_id

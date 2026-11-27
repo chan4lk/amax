@@ -6,6 +6,7 @@ import { announce, Mascot, PinButton, type PinRef } from "@amax/ui";
 import type { Answers, Conversation, ConversationSummary, Edits, Highlight, PendingAction } from "@amax/chat";
 import { cancelChat, checkCardField, confirmChat, pageContext, refreshPins, sendChat, type CardOutcome } from "../../app/actions/chat";
 import type { PageInfo } from "../../lib/page-context";
+import { inApp } from "../../lib/in-app";
 import { pinKey, withFresh, type Pin } from "@amax/chat/pins";
 import { ChoiceCard } from "./ChoiceCard";
 import { ConfirmCard } from "./ConfirmCard";
@@ -332,7 +333,7 @@ export function Chat({ open, fresh = 0, onClose, returnFocus, signedIn, userId, 
                 secret={e.action.secret && convo.current ? <SecretConfirm conversationId={convo.current} as={userId} action={{ ...e.action, secret: e.action.secret }} onCancel={() => decide(e.action, false)}
                   onState={(o) => setLog((l) => l.map((x) => (x.kind === "confirm" && x.action.id === e.action.id ? { ...x, ...o } : x)))} /> : undefined}
                 after={e.reveal ? <RevealOnce reveal={e.reveal} onDone={() => setLog((l) => l.map((x) => (x.kind === "confirm" && x.action.id === e.action.id ? { ...x, reveal: undefined } : x)))} />
-                  : e.open && <p style={{ margin: "8px 0 0" }}><a className="btn sm primary" href={e.open.url}>{e.open.label} ↗</a></p>} />
+                  : e.open && <p style={{ margin: "8px 0 0" }}><a className="btn sm primary" href={e.open.url}>{e.open.label}{inApp(e.open.url) ? "" : " ↗"}</a></p>} />
             </div>
           );
         })}

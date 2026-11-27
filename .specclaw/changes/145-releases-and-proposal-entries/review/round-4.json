@@ -1,0 +1,107 @@
+{
+ "counts": {
+  "blocker": 0,
+  "major": 3,
+  "minor": 0
+ },
+ "escalated": [],
+ "files": [
+  "modules/delivery/README.md",
+  "modules/delivery/server/release-tracking.ts",
+  "modules/delivery/server/services.ts",
+  "modules/delivery/tests/release-review-123.test.ts"
+ ],
+ "final": false,
+ "findings": [
+  {
+   "class": "other",
+   "file": "modules/delivery/tests/release-review-123.test.ts",
+   "fp": "2f32524828d2",
+   "in_delta": true,
+   "line": 119,
+   "message": "This race test never forces the interleaving that the round-3 fix guards, so it can pass with `if (r.status === \"completed\") continue;` (release-tracking.ts:92) deleted. The fix only matters when this exact order happens: recordDeployment holds the release row lock (releaseOf `for update`, services.ts:67), completeReached's plain select (release-tracking.ts:87) still sees the release as open, and recordDeployment commits before `tracked()` takes the lock. In every other order the status predicate on the select already skips the row. Firing two promises 5 times makes that window a matter of chance. `Promise.allSettled` also discards rejections: if either service throws (lock timeout, an error from the change), the test still checks only that there is one completion and passes. Fix: make the interleaving deterministic. Open a transaction with the owner connection that locks the release `for update`, start upsertEnvironment, wait until it is blocked on that lock (poll `pg_locks`/`pg_stat_activity`), then complete the release through a Prod deployment in that held session, commit, and let the upsert finish. Assert that both calls fulfilled, and that `out.completed` is empty for that release.",
+   "original_severity": "major",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B7",
+   "scenario": "Revert line 92 \u2192 run the test \u2192 recordDeployment(Prod) commits before upsertEnvironment's select at release-tracking.ts:87, the select filters the row out, all 5 iterations pass. The test is green without the fix.",
+   "severity": "major",
+   "unclassified": false
+  },
+  {
+   "class": "other",
+   "file": "modules/delivery/server/release-tracking.ts",
+   "fp": "14660a882cc1",
+   "in_delta": true,
+   "line": 95,
+   "message": "This is an instance fix for the attribution finding. The upsert's audit now names the completed releases, but the other copies of the same fact still say a deployment caused the completion. completeReached still calls `completeBy(..., \"deployment\", by)`. So the `delivery.release_status_history` row (returned by get_release_history as `statusHistory`) and the `releaseStatusChanged` event payload (`source`, read by notifications) record `source: deployment` for a completion that an environment change caused. The finding asked for a history source or reason that shows the environment change. Fix: add a source for this case to `Source`, e.g. `\"environment\"` (with the DB check/enum and statusLabel/why text), and pass it here. Test that the QA-made-Prod history row and the event carry it.",
+   "original_severity": "major",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B1",
+   "scenario": "Release p1 (category prod) is deployed to QA. upsert_environment {name: QA, isProd: true} completes it. get_release_history shows the completion as `source: deployment` with QA's old deployment id, and the release-status-changed event also says `source: \"deployment\"`. No deployment was recorded at that time.",
+   "severity": "major",
+   "unclassified": false
+  },
+  {
+   "carried": "file renamed or deleted",
+   "class": "law",
+   "file": "modules/delivery/services.ts",
+   "fp": "c65189b60016",
+   "in_delta": true,
+   "line": 434,
+   "message": "`upsertEnvironment` now completes releases (it writes status, completed_at, completed_day, completion and completing_deployment_id on `delivery.release`), but the service's audit row only covers the environment: `resourceId` is the environment's id and `after` is the raw input. Nothing in the audit names the releases this call completed. The status-history row says `source: 'deployment'`, which hides that an environment change caused the completion. `updateRelease` puts the new status in its audited `after`. Fix: return the ids and versions of the completed releases from `completeReached` and include them in the upsert's audited `after` (for example `after: { ...input, completed: [...] }`). Use a history source or reason that shows an environment change caused the completion.",
+   "original_severity": "major",
+   "pass": "design",
+   "pre_existing": false,
+   "rule": "AGENTS core rule 5",
+   "scenario": "An Admin marks QA as Prod and open release p1 (already deployed to QA) completes. The audit event for delivery.environment shows only {projectKey, name:'QA', isProd:true}. No audit record anywhere says p1 changed, and its history row reads 'completed by deployment, by Admin'.",
+   "severity": "major",
+   "unclassified": false
+  }
+ ],
+ "fix_proof": {
+  "base": "a8414d4354e2d869a652146c372f41911db411c9",
+  "mode": "warn",
+  "reason": "no review.test_command configured, so no test could prove the fix",
+  "status": "not_proven",
+  "tests": []
+ },
+ "head": "ec0e12b7cdc4a94c8baa1e6f2d2e38ae8dc9b6fe",
+ "impact": [
+  ".dockerignore",
+  ".github/dependabot.yml",
+  ".github/workflows/ci.yml",
+  ".gitignore",
+  "apps/mock/public/mock/index.html",
+  "apps/web/app/(app)/[module]/[[...path]]/page.tsx",
+  "apps/web/app/(app)/page.tsx",
+  "apps/web/app/(app)/settings/retention/RequestsCard.tsx",
+  "apps/web/app/(app)/settings/retention/RetentionTickets.tsx",
+  "apps/web/app/(app)/settings/retention/page.tsx",
+  "apps/web/app/(app)/suggestions/page.tsx",
+  "apps/web/app/(public)/welcome/sections.css",
+  "apps/web/app/actions/chat-history.ts",
+  "apps/web/app/actions/chat.ts",
+  "apps/web/app/signin/page.tsx",
+  "apps/web/components/agents/DecideTable.tsx",
+  "apps/web/components/chat/CardForm.tsx",
+  "apps/web/components/chat/Chat.tsx",
+  "apps/web/components/chat/ChoiceCard.tsx",
+  "apps/web/components/chat/ConfirmCard.tsx"
+ ],
+ "model": "opus",
+ "passes": [
+  "review",
+  "design"
+ ],
+ "prompt_chars": 70306,
+ "round": 4,
+ "since": "39cd3f49",
+ "status": "open",
+ "system_chars": 44206,
+ "tier": "review",
+ "tools": "Read,Grep,Glob",
+ "ts_end": 1795711088,
+ "ts_start": 1795710997
+}

@@ -1,0 +1,93 @@
+{
+ "counts": {
+  "blocker": 0,
+  "major": 1,
+  "minor": 1
+ },
+ "escalated": [],
+ "files": [
+  "apps/mock/public/mock/index.html",
+  "modules/delivery/tests/csv-owner-119.test.ts",
+  "modules/delivery/ui/ProposalsPage.tsx",
+  "modules/git-accounts/chat-suggestions.ts",
+  "modules/git-accounts/overview.ts",
+  "modules/git-accounts/server/app.ts",
+  "modules/git-accounts/server/read.ts",
+  "modules/git-accounts/tests/expiry-116.test.ts",
+  "modules/git-accounts/tests/follow-ups-117.test.ts",
+  "modules/git-accounts/tests/nudge-116.test.ts",
+  "modules/git-accounts/tests/problem-117.test.ts",
+  "modules/git-accounts/tests/setup.ts",
+  "modules/git-accounts/tests/state-119.test.ts"
+ ],
+ "final": true,
+ "findings": [
+  {
+   "class": "other",
+   "file": "modules/git-accounts/chat-suggestions.ts",
+   "fp": "8bea19aec06b",
+   "in_delta": true,
+   "line": 17,
+   "message": "AC-2's fix covers only the Connect GitHub suggestion and the Overview nudge. A third place still invites people to connect: the Git accounts page (modules/git-accounts/ui/GitAccountsPage.tsx:38). It shows the primary 'Ask amax \u00b7 Connect GitHub' button whenever `myGitAccounts().configured` is true, and that flag only checks that a credential exists (`hasSecret`). So an incomplete or unreadable app still asks everyone on the page to connect, and each attempt then fails. This is the problem 119 sets out to fix. Fix: make the page decide from `githubAppStatus(v).state === 'ready'`, the same check the suggestion and nudge use. For the other states, show why connecting isn't possible (incomplete, expired or not set up) instead of the button. Add a test row for the page next to state-119's `invited()` check for each state.",
+   "original_severity": "major",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B1",
+   "scenario": "An Admin stores the github-oauth value 'only-the-secret-00000000000000'. Kasun, an Engineer, opens /git-accounts: the suggestion is hidden and status reads 'incomplete', but the card still shows 'Ask amax \u00b7 Connect GitHub'. Confirming it fails with APP_INCOMPLETE.",
+   "severity": "major",
+   "unclassified": false
+  },
+  {
+   "class": "other",
+   "file": "modules/git-accounts/server/read.ts",
+   "fp": "a16a14bf222c",
+   "in_delta": true,
+   "line": 35,
+   "message": "The app check now runs as a job for every viewer, including on every Engineer's Overview render and on the Connect suggestion. useSecret writes `last_used_at`, `last_used_by` and `last_used_purpose` on the credential (packages/core/src/secrets/use.ts:53), so the Keys screen's 'Last used' for github-oauth now shows the 'GitHub app check' at least once every CHECK_MS per process. A real connect use gets overwritten. Until 119 only Admin views did this. Before 119 the stamp was close to the app's real use; now it records that someone looked at a page. Fix: keep the status check from stamping last-used. Either use a read that doesn't stamp usage, or skip the stamp for the 'GitHub app check' purpose. The decrypt can stay audited.",
+   "original_severity": "minor",
+   "pass": "design",
+   "pre_existing": false,
+   "rule": "B11",
+   "scenario": "No one has connected GitHub for 3 months, and Engineers open Overview daily. An Admin checks Settings \u2192 Keys before following 'Remove the GitHub app \u2026 as unused'. It shows 'Last used 10:02 today \u00b7 GitHub app check', so the app looks in use.",
+   "severity": "minor",
+   "unclassified": false
+  }
+ ],
+ "head": "807b2ffb69212e9cd1d22fd132cbf2ee5bbafee9",
+ "impact": [
+  ".gitignore",
+  "apps/web/app/(public)/welcome/page.tsx",
+  "apps/web/app/robots.ts",
+  "apps/web/app/sitemap.ts",
+  "apps/web/components/chat/Markdown.tsx",
+  "apps/web/tests/chat-markdown.test.ts",
+  "modules/delivery/tests/attention-a11.test.ts",
+  "modules/delivery/tests/owner-render-118.test.ts",
+  "modules/delivery/tests/proposal-agent.test.ts",
+  "modules/delivery/tests/proposal-detail.test.ts",
+  "modules/delivery/tests/proposal-metrics.test.ts",
+  "modules/delivery/ui/ProjectLists.tsx",
+  "modules/delivery/ui/delivery.css",
+  "modules/hr/tests/hr-screens-110.test.ts",
+  "modules/notifications/server/render.ts",
+  "modules/notifications/server/rules.ts",
+  "modules/notifications/tests/masking.test.ts",
+  "modules/notifications/ui/BellMenu.tsx",
+  "modules/reports/tests/e2e/reports.spec.ts",
+  "modules/time/ui/BandIcon.tsx"
+ ],
+ "model": "opus",
+ "passes": [
+  "review",
+  "design"
+ ],
+ "prompt_chars": 80442,
+ "round": 3,
+ "since": null,
+ "status": "open",
+ "system_chars": 44189,
+ "tier": "review",
+ "tools": "Read,Grep,Glob",
+ "ts_end": 1794894365,
+ "ts_start": 1794894225
+}

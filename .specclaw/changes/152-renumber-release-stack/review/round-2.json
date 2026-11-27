@@ -1,0 +1,46 @@
+{
+ "counts": {
+  "blocker": 0,
+  "major": 0,
+  "minor": 1
+ },
+ "escalated": [],
+ "files": [
+  "apps/mock/public/mock/index.html",
+  "apps/web/tests/e2e/delivery-visual.spec.ts"
+ ],
+ "final": true,
+ "findings": [
+  {
+   "class": "other",
+   "file": "apps/mock/public/mock/index.html",
+   "fp": "1865ead487a3",
+   "in_delta": true,
+   "line": 4205,
+   "message": "The renumbering changed the section ids, ledes and banners but missed the cross-references in the body text. Section 150 still says \"Before 128 this read \u2026\" (line 4205), and section 151 still says \"Before 129 it moved silently.\" (line 4222). 128 is now 150 and 129 is now 151, so both sentences point to the old numbers. Under the new scheme, 128 and 129 are either unused or belong to other changes. The source mock `.specclaw/mock/index.html:4205` and `:4222` has the same stale text, so this copy only repeats it. Change the text to \"Before 150\" and \"Before 151\" in both files.",
+   "original_severity": "minor",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B1",
+   "scenario": "A reader opens #150-release-completed-day and sees \"Before 128 this read \u2026\". They look for change 128, which is not the change that fixed the completion day, and get the wrong history.",
+   "severity": "minor",
+   "unclassified": false
+  }
+ ],
+ "head": "f6b2be106a66aa4538188704c32fda20787c46bd",
+ "impact": [],
+ "model": "opus",
+ "passes": [
+  "review",
+  "design"
+ ],
+ "prompt_chars": 84035,
+ "round": 2,
+ "since": null,
+ "status": "clean",
+ "system_chars": 44175,
+ "tier": "review",
+ "tools": "Read,Grep,Glob",
+ "ts_end": 1795757080,
+ "ts_start": 1795757051
+}

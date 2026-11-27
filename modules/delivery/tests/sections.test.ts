@@ -10,7 +10,7 @@ import { loadFixtures, lumen } from "@amax/testing";
 import manifest from "../module";
 import { PROJECT_SECTIONS } from "../contracts";
 import { listProposals, listReleases } from "../server/queries";
-import { ProjectTabs } from "../ui/ProjectSections";
+import { ProjectTabs } from "../ui/ProjectHeader";
 
 describe("project section tabs", () => {
   it("AC4 every tab is a link to its own section, none is aria-disabled, and only the current one is marked", async () => {

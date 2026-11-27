@@ -1,33 +1,22 @@
 import type { ReactNode } from "react";
 import type { ScreenProps } from "@amax/core";
 import { Card, EmptyState, type IconName } from "@amax/ui";
-import { PROJECT_SECTIONS, projectHref, type ProjectSection } from "../contracts";
+import type { ProjectSection } from "../contracts";
 import { projectPin } from "../pins";
-import { getProject } from "../server/queries";
+import { projectHeader } from "../server/header";
+import { ProjectHeader } from "./ProjectHeader";
 import { AskButton } from "./AskButton";
 import { needViewer, SignInFirst } from "./parts";
-
-export function ProjectTabs({ projectKey, current }: { projectKey: string; current: ProjectSection }) {
-  return (
-    <nav className="tabs" aria-label="Sections">
-      {PROJECT_SECTIONS.map((s) => (
-        <a key={s.path} className="btn sm" href={projectHref(projectKey, s.path)} aria-current={s.path === current ? "page" : undefined}>{s.label}</a>
-      ))}
-    </nav>
-  );
-}
 
 export async function ProjectSectionPage({ viewer: raw, params, section, title, children }: ScreenProps & { section: ProjectSection; title: string; children: (p: { id: string; key: string; name: string; repoUrl?: string | null; agentFirst?: boolean }) => ReactNode }) {
   const viewer = needViewer(raw);
   if (!viewer) return <><h1>Project</h1><SignInFirst /></>;
-  const data = await getProject(viewer, params.key);
-  if (!data) return <><h1>Project not found</h1><p className="lede">No project with the key {params.key}.</p></>;
-  const { project } = data;
+  const head = await projectHeader(viewer, params.key);
+  if (!head) return <><h1>Project not found</h1><p className="lede">No project with the key {params.key}.</p></>;
+  const { project } = head;
   return (
     <>
-      <nav className="crumb" aria-label="Breadcrumb"><a href="/delivery">Projects</a><span>/</span><a href={projectHref(project.key)}>{project.name}</a><span>/</span>{title}</nav>
-      <h1>{project.name}</h1>
-      <ProjectTabs projectKey={project.key} current={section} />
+      <ProjectHeader project={project} lede={head.lede} section={section} title={title} />
       {children(project)}
     </>
   );

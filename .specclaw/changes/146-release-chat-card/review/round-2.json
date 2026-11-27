@@ -1,0 +1,109 @@
+{
+ "counts": {
+  "blocker": 0,
+  "major": 2,
+  "minor": 0
+ },
+ "escalated": [],
+ "files": [
+  "apps/web/lib/in-app.ts",
+  "apps/web/tests/card-checks-124.test.ts",
+  "modules/delivery/server/release-card.ts",
+  "modules/delivery/server/release-status.ts",
+  "modules/delivery/server/release-tracking.ts",
+  "modules/delivery/server/services.ts",
+  "modules/delivery/tests/release-card-124.test.ts"
+ ],
+ "final": false,
+ "findings": [
+  {
+   "class": "other",
+   "file": "modules/delivery/server/services.ts",
+   "fp": "1c231721739e",
+   "in_delta": false,
+   "line": 452,
+   "message": "This round adds one shared `Version` schema (trim, min 1, max 40, with messages) and uses it in `createRelease` and the card. `tagRelease` still has its own copy of the version rule: `newVersion: z.string().min(1).max(40)`, with no trim and no messages. The two can disagree. A re-tag can store a version that create would refuse or trim. Fix: use `newVersion: Version` in tagRelease. Add `\"   \"` and `\" v1 \"` to the variant test.",
+   "original_severity": "major",
+   "pass": "review",
+   "pre_existing": true,
+   "rule": "B4",
+   "scenario": "tag_release { projectKey: 'CON', version: 'v2.5.0', newVersion: '   ' } \u2192 passes min(1), so the release is renamed to a blank version and its page href becomes /delivery/releases/CON/%20%20%20. create_release with version '   ' is refused with 'the release needs a version'.",
+   "severity": "major",
+   "unclassified": false
+  },
+  {
+   "class": "other",
+   "file": "modules/delivery/server/release-card.ts",
+   "fp": "5621533fbc8b",
+   "in_delta": true,
+   "line": 71,
+   "message": "The card now checks the version with `Version`, which trims, and the service now stores the trimmed version. But the duplicate check still queries the raw `a.version`. So for a padded version, the card's check and the confirm disagree, which is the defect the previous round named. The done line (line 49) also shows the raw value. Fix: run the taken check, and build the done text, with the parsed value (`Version.parse(a.version)`). Even simpler: trim `version` in `ReleaseDraft`, the way category is now normalised.",
+   "original_severity": "major",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B1",
+   "scenario": "CON already has v2.5.0. The draft has version ' v2.5.0' \u2192 the taken query finds no ' v2.5.0', so the card shows no field error. On Create, the service trims it to 'v2.5.0', hits the conflict and refuses with 'CON already has a release v2.5.0'. That error is not tied to the version field.",
+   "severity": "major",
+   "unclassified": false
+  },
+  {
+   "class": "security",
+   "file": "apps/web/lib/in-app.ts",
+   "fp": "ce16d091b48b",
+   "in_delta": true,
+   "line": 1,
+   "message": "This fixes one copy of the same-site path check and misses the other. `apps/web/lib/chat-move.ts:6` (`local`) still uses the old `/^\\/(?![/\\\\])/` test. It guards `moved.from` and `moved.to`, and `followMove` sends the page to `moved.to` after a confirmed write. Whitespace and control characters still pass there. Fix: have `chat-move.ts` use `inApp` instead of its own regex, and add the whitespace and control-character variants to the `movedOf` test.",
+   "original_severity": "major",
+   "pass": "design",
+   "pre_existing": false,
+   "rule": "B1",
+   "scenario": "A tool result with `moved: { from: \"/delivery/releases/ORB/v1\", to: \"/\\t/evil.example\" }` \u2192 `movedOf` accepts it, and the chat moves the page there. The browser's URL parser strips the tab, so the page goes to `//evil.example`, which is off-site. `inApp` now rejects the same string.",
+   "severity": "major",
+   "unclassified": false
+  }
+ ],
+ "fix_proof": {
+  "base": "97b81c3072d751c4495044344a84c4bfbb137435",
+  "mode": "warn",
+  "reason": "no review.test_command configured, so no test could prove the fix",
+  "status": "not_proven",
+  "tests": []
+ },
+ "head": "1659b280e6343a1e0b18f04234806aca4af4e18e",
+ "impact": [
+  ".github/workflows/codeql.yml",
+  ".github/workflows/dependency-review.yml",
+  "apps/mock/public/mock/index.html",
+  "apps/web/components/chat/Chat.tsx",
+  "apps/web/lib/backup-workflows.ts",
+  "apps/web/lib/chat-outcome.ts",
+  "deploy/ci/drill.yaml",
+  "modules/allocations/tests/scope.test.ts",
+  "modules/allocations/tests/standing-race-107.test.ts",
+  "modules/compliance/contracts.ts",
+  "modules/compliance/tests/standard.test.ts",
+  "modules/delivery/mcp.ts",
+  "modules/delivery/server/manager.ts",
+  "modules/notifications/server/deliver.ts",
+  "modules/notifications/server/digest.ts",
+  "modules/notifications/server/send.ts",
+  "modules/presales/server/promote.ts",
+  "plugins/amax/scripts/read-specclaw.mjs",
+  "plugins/amax/scripts/src/read-specclaw.ts",
+  "plugins/amax/tests/reader.test.ts"
+ ],
+ "model": "opus",
+ "passes": [
+  "review",
+  "design"
+ ],
+ "prompt_chars": 63190,
+ "round": 2,
+ "since": "97b81c30",
+ "status": "open",
+ "system_chars": 44135,
+ "tier": "review",
+ "tools": "Read,Grep,Glob",
+ "ts_end": 1795684420,
+ "ts_start": 1795684346
+}

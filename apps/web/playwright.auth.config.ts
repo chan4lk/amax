@@ -15,8 +15,8 @@ export default defineConfig({
   projects: [
     { name: "visual", testMatch: /(delivery|api)-visual\.spec\.ts/ },
     { name: "amx", testMatch: /amx\.setup\.ts/, dependencies: ["visual"] },
-    { name: "screens", testMatch: /(auth|landing|delivery|sections|ai|mcp|pins|secrets|workflows|notifications|suggestions|overview)\.spec\.ts/, dependencies: ["amx"] },
-    { name: "writes", testMatch: /(chat|chat-first|releases|admin|ai-usage|api|set-up-project(-fields)?|project-team|git-accounts)\.spec\.ts/, dependencies: ["screens"] },
+    { name: "screens", testMatch: /(auth|landing|delivery|sections|ai|mcp|pins|secrets|workflows|notifications|suggestions|overview|project-tabs)\.spec\.ts/, dependencies: ["amx"] },
+    { name: "writes", testMatch: /(chat|chat-first|releases|admin|ai-usage|api|set-up-project(-fields)?|project-team|git-accounts|release-pages)\.spec\.ts/, dependencies: ["screens"] },
     { name: "audit", testMatch: /audit\.spec\.ts/, dependencies: ["writes"] },
     // 032: the privacy spec erases the demo erasure request's person, so it runs last.
     { name: "privacy", testMatch: /retention(-visual)?\.spec\.ts/, dependencies: ["audit"] },

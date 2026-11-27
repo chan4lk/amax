@@ -1,0 +1,109 @@
+{
+ "counts": {
+  "blocker": 0,
+  "major": 2,
+  "minor": 1
+ },
+ "escalated": [
+  "f2a80de4c527"
+ ],
+ "files": [
+  "apps/web/app/(app)/settings/integrations/page.tsx",
+  "modules/git-accounts/server/app.ts",
+  "modules/git-accounts/server/read.ts",
+  "modules/git-accounts/tests/follow-ups-117.test.ts",
+  "modules/git-accounts/tests/setup.ts"
+ ],
+ "final": false,
+ "findings": [
+  {
+   "class": "other",
+   "file": "modules/git-accounts/chat-suggestions.ts",
+   "fp": "87ab15c61889",
+   "in_delta": true,
+   "line": 12,
+   "message": "This fixes only the status, not its consumers. `githubAppStatus` now returns `usable: null` and `checkProblem`, but it still sets `configured: true` when the check couldn't run. Two consumers still read that as configured. First, `admin(set)` in chat-suggestions.ts compares only `.configured === set`, so chat keeps offering Rotate and Remove as if the value had been checked. Second, the Integrations chip (apps/web/app/(app)/settings/integrations/page.tsx:38) still shows the green `good` chip reading \"Configured \u00b7 couldn't check it\". The previous finding asked for both consumers to show 'couldn't check' instead of Configured, and not to offer Rotate or Remove. Fix: when `usable === null`, the suggestions offer neither Set up nor Rotate/Remove (or a 'check again' prompt), and the chip shows a neutral \"Couldn't check\" state without the `good` class.",
+   "original_severity": "major",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B1",
+   "scenario": "An incomplete value is stored, then the KMS goes down. An Admin opens /settings/integrations and sees a green chip, \"Configured \u00b7 couldn't check it\". Chat offers [\"Rotate the GitHub app secret\", \"Remove the GitHub app\"] when it should offer neither, and it doesn't offer Set up, which the stored value actually needs.",
+   "severity": "major",
+   "unclassified": false
+  },
+  {
+   "class": "other",
+   "file": "modules/git-accounts/tests/follow-ups-117.test.ts",
+   "fp": "f2a80de4c527",
+   "in_delta": true,
+   "line": 64,
+   "message": "The table still has no row for a refused use (ForbiddenError or another non-refusal useSecret error), although the previous finding named that variant. Those errors take the generic branch in `problemOf`, and no test covers that branch. The second row's `why` is `/./`, which any non-empty string matches, so that row's reason check proves nothing. The test also never checks `offered()` during the outage, which is why the folded-to-configured suggestions above go unnoticed. Fix: add a refused-use row and a row for an unexpected error, each with a specific expected reason. Assert `offered()` during the outage as well. Restore the KMS in a `finally` so a throwing `status()` can't leak the outage config into later tests.",
+   "original_severity": "major",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B2",
+   "scenario": "Make `problemOf` throw or return '' for non-ToolError errors, or reintroduce Rotate/Remove for an unchecked status. Every row of the table stays green.",
+   "severity": "major",
+   "unclassified": false
+  },
+  {
+   "class": "other",
+   "file": "modules/git-accounts/server/app.ts",
+   "fp": "795d585ae372",
+   "in_delta": true,
+   "line": 50,
+   "message": "The new guard comment says \"a late failure never drops a newer check\" (the `checks.get(...)?.answer === answer` comparison), but no test runs a failing read that overlaps a newer check. Deleting the comparison leaves every test green. The only effect is one extra audited read, so this is minor. Add an overlapping-check test or drop the claim.",
+   "original_severity": "minor",
+   "pass": "review",
+   "pre_existing": false,
+   "rule": "B7",
+   "scenario": "Check A fails after a rotation has already started check B. Without the guard, A's catch deletes B's entry. No test fails.",
+   "severity": "minor",
+   "unclassified": false
+  }
+ ],
+ "fix_proof": {
+  "base": "480d8fbd703cfcf69ac22b6da22e84e2a7a1dc0a",
+  "mode": "warn",
+  "reason": "no review.test_command configured, so no test could prove the fix",
+  "status": "not_proven",
+  "tests": []
+ },
+ "head": "97ac3fd2016df9692c8d0ef5bd6e42753a896b2c",
+ "impact": [
+  "apps/web/app/(app)/layout.tsx",
+  "apps/web/app/(app)/operations/[screen]/page.tsx",
+  "apps/web/app/(app)/settings/ai/page.tsx",
+  "apps/web/app/(app)/settings/ai/usage/page.tsx",
+  "apps/web/app/(app)/settings/api/page.tsx",
+  "apps/web/app/(app)/settings/audit/page.tsx",
+  "apps/web/app/(app)/settings/backups/page.tsx",
+  "apps/web/app/(app)/settings/keys/page.tsx",
+  "apps/web/app/(app)/settings/page.tsx",
+  "apps/web/app/(app)/settings/retention/page.tsx",
+  "apps/web/app/(app)/settings/workflows/page.tsx",
+  "apps/web/app/(app)/suggestions/page.tsx",
+  "apps/web/app/(public)/welcome/page.tsx",
+  "apps/web/app/.well-known/oauth-authorization-server/route.ts",
+  "apps/web/app/.well-known/oauth-protected-resource/[[...path]]/route.ts",
+  "apps/web/app/api/backups/export/[id]/route.ts",
+  "apps/web/app/api/git/github/callback/route.ts",
+  "apps/web/app/api/jobs/tick/route.ts",
+  "apps/web/app/api/mcp/route.ts",
+  "apps/web/app/api/scim/v2/Users/[id]/route.ts"
+ ],
+ "model": "opus",
+ "passes": [
+  "review",
+  "design"
+ ],
+ "prompt_chars": 61781,
+ "round": 3,
+ "since": "8dd1f930",
+ "status": "escalate",
+ "system_chars": 44133,
+ "tier": "review",
+ "tools": "Read,Grep,Glob",
+ "ts_end": 1794837587,
+ "ts_start": 1794837527
+}

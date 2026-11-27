@@ -1,0 +1,10 @@
+{
+  "change": "148-release-status-engine",
+  "phase": "verify",
+  "branch": "",
+  "phases": {
+    "proposal": {"status":"approved","at":"2026-11-26T10:41:24Z"},
+    "tasks": {"status":"done","at":"2026-11-26T10:41:39Z"},
+    "verify": {"status":"done","at":"2026-11-26T12:43:52Z"}
+  }
+}

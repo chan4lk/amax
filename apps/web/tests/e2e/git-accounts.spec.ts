@@ -47,7 +47,7 @@ test.beforeAll(async () => {
   configureRuntime({ db, auditKey: "e2e-audit-key-e2e-audit-key-e2e-audit" });
   installAuthorizer();
   configureSecrets({ kms: localKms(parseKeyFile(readFileSync(KEY_FILE, "utf8"))) });
-  await putSecret(contextFor.job(T, "e2e-seed"), { connector: "github-oauth", value: "e2e-app:e2e-secret" });
+  await putSecret(contextFor.job(T, "e2e-seed"), { connector: "github-oauth", value: "e2e-app:e2e-secret-fake-0000000000" });
   await client.end();
 });
 test.afterAll(async () => {
@@ -67,6 +67,26 @@ async function ask(page: Page, button: string, prompt: string) {
   }).toPass({ timeout: 30_000 });
   await page.keyboard.press("Enter");
 }
+
+test("116 AC1 AC4 an Admin replaces the GitHub app from Integrations with one card: Client ID, callback URL, masked secret", async ({ page }) => {
+  await page.goto("/signin");
+  await page.getByLabel("Demo user (fixtures only)").fill("maya@lumenlabs.test");
+  await page.getByRole("button", { name: "Sign in as demo user" }).click();
+  await expect(page).toHaveURL((u) => u.pathname === "/");
+  await page.goto("/settings/integrations");
+  await expect(page.getByText(/^Configured · rotated /)).toBeVisible();
+  await page.waitForLoadState("networkidle");
+  await page.getByRole("button", { name: "Ask amax", exact: true }).first().click();
+  await expect(page.getByLabel("Message amax")).toBeVisible();
+  await page.getByLabel("Message amax").fill("Set up the GitHub app with client id e2e-app");
+  await page.getByRole("complementary", { name: "amax chat" }).getByRole("button", { name: "Send", exact: true }).click();
+  const card = page.getByRole("group", { name: "Confirm: Replace the GitHub app" });
+  await expect(card).toContainText("/api/git/github/callback", { timeout: 60_000 });
+  await expect(card.getByRole("button", { name: "Copy Callback URL to paste into GitHub" })).toBeVisible();
+  await card.getByLabel("Client secret").fill("e2e-secret-0000000000000000");
+  await card.getByRole("button", { name: "Confirm" }).click();
+  await expect(card).toContainText("saved to the vault");
+});
 
 test("112 AC5 a real return interrupted by sign-in finishes the connect after resume", async ({ page, browser }) => {
   await page.goto("/signin");

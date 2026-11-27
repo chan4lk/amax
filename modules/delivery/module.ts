@@ -9,7 +9,7 @@ import { ingestPush } from "./server/ingest";
 import { linkIdentity } from "./suggestions";
 import { proposalAgent } from "./server/agent";
 import { proposalKinds } from "./server/proposal-kinds";
-import { EVENTS, managedProjectIds, type ProposalPhaseChanged, type ProposalRekeyed, type ProposalWithdrawn, type ProposalOwnerChanged, type ReleaseDeployed, type TaskDone, type TaskReopened, type CommitTime, type ProjectManagerChanged } from "./contracts";
+import { EVENTS, PROJECT_HEADER_SLOT, managedProjectIds, type ProposalPhaseChanged, type ProposalRekeyed, type ProposalWithdrawn, type ProposalOwnerChanged, type ReleaseDeployed, type ReleaseStatusChanged, type TaskDone, type TaskReopened, type CommitTime, type ProjectManagerChanged } from "./contracts";
 import { ProjectsPage } from "./ui/ProjectsPage";
 import { ProjectPage } from "./ui/ProjectPage";
 import { ProposalsPage } from "./ui/ProposalsPage";
@@ -18,6 +18,8 @@ import { ReleasePage } from "./ui/ReleasePage";
 import { ProjectProposals, ProjectReleases } from "./ui/ProjectLists";
 import { ContractSection, RisksSection, TeamSection } from "./ui/ProjectSections";
 import { deliveryOverview } from "./server/overview";
+import { projectHeaderSlot } from "./ui/ProjectHeaderSlot";
+import { releaseCheck, releaseCheckSchedule } from "./server/release-check";
 
 const READ = ["delivery:read"];
 
@@ -31,6 +33,7 @@ export default defineModule({
   nav: [{ path: "proposals", title: "Proposals", icon: "doc" }, { path: "releases", title: "Releases", icon: "rocket" }],
   dependsOn: [],
   integratesWith: [],
+  provides: { [PROJECT_HEADER_SLOT]: projectHeaderSlot },
   permissions: ["delivery:read", "delivery:project:create", "delivery:proposal:create", "delivery:proposal:move", "delivery:release:create", "delivery:deployment:record", "delivery:proposal:sync", "delivery:task:done", "delivery:identity:link", "delivery:commit-time:manage", "delivery:project:link", "delivery:proposal:push", "delivery:proposal:hours", "delivery:commit-time:release", "delivery:project:manage"],
   grants: {
     Leadership: READ,
@@ -70,6 +73,7 @@ export default defineModule({
     { table: "delivery.deployment", label: "Who recorded a deployment", subject: ["recorded_by"], fields: ["recorded_by", "note"], keep: { prior_phases: "the release's phase states before it, no person in them" }, class: "personal", period: "P7Y", start: { at: ["at"] }, action: "anonymise" },
     // The voider's clock starts at the void, which can be years after the deployment (final review).
     { table: "delivery.deployment", label: "Who voided a deployment", subject: ["voided_by"], fields: ["voided_by", "void_reason"], class: "personal", period: "P7Y", start: { at: ["voided_at"] }, action: "anonymise" },
+    { table: "delivery.release_status_history", label: "Who changed a release's status", subject: ["changed_by"], fields: ["changed_by"], class: "personal", period: "P7Y", start: { at: ["at"] }, action: "anonymise" },
     // 008: who closed a task (a person, or a credential or Git acting for one), kept with the delivery evidence.
     { table: "delivery.task", label: "Who closed a task", subject: ["done_by"], fields: ["done_by"], class: "personal", period: "P7Y", start: { at: ["done_at"] }, action: "anonymise" },
     { table: "delivery.commit_time", label: "Who switched commit time on or off", subject: ["set_by"], entity: "legal_entity_id", fields: ["set_by"], class: "personal", period: "P7Y", start: { at: ["updated_at"] }, action: "anonymise" },
@@ -89,6 +93,8 @@ export default defineModule({
   pinSuggestions,
   pageLabel,
   jobs: [],
+  workflows: [releaseCheck],
+  schedules: [releaseCheckSchedule],
   // 035: outgoing webhooks send only declared fields (review 058).
   events: {
     emits: Object.values(EVENTS),
@@ -96,6 +102,8 @@ export default defineModule({
     handles: proposalAgent,
     payloads: {
       [EVENTS.releaseDeployed]: declarePayload<ReleaseDeployed>({ releaseId: "plain", projectId: "plain", version: "plain", environment: "plain", status: "plain", released: "plain" }),
+      [EVENTS.releaseStatusChanged]: declarePayload<ReleaseStatusChanged>({ releaseId: "plain", projectId: "plain", projectKey: "plain", managerUserId: "plain", version: "plain", name: "plain", category: "plain", categoryLabel: "plain",
+        targetDate: "plain", targetDay: "plain", from: "plain", to: "plain", toLabel: "plain", source: "plain", href: "plain" }),
       [EVENTS.proposalPhaseChanged]: declarePayload<ProposalPhaseChanged>({ proposalId: "plain", key: "plain", projectId: "plain", from: "plain", to: "plain", by: "plain", ownerUserId: "plain" }),
       [EVENTS.proposalRekeyed]: declarePayload<ProposalRekeyed>({ proposalId: "plain", projectId: "plain", from: "plain", to: "plain" }),
       [EVENTS.proposalWithdrawn]: declarePayload<ProposalWithdrawn>({ proposalId: "plain", key: "plain", projectId: "plain", by: "plain", reason: "plain", ownerUserId: "plain", title: "plain" }),
@@ -111,6 +119,12 @@ export default defineModule({
     { id: "delivery.release-rolled-back", event: EVENTS.releaseDeployed, when: { status: "rolled-back" }, category: "releases", urgency: "urgent",
       to: [{ role: "PM" }], permission: "delivery:deployment:record", scope: { projectId: "projectId" },
       title: "Release {version} rolled back in {environment}", href: "/delivery/releases" },
+    { id: "delivery.release-off-track", event: EVENTS.releaseStatusChanged, when: { to: "overdue" }, category: "releases", urgency: "urgent",
+      to: [{ owner: "managerUserId" }], permission: "delivery:release:create", scope: { projectId: "projectId" },
+      title: "{name} is now Off track", body: "{categoryLabel} release · target {targetDay} · no successful {categoryLabel} deployment yet", href: "{href}" },
+    { id: "delivery.release-failed", event: EVENTS.releaseDeployed, when: { status: "failed" }, category: "releases", urgency: "urgent",
+      to: [{ role: "PM" }], permission: "delivery:deployment:record", scope: { projectId: "projectId" },
+      title: "Release {version} failed in {environment}", href: "/delivery/releases" },
     // 081 AC-19: a proposal's owner hears when someone else moves or releases it, or finishes one of its tasks.
     { id: "delivery.proposal-phase", event: EVENTS.proposalPhaseChanged, category: "releases", to: [{ owner: "ownerUserId" }], except: "by",
       permission: "delivery:read", scope: { projectId: "projectId" }, subject: "ownerUserId", title: "{key} moved from {from} to {to}", href: "/delivery/proposals/{key}" },

@@ -3,6 +3,7 @@
 import { sql } from "drizzle-orm";
 import type { Tx } from "@amax/db";
 import type { Viewer } from "@amax/auth";
+import type { ReactNode } from "react";
 import { withdrawnIn } from "./server/readiness";
 
 export const PHASES = ["proposed", "planned", "building", "verified", "released"] as const;
@@ -16,7 +17,7 @@ export const releaseHref = (r: { projectKey: string; version: string }) => `/del
 export type ProjectRef = { id: string; key: string; name: string; client: string; billing: string; managerUserId: string | null; managerName: string | null; legalEntityId: string | null };
 
 /** Emitted when a deployment is recorded. `released` is true when the environment is Prod. */
-export type ReleaseDeployed = { releaseId: string; projectId: string; version: string; environment: string; status: "deployed" | "testing" | "rolled-back"; released: boolean };
+export type ReleaseDeployed = { releaseId: string; projectId: string; version: string; environment: string; status: "deployed" | "testing" | "rolled-back" | "failed"; released: boolean };
 /** Emitted on every phase change, from a board move, a sync or a Prod deployment. */
 /** 081: `ownerUserId` is the proposal's owner, told about changes others make (null when it has none). */
 export type ProposalPhaseChanged = { proposalId: string; key: string; projectId: string; from: Phase; to: Phase; by: string; ownerUserId?: string | null };
@@ -34,7 +35,15 @@ export type ProposalRekeyed = { proposalId: string; projectId: string; from: str
 /** 081 amendment 7 (AC-74): `ownerUserId` (null for none) and `title`, so the owner can be told. */
 export type ProposalWithdrawn = { proposalId: string; key: string; projectId: string; by: string; reason: string; ownerUserId?: string | null; title?: string };
 
-export const EVENTS = { releaseDeployed: "delivery.release.deployed", proposalPhaseChanged: "delivery.proposal.phase_changed", proposalRekeyed: "delivery.proposal.rekeyed", proposalWithdrawn: "delivery.proposal.withdrawn", taskDone: "delivery.task.done", taskReopened: "delivery.task.reopened", commitTime: "delivery.commit.time", ownerChanged: "delivery.proposal.owner_changed", projectManagerChanged: "delivery.project.manager_changed" } as const;
+export const EVENTS = { releaseDeployed: "delivery.release.deployed", proposalPhaseChanged: "delivery.proposal.phase_changed", proposalRekeyed: "delivery.proposal.rekeyed", proposalWithdrawn: "delivery.proposal.withdrawn", taskDone: "delivery.task.done", taskReopened: "delivery.task.reopened", commitTime: "delivery.commit.time", ownerChanged: "delivery.proposal.owner_changed", projectManagerChanged: "delivery.project.manager_changed", releaseStatusChanged: "delivery.release.status_changed" } as const;
+
+/** 126: a deployment that didn't succeed: rolled back or failed. One rule for Delivery and every module reading ReleaseDeployed. */
+export const UNSUCCESSFUL = ["rolled-back", "failed"] as const;
+export const unsuccessfulDeployment = (status: string | null | undefined) => (UNSUCCESSFUL as readonly (string | null | undefined)[]).includes(status);
+
+/** 127: a release took a new status (create, edit, deployment or the hourly check); `to` is the stored value (`overdue` reads "Off track"); `managerUserId` the project's PM. */
+export type ReleaseStatusChanged = { releaseId: string; projectId: string; projectKey: string; managerUserId: string | null; version: string; name: string; category: string; categoryLabel: string; targetDate: string; targetDay: string;
+  from: string | null; to: string; toLabel: string; source: string; href: string };
 
 /** 107: a project's PM handed over; `from` is null when it had none, `by` the actor. */
 export type ProjectManagerChanged = { projectId: string; key: string; name: string; from: string | null; to: string; toName: string; by: string };
@@ -143,5 +152,12 @@ export const PROJECT_SECTIONS = [
   { path: "contract", label: "Contract" },
 ] as const;
 export type ProjectSection = (typeof PROJECT_SECTIONS)[number]["path"];
+
+export const PROJECT_HEADER_SLOT = "delivery.project-header";
+export type ProjectHeaderData = { project: { key: string; name: string; agentFirst?: boolean; repoUrl?: string | null }; lede: string };
+export type ProjectHeaderSlot = {
+  load: (viewer: Viewer, projectKey: string) => Promise<ProjectHeaderData | null>;
+  Header: (p: { head: ProjectHeaderData; section: ProjectSection; title: string; actions?: ReactNode }) => ReactNode;
+};
 
 export const projectHref = (key: string, section: ProjectSection = "") => `/delivery/p/${encodeURIComponent(key)}${section ? `/${section}` : ""}`;

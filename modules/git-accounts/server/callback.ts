@@ -24,7 +24,7 @@ export const githubCallback: GitHubCallback = async (ctx, params) => {
 
 /** What this return came to, as a result code, and on success the claim it stored against. */
 async function outcome(ctx: Parameters<GitHubCallback>[0], params: Record<string, string>): Promise<{ code: Exclude<ResultCode, "connected">; claimId?: undefined; held?: string } | { code: "connected"; claimId: string; held?: undefined }> {
-  if (params.error) return { code: params.error === "access_denied" ? "denied" : "incomplete" };
+  if (params.error) return { code: params.error === "access_denied" ? "denied" : params.error === "redirect_uri_mismatch" ? "callback" : "incomplete" };
   const q = Query.safeParse(params);
   if (!q.success) return { code: "incomplete" };
   try {

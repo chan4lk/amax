@@ -38,6 +38,10 @@ const RULES: Rule[] = [
   // 081 amendment 3: what the other Delivery pins offer.
   [new RegExp(`^add a proposal to .+? \\(${KEY}\\): (.+)$`, "i"), (m) => [["create_proposal", { projectKey: m[1], title: m[2].trim() }]]],
   [new RegExp(`^create release (v?\\d+\\.\\d+\\.\\d+) of ${KEY}\\s*$`, "i"), (m) => [["create_release", { projectKey: m[2], version: m[1] }]]],
+  [new RegExp(`^create a new release for .+? \\(${KEY}\\)\\s*$`, "i"), (m) => [["create_release", { projectKey: m[1] }]]],
+  [new RegExp(`^edit release (\\S+) of ${KEY}\\s*$`, "i"), (m) => [["update_release", { projectKey: m[2], version: m[1] }]]],
+  [new RegExp(`^create release (v?\\d+\\.\\d+\\.\\d+) of ${KEY}: (.+?), (dev|uat|prod), (\\d{4}-\\d{2}-\\d{2}) to (\\d{4}-\\d{2}-\\d{2})\\s*$`, "i"),
+    (m) => [["create_release", { projectKey: m[2], version: m[1], name: m[3].trim(), category: m[4], startDate: m[5], targetDate: m[6] }]]],
   [new RegExp(`^mark (T\\d+) of (${KEY.slice(1, -1)}-H?\\d+) done\\s*$`, "i"), (m) => [["mark_task_done", { key: m[2], task: m[1].toUpperCase() }]]],
   // 081 amendment 5: reopen a task closed by mistake.
   [new RegExp(`^reopen (T\\d+) of (${KEY.slice(1, -1)}-H?\\d+)\\s*$`, "i"), (m) => [["reopen_task", { key: m[2], task: m[1].toUpperCase() }]]],

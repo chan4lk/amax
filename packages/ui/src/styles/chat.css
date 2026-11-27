@@ -194,6 +194,13 @@ body.picking .pinnable:hover{outline:2px dashed var(--violet);outline-offset:2px
 .cf-chips .chip input{position:absolute;opacity:0;width:1px;height:1px}
 .cf-chips .chip:focus-within{outline:2px solid var(--violet);outline-offset:2px}
 .cf-chips .cf-text{flex:1 1 160px}
+.cf-checks{border:0;padding:0;margin:0;display:flex;flex-direction:column;gap:6px}
+.cf-checks legend{font-size:12.5px;font-weight:600;color:var(--ink);padding:0;margin:0 0 4px}
+.cf-check{display:flex;gap:8px;align-items:flex-start;font-size:13px;line-height:1.35;color:var(--ink);cursor:pointer}
+.cf-check input{margin:2px 0 0;accent-color:var(--chip-agent);width:16px;height:16px;flex:none}
+.cf-check input:focus-visible{outline:2px solid var(--violet);outline-offset:2px}
+.cf-check small{display:block;color:var(--ink-2);font-size:12px}
+.cf-checks .err{margin:0;font-size:12px}
 .cf-more{border-top:1px solid var(--line);padding-top:10px;display:flex;flex-direction:column;gap:12px}
 .cf-more summary{cursor:pointer;font-size:12.5px;font-weight:600;color:var(--chip-agent)}
 .cf-more summary:focus-visible{outline:2px solid var(--violet);outline-offset:2px}
